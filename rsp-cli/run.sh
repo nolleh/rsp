@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 #
-./build/Client
+./build/Client "$1"

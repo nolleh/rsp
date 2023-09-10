@@ -5,6 +5,10 @@
 started @since 23.09.10  
 developement by [@nolleh](mailto: nolleh7707@gmail.com)
 
+it is open to use,  
+but plz represent where it [from](https://github.com/nolleh/rsp) and  
+and also if you like this, press star. :)
+
 ## dependencies
 
 - tested on
@@ -29,5 +33,5 @@ determines that a user which room should be assigned to enter.
 (load balancing, and match making)
 
 # Troubleshoot
+- objdump -S -f $file
 
-## objdump -S -f $file

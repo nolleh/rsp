@@ -10,15 +10,18 @@ int main() {
   std::cout << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
             << std::endl;
 
-  namespace libs = rsp::libs;
+  namespace server = rsp::libs::server;
+  namespace utils = rsp::libs::utils;
+
   try {
     std::cout << func(1, 2) << std::endl;
 
     boost::asio::io_context io_context;
-    libs::server::tcp_server server(&io_context);
+    server::tcp_server server(&io_context);
     // TODO(@nolleh) thread pool
     io_context.run();
   } catch (std::exception &e) {
-    libs::utils::logger::get_instance().error("exception ocurred");
+    utils::logger::get_instance().error("exception ocurred" +
+                                        std::string(e.what()));
   }
 }
