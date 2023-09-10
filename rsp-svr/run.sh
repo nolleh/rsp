@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-./build/rooms/rooms
-./build/users/users
+./build/room/Room
+./build/user/User

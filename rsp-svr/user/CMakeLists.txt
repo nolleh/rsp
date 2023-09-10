@@ -1,7 +1,38 @@
-project(users)
+cmake_minimum_required(VERSION 3.5)
+project(User VERSION 1.0)
 
-cmake_minimum_required(VERSION 3.0)
+cmake_policy(SET CMP0048 NEW)
 
-add_executable(users
-  src/main.cpp
+find_package(Boost)
+
+configure_file(
+  config.h.in
+  config.h
+)
+
+# source_group("cpp"
+#   FILES
+#   ${PROJECT_SOURCE_DIR}/src
+#   REGULAR_EXPRESSION "*.(cpp | c)"
+# )
+
+file(GLOB_RECURSE SRC src/*.cpp)
+
+add_executable(User
+  ${SRC}
+)
+
+target_include_directories(User PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${Boost_DIR}/include
+  ${LIBS_DIR}/include
+  ${PROJECT_BINARY_DIR}
+)
+
+target_link_directories(User PRIVATE
+  ${Boost_DIR}/lib
+)
+
+target_link_libraries(User
+  Libs
 )

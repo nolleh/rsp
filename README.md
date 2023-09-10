@@ -1,8 +1,8 @@
 
 # OVERVIEW
-*R*ealTime *S*erver *P*latform
+**R**ealTime **S**erver **P**latform
 
-started @since 23.09.10 
+started @since 23.09.10  
 developement by [@nolleh](mailto: nolleh7707@gmail.com)
 
 ## dependencies
@@ -27,3 +27,7 @@ the room server user entered
 ### room_manager
 determines that a user which room should be assigned to enter.
 (load balancing, and match making)
+
+# Troubleshoot
+
+## objdump -S -f $file

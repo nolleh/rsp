@@ -1,0 +1,4 @@
+// the configured options and settings for user 
+
+#define User_VERSION_MAJOR @User_VERSION_MAJOR@
+#define User_VERSION_MINOR @User_VERSION_MINOR@
