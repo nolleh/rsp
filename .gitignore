@@ -1,0 +1,7 @@
+# **** CMAKE *********
+CMakeFiles
+Makefile
+CMakeCache.txt
+build
+.ccls-cache
+*.swp
