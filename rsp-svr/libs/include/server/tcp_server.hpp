@@ -3,7 +3,9 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <memory>
+#include <set>
 
+#include "server/server_event.hpp"
 #include "server/tcp_connection.hpp"
 #include "thread/thread_pool.hpp"
 #include "utils/logger.hpp"
@@ -25,18 +27,28 @@ class tcp_server {
 
   ~tcp_server() { stop(); }
 
+  void subscribe(server_event* event) { event_subscribers_.insert(event); }
+  void notify_on_created(std::shared_ptr<tcp_connection> conn) {
+    for (auto s : event_subscribers_) {
+      s->on_conn_created(conn);
+    }
+  }
+  void unsubscribe(server_event* event) {
+    event_subscribers_.erase(event);
+  }
+
   void start() {
     acceptor_threads_.start();
     io_threads_.start();
     start_accept();
 
-    io_threads_.join();
     acceptor_threads_.join();
+    io_threads_.join();
   }
 
   void stop() {
-    io_threads_.stop();
     acceptor_threads_.stop();
+    io_threads_.stop();
   }
 
   void start_accept() {
@@ -62,6 +74,7 @@ class tcp_server {
   thread::thread_pool acceptor_threads_;
   thread::thread_pool io_threads_;
   tcp::acceptor acceptor_;
+  std::set<server_event*> event_subscribers_;
 };
 }  // namespace server
 }  // namespace libs

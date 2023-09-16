@@ -4,6 +4,7 @@ project(User VERSION 1.0)
 cmake_policy(SET CMP0048 NEW)
 
 find_package(Boost)
+find_package(Protobuf)
 
 configure_file(
   config.h.in
@@ -17,12 +18,15 @@ configure_file(
 # )
 
 file(GLOB_RECURSE SRC src/*.cpp)
+file(GLOB_RECURSE PROTO gen_proto/*.cc)
 
 add_executable(User
   ${SRC}
+  ${PROTO}
 )
 
 target_include_directories(User PRIVATE
+  gen_proto
   ${PROJECT_SOURCE_DIR}/include
   ${Boost_DIR}/include
   ${LIBS_DIR}/include
@@ -35,4 +39,5 @@ target_link_directories(User PRIVATE
 
 target_link_libraries(User
   Libs
+  protobuf
 )

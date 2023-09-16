@@ -26,8 +26,8 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void start(size_t len) {
     // TODO(@nolleh) std::wrap?
-    send("welcome, client");
-  
+    // send("welcome, client");
+
     shared_mutable_buffer buffer{std::vector<char>(len)};
     utils::logger::instance().debug("start async read" + std::to_string(len));
     socket_.async_read_some(
@@ -35,16 +35,26 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
                           buffer, ph::_1, ph::_2));
   }
 
-  void send(const std::string& msg) {
-    // TODO(@nolleh) warp?
-    utils::logger::instance().debug(msg);
-    shared_const_buffer buffer{msg};
-    boost::asio::async_write(
-        socket_, buffer,
-        std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
-                  ph::_1, ph::_2));
+  template <typename Message>
+  void send(Message msg) {
+    std::string bytes;
+    auto success = msg.SerializeToString(&bytes);
+    if (!success) {
+      utils::logger::instance().error("failed to serialize message");
+    }
+    // send(bytes);
   }
 
+  // void send(const std::string&& msg) {
+  //   // TODO(@nolleh) warp?
+  //   utils::logger::instance().debug(msg);
+  //   shared_const_buffer buffer{msg};
+  //   boost::asio::async_write(
+  //       socket_, buffer,
+  //       std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
+  //                 ph::_1, ph::_2));
+  // }
+  //
   void stop() { socket_.close(); }
 
  private:

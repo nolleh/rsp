@@ -6,3 +6,4 @@ build
 .ccls-cache
 *.swp
 compile_commands.json
+gen_proto
