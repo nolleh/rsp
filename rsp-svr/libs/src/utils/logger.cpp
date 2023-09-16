@@ -4,14 +4,14 @@ namespace rsp {
 namespace libs {
 namespace utils {
 
-std::once_flag logger::flag;
-std::unique_ptr<logger> logger::instance;
+std::once_flag logger::s_flag;
+std::unique_ptr<logger> logger::s_instance;
 
-logger& logger::get_instance() {
-  std::call_once(logger::flag, []() {
-    logger::instance.reset(new logger{log_level::TRACE});
+logger& logger::instance() {
+  std::call_once(logger::s_flag, []() {
+    logger::s_instance.reset(new logger{log_level::TRACE});
   });
-  return *logger::instance;
+  return *logger::s_instance;
 }
 
 void logger::debug(std::string msg) {

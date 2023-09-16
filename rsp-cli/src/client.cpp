@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     namespace ip = boost::asio::ip;
 
     ip::tcp::resolver resolver(io_context);
-    ip::tcp::resolver::query query(argv[1]);
+    ip::tcp::resolver::query query(argv[1], "8080");
     // io::tcp::resolver::results_type endpoints =
     //     resolver.resolve(argv[1], "daytime");
 
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     boost::asio::connect(socket, resolver.resolve(query));
 
     for (;;) {
-      std::array<char, 128> buf;
+      std::array<char, 10> buf;
       boost::system::error_code error;
 
       size_t len = socket.read_some(boost::asio::buffer(buf), error);

@@ -12,9 +12,7 @@ enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
 
 class logger {
  public:
-  static logger &get_instance();
-
-  explicit logger(log_level level) : level(level) {}
+  static logger &instance();
 
   void trace(std::string msg);
   void debug(std::string msg);
@@ -23,9 +21,10 @@ class logger {
   void error(std::string msg);
 
  private:
+  explicit logger(log_level level) : level(level) {}
   log_level level;
-  static std::once_flag flag;
-  static std::unique_ptr<logger> instance;
+  static std::once_flag s_flag;
+  static std::unique_ptr<logger> s_instance;
   logger(const logger &) = delete;
   logger &operator=(const logger &) = delete;
 };
