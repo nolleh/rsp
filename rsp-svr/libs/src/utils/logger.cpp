@@ -14,28 +14,6 @@ logger& logger::instance() {
   return *logger::s_instance;
 }
 
-void logger::debug(std::string msg) {
-  if (level > log_level::DEBUG) return;
-
-  std::cout << msg << std::endl;
-}
-
-void logger::info(std::string msg) {
-  if (level > log_level::INFO) return;
-  std::cout << msg << std::endl;
-}
-
-void logger::warn(std::string msg) {
-  if (level > log_level::WARN) return;
-
-  std::cout << msg << std::endl;
-}
-
-void logger::error(std::string msg) {
-  if (level > log_level::ERROR) return;
-
-  std::cout << msg << std::endl;
-}
 }  // namespace utils
 }  // namespace libs
 }  // namespace rsp

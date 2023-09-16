@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "buffer/shared_const_buffer.hpp"
+#include "buffer/shared_mutable_buffer.hpp"
 #include "utils/logger.hpp"
 
 namespace rsp {
@@ -25,22 +27,21 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   void start(size_t len) {
     // TODO(@nolleh) std::wrap?
     send("welcome, client");
-    data_.reset(new std::vector<char>(len));
-
+  
+    shared_mutable_buffer buffer{std::vector<char>(len)};
     utils::logger::instance().debug("start async read" + std::to_string(len));
     socket_.async_read_some(
-        boost::asio::buffer(*data_.get()),
-        std::bind(&tcp_connection::handle_read, shared_from_this(), data_,
-                  ph::_1, ph::_2));
+        buffer, std::bind(&tcp_connection::handle_read, shared_from_this(),
+                          buffer, ph::_1, ph::_2));
   }
 
   void send(const std::string& msg) {
     // TODO(@nolleh) warp?
     utils::logger::instance().debug(msg);
-    message_ = msg;
+    shared_const_buffer buffer{msg};
     boost::asio::async_write(
-        socket_, boost::asio::buffer(message_),
-        std::bind(&tcp_connection::handle_write, shared_from_this(), message_,
+        socket_, buffer,
+        std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
                   ph::_1, ph::_2));
   }
 
@@ -49,23 +50,29 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  private:
   explicit tcp_connection(boost::asio::io_context* io_context)
       : socket_(*io_context) {}
-  void handle_write(std::string& s, const boost::system::error_code& error,
-                    size_t bytes) {
-    utils::logger::instance().debug(
-        "write message size(" + std::to_string(bytes) + "), message:" + s);
+  void handle_write(shared_const_buffer buffer,
+                    const boost::system::error_code& error, size_t bytes) {
+    // const std::string s{buffer.begin(), buffer.end()};
+    utils::logger::instance().trace("conn: write message size(" +
+                                    std::to_string(bytes) + "), message:");
   }
-  void handle_read(std::shared_ptr<std::vector<char>> data,
+
+  void handle_read(shared_mutable_buffer buffer,
                    const boost::system::error_code& error, size_t bytes) {
-    std::string s(data->begin(), data->end());
-    utils::logger::instance().debug("read...message size" +
-                                    std::to_string(bytes) + "message:" + s);
-    start(std::stoi(s));
+    if (boost::asio::error::eof) {
+      utils::logger::instance().debug("conn: closed");
+      stop();
+      return;
+    }
+
+    // std::string s(buffer.begin(), buffer.end());
+    utils::logger::instance().trace("conn: read...message size" +
+                                    std::to_string(bytes) + "message:");
+    // start(std::stoi(s));
+    start(1);
   }
 
   tcp::socket socket_;
-  std::string message_;
-  // TODO(@nolleh) refact
-  std::shared_ptr<std::vector<char>> data_;
 };
 }  // namespace server
 }  // namespace libs

@@ -14,11 +14,36 @@ class logger {
  public:
   static logger &instance();
 
-  void trace(std::string msg);
-  void debug(std::string msg);
-  void info(std::string msg);
-  void warn(std::string msg);
-  void error(std::string msg);
+  template <typename Msg>
+  void trace(Msg &&msg) {
+    if (level > log_level::TRACE) return;
+
+    std::cout << msg << std::endl;
+  }
+  template <typename Msg>
+  void debug(Msg &&msg) {
+    if (level > log_level::DEBUG) return;
+
+    std::cout << msg << std::endl;
+  }
+
+  template <typename Msg>
+  void info(Msg &&msg) {
+    if (level > log_level::INFO) return;
+    std::cout << msg << std::endl;
+  }
+
+  template <typename Msg>
+  void warn(Msg &&msg) {
+    if (level > log_level::WARN) return;
+    std::cout << msg << std::endl;
+  }
+
+  template <typename Msg>
+  void error(Msg &&msg) {
+    if (level > log_level::WARN) return;
+    std::cout << msg << std::endl;
+  }
 
  private:
   explicit logger(log_level level) : level(level) {}

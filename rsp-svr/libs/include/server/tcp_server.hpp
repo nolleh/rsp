@@ -17,9 +17,9 @@ class tcp_server {
 
  public:
   static const int LEN_BYTE = 1;
-  explicit tcp_server()
+  tcp_server()
       : acceptor_threads_(2),
-        worker_threads_(10),
+        io_threads_(10),
         acceptor_(*acceptor_threads_.io_context(),
                   tcp::endpoint(tcp::v4(), 8080)) {}
 
@@ -27,21 +27,21 @@ class tcp_server {
 
   void start() {
     acceptor_threads_.start();
-    worker_threads_.start();
+    io_threads_.start();
     start_accept();
-    
-    worker_threads_.join();
+
+    io_threads_.join();
     acceptor_threads_.join();
   }
 
   void stop() {
-    worker_threads_.stop();
+    io_threads_.stop();
     acceptor_threads_.stop();
   }
 
   void start_accept() {
     std::shared_ptr<tcp_connection> new_connection =
-        tcp_connection::create(worker_threads_.io_context());
+        tcp_connection::create(io_threads_.io_context());
 
     utils::logger::instance().info("start accepting");
     acceptor_.async_accept(new_connection->socket(),
@@ -56,12 +56,11 @@ class tcp_server {
       new_connection->start(LEN_BYTE);
     }
 
-    // TODO(@nolleh) seperate pool
     start_accept();
   }
   // too make sure live longer than thread_pool
   thread::thread_pool acceptor_threads_;
-  thread::thread_pool worker_threads_;
+  thread::thread_pool io_threads_;
   tcp::acceptor acceptor_;
 };
 }  // namespace server
