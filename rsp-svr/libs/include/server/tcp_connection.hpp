@@ -15,10 +15,12 @@ namespace server {
 
 using boost::asio::ip::tcp;
 namespace ph = std::placeholders;
+class tcp_connection;
+
+using connection_ptr = std::shared_ptr<tcp_connection>;
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
-  static std::shared_ptr<tcp_connection> create(
-      boost::asio::io_context* io_context) {
+  static connection_ptr create(boost::asio::io_context* io_context) {
     return std::shared_ptr<tcp_connection>(new tcp_connection(io_context));
   }
 
@@ -35,6 +37,8 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
                           buffer, ph::_1, ph::_2));
   }
 
+  void stop() { socket_.close(); }
+
   template <typename Message>
   void send(Message msg) {
     std::string bytes;
@@ -43,23 +47,24 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       utils::logger::instance().error("failed to serialize message");
     }
     // send(bytes);
+    // REMARK(@nolleh) looks like template speiclaization is hard to deduce &
+    // type. to avoid unneccessary copy, invoke impl function
+    send_impl(bytes);
   }
-
-  // void send(const std::string&& msg) {
-  //   // TODO(@nolleh) warp?
-  //   utils::logger::instance().debug(msg);
-  //   shared_const_buffer buffer{msg};
-  //   boost::asio::async_write(
-  //       socket_, buffer,
-  //       std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
-  //                 ph::_1, ph::_2));
-  // }
-  //
-  void stop() { socket_.close(); }
 
  private:
   explicit tcp_connection(boost::asio::io_context* io_context)
       : socket_(*io_context) {}
+
+  void send_impl(const std::string& msg) {
+    // TODO(@nolleh) warp?
+    utils::logger::instance().debug(msg);
+    shared_const_buffer buffer{msg};
+    boost::asio::async_write(
+        socket_, buffer,
+        std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
+                  ph::_1, ph::_2));
+  }
   void handle_write(shared_const_buffer buffer,
                     const boost::system::error_code& error, size_t bytes) {
     // const std::string s{buffer.begin(), buffer.end()};
@@ -84,6 +89,12 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   tcp::socket socket_;
 };
+
+template <>
+void tcp_connection::send(const char* msg);
+template <>
+void tcp_connection::send(std::basic_string<char> msg);
+
 }  // namespace server
 }  // namespace libs
 }  // namespace rsp

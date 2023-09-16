@@ -11,11 +11,13 @@ namespace session {
 
 class session {
  public:
-  session(std::shared_ptr<server::tcp_connection> conn) : connection_(conn) {}
+  explicit session(server::connection_ptr conn) : connection_(conn) {}
   ~session() {
     // logout meaning disconnect
     connection_->stop();
   }
+
+  const server::connection_ptr& conn_ptr() const { return connection_; }
 
   // session(session&& r) : connection_(std::move(r.connection_)) {}
 
