@@ -68,9 +68,10 @@ class tcp_server {
       new_connection->start(LEN_BYTE);
     }
 
+    notify_on_created(new_connection);
     start_accept();
   }
-  // too make sure live longer than thread_pool
+
   thread::thread_pool acceptor_threads_;
   thread::thread_pool io_threads_;
   tcp::acceptor acceptor_;

@@ -53,6 +53,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
  private:
+  // TODO(@nolleh) consider options for linger / nagle
   explicit tcp_connection(boost::asio::io_context* io_context)
       : socket_(*io_context) {}
 
@@ -67,6 +68,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
   void handle_write(shared_const_buffer buffer,
                     const boost::system::error_code& error, size_t bytes) {
+    if (error) {
+      utils::logger::instance().error("failed to async_write: " +
+                                      error.message());
+      return;
+    }
     // const std::string s{buffer.begin(), buffer.end()};
     utils::logger::instance().trace("conn: write message size(" +
                                     std::to_string(bytes) + "), message:");
@@ -74,15 +80,27 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void handle_read(shared_mutable_buffer buffer,
                    const boost::system::error_code& error, size_t bytes) {
-    if (boost::asio::error::eof) {
+    if (boost::asio::error::eof == error) {
       utils::logger::instance().debug("conn: closed");
       stop();
       return;
     }
 
+    if (boost::asio::error::operation_aborted == error) {
+      utils::logger::instance().debug("conn: closed from server");
+      return;
+    }
+
+    if (error) {
+      utils::logger::instance().error("failed to async_read: " +
+                                      error.message());
+      // start(1);
+      return;
+    }
+
     // std::string s(buffer.begin(), buffer.end());
-    utils::logger::instance().trace("conn: read...message size" +
-                                    std::to_string(bytes) + "message:");
+    utils::logger::instance().trace("conn: read...message size(" +
+                                    std::to_string(bytes) + ") message:");
     // start(std::stoi(s));
     start(1);
   }

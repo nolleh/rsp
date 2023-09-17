@@ -1,5 +1,10 @@
 syntax = "proto3";
 
 message ReqLogin {
-  string uid=1;
+  string uid = 1;
+}
+
+message ResLogin {
+  bool success = 1;
+  string uid = 2;
 }

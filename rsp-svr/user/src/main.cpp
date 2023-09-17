@@ -24,6 +24,8 @@ int main() {
     user_server::acceptor acceptor;
     server.subscribe(&acceptor);
     server.start();
+    // TODO(@nolleh) more elegant way
+    server.unsubscribe(&acceptor);
   } catch (std::exception &e) {
     utils::logger::instance().error("exception ocurred" +
                                     std::string(e.what()));

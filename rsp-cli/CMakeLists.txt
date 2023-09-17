@@ -2,11 +2,27 @@ cmake_minimum_required(VERSION 3.5)
 project(Client)
 
 find_package(Boost)
+find_package(Protobuf)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(libs)
 
 file(GLOB_RECURSE SRC src/*.cpp)
+file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/*.cc)
 
 add_executable(Client
   ${SRC}
+  ${PROTO}
+)
+
+target_include_directories(Client PRIVATE
+  ${CMAKE_SOURCE_DIR}/../gen_proto
+  ${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(Client PRIVATE
+  protobuf
 )

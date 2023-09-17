@@ -3,9 +3,12 @@
 #include <memory>
 #include <utility>
 
-#include "login.pb.h"
+#include "common/message_type.pb.h"
 #include "server/server_event.hpp"
 #include "session/session.hpp"
+#include "user/login.pb.h"
+
+#include "utils/logger.hpp"
 
 namespace rsp {
 namespace user {
@@ -23,12 +26,19 @@ class session_manager {
   void add_session(const session& session) { add_session(session.conn_ptr()); }
 
   void add_session(const server::connection_ptr& conn) {
-    session s{conn};
-    ReqLogin login;
+    ResLogin login;
     login.set_uid("nolleh");
-    s.send_message(login);
-    s.send_message("hello");
-    sessions_[conn].reset(new session(std::move(s)));
+    login.set_success(true);
+    // s.send_message(login);
+    sessions_[conn].reset(new session(conn));
+    // sessions_[conn]->send_message(MessageType::RES_LOGIN);
+    sessions_[conn]->send_message("1");
+
+    libs::utils::logger::instance().debug("mesasge size: " +
+                                    std::to_string(login.ByteSizeLong()));
+    sessions_[conn]->send_message(login);
+    // sessions_[conn]->send_message("hello, anonymous, let me know who you
+    // are"); sessions_[conn]->send_message("test");
   }
 
   void remove_session(const session& session) {
