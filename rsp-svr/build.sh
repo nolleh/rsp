@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-cmake --build ./build
+cmake --build ../build/rsp-svr

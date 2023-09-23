@@ -69,7 +69,7 @@ class base_state {
                   << "), bytes: " << msg.ByteSizeLong() << std::endl;
         return this;
       }
-      std::cout << "success to login" << std::endl;
+      std::cout << "success to login:" << msg.uid() << std::endl;
       // TODO(@nolleh) make factory
       // return static_cast<base_state*>(new state_login);
       return this;

@@ -9,7 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE SRC src/*.cpp)
-# file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/*.cc)
+if (NOT DEFINED PROTO) 
+  file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/proto/*.cc)
+  set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
+endif()
 
 add_executable(Client
   ${SRC}

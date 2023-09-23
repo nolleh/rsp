@@ -50,9 +50,9 @@ class logger {
 
   explicit logger(log_level level)
       : level_(level), o_stream_(std::cout.rdbuf()) {}
-  log_level level_;
   static std::once_flag s_flag;
   static std::unique_ptr<logger> s_instance;
+  log_level level_;
   std::ostream o_stream_;
 };
 

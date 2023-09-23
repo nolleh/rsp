@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-rm -rf ./build
+rm -rf ../build/rsp-svr
