@@ -12,9 +12,11 @@ and also if you like this, press star. :)
 ## dependencies
 
 - tested on
+    - cxx - 17
     - boost-1_83_0
     - cmake-3.25.1
     - gcc-12.3.0
+    - protoc-3.21.12
 
 ## rsp-cli
 client for connecting to svr. no GUI 
