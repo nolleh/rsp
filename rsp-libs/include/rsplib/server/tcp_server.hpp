@@ -5,10 +5,10 @@
 #include <memory>
 #include <set>
 
-#include "logger/logger.hpp"
-#include "server/server_event.hpp"
-#include "server/tcp_connection.hpp"
-#include "thread/thread_pool.hpp"
+#include "rsplib/logger/logger.hpp"
+#include "rsplib/server/server_event.hpp"
+#include "rsplib/server/tcp_connection.hpp"
+#include "rsplib/thread/thread_pool.hpp"
 
 namespace rsp {
 namespace libs {

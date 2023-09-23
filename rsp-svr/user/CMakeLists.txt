@@ -18,7 +18,6 @@ configure_file(
 # )
 
 file(GLOB_RECURSE SRC src/*.cpp)
-file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/*.cc)
 
 add_executable(User
   ${SRC}
@@ -26,10 +25,10 @@ add_executable(User
 )
 
 target_include_directories(User PRIVATE
-  ${CMAKE_SOURCE_DIR}/../gen_proto
-  ${PROJECT_SOURCE_DIR}/include
   ${Boost_DIR}/include
-  ${LIBS_DIR}/include
+  ${Libs_DIR}/include
+  ${Proto_DIR}
+  ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_BINARY_DIR}
 )
 

@@ -3,11 +3,11 @@
 #include <memory>
 #include <utility>
 
-#include "common/message_type.pb.h"
-#include "logger/logger.hpp"
-#include "server/server_event.hpp"
+#include "proto/common/message_type.pb.h"
+#include "proto/user/login.pb.h"
+#include "rsplib/logger/logger.hpp"
+#include "rsplib/server/server_event.hpp"
 #include "session/session.hpp"
-#include "user/login.pb.h"
 
 namespace rsp {
 namespace user {

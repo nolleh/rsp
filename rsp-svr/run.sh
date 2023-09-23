@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-./build/room/Room
-./build/user/User
+../build/rsp-svr/room/Room
+../build/rsp-svr/user/User

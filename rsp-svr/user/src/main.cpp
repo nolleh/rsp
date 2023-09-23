@@ -2,8 +2,8 @@
 #include <iostream>
 
 #include "config.h"
-#include "logger/logger.hpp"
-#include "server/tcp_server.hpp"
+#include "rsplib/logger/logger.hpp"
+#include "rsplib/server/tcp_server.hpp"
 #include "server/connection.hpp"
 #include "test.hpp"
 

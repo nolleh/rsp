@@ -1,5 +1,5 @@
 
-#include "logger/console_logger.hpp"
+#include "rsplib/logger/console_logger.hpp"
 
 namespace rsp {
 namespace libs {

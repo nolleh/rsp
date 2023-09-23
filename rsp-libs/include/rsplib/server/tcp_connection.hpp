@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "buffer/shared_const_buffer.hpp"
-#include "buffer/shared_mutable_buffer.hpp"
-#include "logger/logger.hpp"
+#include "rsplib/buffer/shared_const_buffer.hpp"
+#include "rsplib/buffer/shared_mutable_buffer.hpp"
+#include "rsplib/logger/logger.hpp"
 
 namespace rsp {
 namespace libs {

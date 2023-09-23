@@ -1,6 +1,6 @@
 #pragma once
 
-#include "logger/streamable_logger.hpp"
+#include "rsplib/logger/streamable_logger.hpp"
 
 namespace rsp {
 namespace libs {

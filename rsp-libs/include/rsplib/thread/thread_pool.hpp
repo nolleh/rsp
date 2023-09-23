@@ -6,7 +6,7 @@
 #include <functional>
 #include <memory>
 
-#include "logger/logger.hpp"
+#include "rsplib/logger/logger.hpp"
 
 namespace asio = boost::asio;
 namespace rsp {

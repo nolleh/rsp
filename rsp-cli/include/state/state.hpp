@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "common/message_type.pb.h"
-#include "user/login.pb.h"
+#include "proto/common/message_type.pb.h"
+#include "proto/user/login.pb.h"
 
 namespace rsp {
 namespace cli {

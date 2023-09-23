@@ -8,10 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(libs)
-
 file(GLOB_RECURSE SRC src/*.cpp)
-file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/*.cc)
+# file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/*.cc)
 
 add_executable(Client
   ${SRC}
@@ -19,7 +17,8 @@ add_executable(Client
 )
 
 target_include_directories(Client PRIVATE
-  ${CMAKE_SOURCE_DIR}/../gen_proto
+  ${Proto_DIR}
+  ${Libs_DIR}/include
   ${PROJECT_SOURCE_DIR}/include
 )
 

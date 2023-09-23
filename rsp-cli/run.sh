@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 #
-./build/Client "$1"
+../build/rsp-cli/Client "$1"
