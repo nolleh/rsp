@@ -31,7 +31,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // TODO(@nolleh) std::wrap?
     // send("welcome, client");
 
-    shared_mutable_buffer buffer{std::vector<char>(len)};
+    buffer::shared_mutable_buffer buffer{std::vector<char>(len)};
     logger::instance().debug("start async read", len);
     socket_.async_read_some(
         buffer, std::bind(&tcp_connection::handle_read, shared_from_this(),
@@ -61,13 +61,14 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   void send_impl(const std::string& msg) {
     // TODO(@nolleh) warp?
     logger::instance().debug(msg);
-    shared_const_buffer buffer{msg};
+    buffer::shared_const_buffer buffer{msg};
     boost::asio::async_write(
         socket_, buffer,
         std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
                   ph::_1, ph::_2));
   }
-  void handle_write(shared_const_buffer buffer,
+
+  void handle_write(buffer::shared_const_buffer buffer,
                     const boost::system::error_code& error, size_t bytes) {
     if (error) {
       logger::instance().error("failed to async_write: ",
@@ -78,7 +79,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     logger::instance().trace("conn: write message size(", bytes, "), message:");
   }
 
-  void handle_read(shared_mutable_buffer buffer,
+  void handle_read(buffer::shared_mutable_buffer buffer,
                    const boost::system::error_code& error, size_t bytes) {
     if (boost::asio::error::eof == error) {
       logger::instance().debug("conn: closed");
