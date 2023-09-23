@@ -5,10 +5,10 @@
 #include <memory>
 #include <set>
 
+#include "logger/logger.hpp"
 #include "server/server_event.hpp"
 #include "server/tcp_connection.hpp"
 #include "thread/thread_pool.hpp"
-#include "utils/logger.hpp"
 
 namespace rsp {
 namespace libs {
@@ -16,6 +16,7 @@ namespace server {
 
 class tcp_server {
   using tcp = boost::asio::ip::tcp;
+  // using logger = logger::logger;
 
  public:
   static const int LEN_BYTE = 1;
@@ -33,9 +34,7 @@ class tcp_server {
       s->on_conn_created(conn);
     }
   }
-  void unsubscribe(server_event* event) {
-    event_subscribers_.erase(event);
-  }
+  void unsubscribe(server_event* event) { event_subscribers_.erase(event); }
 
   void start() {
     acceptor_threads_.start();
@@ -55,7 +54,7 @@ class tcp_server {
     std::shared_ptr<tcp_connection> new_connection =
         tcp_connection::create(io_threads_.io_context());
 
-    utils::logger::instance().info("start accepting");
+    logger::instance().info("start accepting");
     acceptor_.async_accept(new_connection->socket(),
                            std::bind(&tcp_server::handle_accept, this,
                                      new_connection, std::placeholders::_1));

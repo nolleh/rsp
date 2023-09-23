@@ -8,7 +8,7 @@ template <>
 void tcp_connection::send(const char* msg) {
   std::string str(msg);
   // send(str);
-  utils::logger::instance().debug(msg);
+  logger::instance().debug(msg);
   shared_const_buffer buffer{msg};
   boost::asio::async_write(
       socket_, buffer,
@@ -19,7 +19,7 @@ void tcp_connection::send(const char* msg) {
 template <>
 void tcp_connection::send(std::basic_string<char> msg) {
   // TODO(@nolleh) warp?
-  utils::logger::instance().debug(msg);
+  logger::instance().debug(msg);
   shared_const_buffer buffer{msg};
   boost::asio::async_write(
       socket_, buffer,

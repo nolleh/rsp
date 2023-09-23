@@ -4,17 +4,18 @@
 #include <utility>
 
 #include "common/message_type.pb.h"
+#include "logger/logger.hpp"
 #include "server/server_event.hpp"
 #include "session/session.hpp"
 #include "user/login.pb.h"
-
-#include "utils/logger.hpp"
 
 namespace rsp {
 namespace user {
 namespace session {
 
 class session_manager {
+  using logger = rsp::libs::logger::logger;
+
  public:
   static session_manager& instance() {
     std::call_once(session_manager::s_flag, []() {
@@ -34,8 +35,8 @@ class session_manager {
     // sessions_[conn]->send_message(MessageType::RES_LOGIN);
     sessions_[conn]->send_message("1");
 
-    libs::utils::logger::instance().debug("mesasge size: " +
-                                    std::to_string(login.ByteSizeLong()));
+    logger::instance().debug("mesasge size: " +
+                             std::to_string(login.ByteSizeLong()));
     sessions_[conn]->send_message(login);
     // sessions_[conn]->send_message("hello, anonymous, let me know who you
     // are"); sessions_[conn]->send_message("test");

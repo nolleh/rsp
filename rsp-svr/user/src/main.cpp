@@ -2,21 +2,19 @@
 #include <iostream>
 
 #include "config.h"
-#include "server/connection.hpp"
+#include "logger/logger.hpp"
 #include "server/tcp_server.hpp"
-#include "session/session_manager.hpp"
+#include "server/connection.hpp"
 #include "test.hpp"
-#include "thread/thread_pool.hpp"
-#include "utils/logger.hpp"
 
 int main() {
   std::cout << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
             << std::endl;
 
   namespace server = rsp::libs::server;
-  namespace utils = rsp::libs::utils;
   namespace user_server = rsp::user::server;
-  namespace session = rsp::user::session;
+  using logger = rsp::libs::logger::logger;
+
   try {
     std::cout << func(1, 2) << std::endl;
 
@@ -27,7 +25,6 @@ int main() {
     // TODO(@nolleh) more elegant way
     server.unsubscribe(&acceptor);
   } catch (std::exception &e) {
-    utils::logger::instance().error("exception ocurred" +
-                                    std::string(e.what()));
+    logger::instance().error("exception ocurred", e.what());
   }
 }

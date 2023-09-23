@@ -1,8 +1,8 @@
-#include "utils/logger.hpp"
+#include "logger/logger.hpp"
 
 namespace rsp {
 namespace libs {
-namespace utils {
+namespace logger {
 
 std::once_flag logger::s_flag;
 std::unique_ptr<logger> logger::s_instance;
@@ -14,6 +14,6 @@ logger& logger::instance() {
   return *logger::s_instance;
 }
 
-}  // namespace utils
+}  // namespace logger
 }  // namespace libs
 }  // namespace rsp
