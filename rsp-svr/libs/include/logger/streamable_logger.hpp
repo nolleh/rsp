@@ -1,3 +1,4 @@
+// https://www.cppstories.com/2021/stream-logger/ 
 #pragma once
 
 #include <iomanip>
