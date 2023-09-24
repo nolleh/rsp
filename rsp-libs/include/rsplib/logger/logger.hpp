@@ -45,11 +45,11 @@ class logger {
   }
 
  private:
+  explicit logger(log_level level)
+      : level_(level), o_stream_(std::cout.rdbuf()) {}
   logger(const logger &) = delete;
   logger &operator=(const logger &) = delete;
 
-  explicit logger(log_level level)
-      : level_(level), o_stream_(std::cout.rdbuf()) {}
   static std::once_flag s_flag;
   static std::unique_ptr<logger> s_instance;
   log_level level_;

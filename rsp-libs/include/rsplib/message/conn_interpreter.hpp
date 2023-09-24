@@ -6,7 +6,8 @@
 
 #include "proto/common/message_type.pb.h"
 #include "rsplib/buffer/shared_const_buffer.hpp"
-// #include "rsplib/buffer/shared_mutable_buffer.hpp"
+#include "rsplib/message/message_dispatcher.hpp"
+#include "rsplib/message/util.hpp"
 
 namespace rsp {
 namespace libs {
@@ -23,42 +24,39 @@ class conn_interpreter {
  public:
   const size_t CONTENT_LEN = 4;
   const size_t TYPE = 1;
+  conn_interpreter() : dispatcher_(message_dispatcher::instance()) {}
 
   // aggregate message until ready.
   void handle_buffer(shared_const_buffer buffer) {
     const size_t len = buffer.end() - buffer.begin();
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
-      // need more bytes.
       buffer_.insert(buffer_.end(), buffer.begin(), buffer.end());
       return;
     }
 
     buffer_.insert(buffer_.end(), buffer.begin(), buffer.end());
-    const auto length_parts =
-        retrieve_parts<std::string>(buffer_, 0, CONTENT_LEN);
+    const auto length_parts = retrieve_s(buffer_, 0, CONTENT_LEN);
     const size_t content_length = stoi(length_parts);
-
-    if (buffer_.size() < content_length + TYPE) {
-      // wait more until full message is retrievend
+    const size_t message_len = CONTENT_LEN + TYPE + content_length;
+    if (buffer_.size() < message_len) {
       return;
     }
 
-    // hello, message!
-    const auto type_parts = retrieve_parts<std::string>(
-        buffer_, CONTENT_LEN + 1, CONTENT_LEN + 1 + TYPE);
+    // full message is retrievend
+    const auto type_parts =
+        retrieve_s(buffer_, CONTENT_LEN, CONTENT_LEN + TYPE);
     const auto type = static_cast<MessageType>(stoi(type_parts));
-    // dispatch_message(type, message);
-  }
+    const auto message = retrieve_v(buffer_, CONTENT_LEN + TYPE, message_len);
 
-  template <typename Type>
-  Type retrieve_parts(std::vector<char> buf, int begin, int end) const {
-    // TODO(@nolleh) do not construct. change more efficiently.
-    return Type{buf.begin() + begin, buf.begin() + end};
+    // TODO(@nolleh) optimize
+    buffer_ = retrieve_v(buffer_, message_len, buffer_.size());
+
+    dispatcher_.dispatch(type, message);
   }
 
  private:
-  // buffer::shared_mutable_buffer buffer_;
+  message_dispatcher& dispatcher_;
   std::vector<char> buffer_;
 };
 
