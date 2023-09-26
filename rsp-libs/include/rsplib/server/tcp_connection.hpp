@@ -11,9 +11,14 @@
 
 namespace rsp {
 namespace libs {
+
+namespace link {
+class link;
+}
 namespace server {
 
 using boost::asio::ip::tcp;
+
 namespace ph = std::placeholders;
 class tcp_connection;
 
@@ -51,6 +56,16 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // REMARK(@nolleh) looks like template speiclaization is hard to deduce &
     // type. to avoid unneccessary copy, invoke impl function
     send_impl(bytes);
+  }
+
+  void attach_link(const link::link* link) {
+    std::lock_guard<std::mutex> lock(m_);
+    link_ = link;
+  }
+
+  void detach_link() {
+    std::lock_guard<std::mutex> lock(m_);
+    link_ = nullptr;
   }
 
  private:
@@ -106,6 +121,9 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   tcp::socket socket_;
+
+  std::mutex m_;
+  const link::link* link_;
 };
 
 template <>
@@ -113,7 +131,7 @@ void tcp_connection::send(const char* msg);
 template <>
 void tcp_connection::send(std::basic_string<char> msg);
 
-template<>
+template <>
 void tcp_connection::send(std::vector<char> msg);
 
 }  // namespace server
