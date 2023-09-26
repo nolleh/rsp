@@ -3,6 +3,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <functional>
 
 #include "rsplib/job/job.hpp"
 #include "rsplib/link/link.hpp"
@@ -16,38 +17,39 @@ using link_ptr = rsp::libs::link::link_ptr;
 using job_ptr = rsp::libs::job::job_ptr;
 /**
  * has role running logic serialization.
- * need thread safety logic.
  * */
 class job_scheduler {
  public:
-  explicit job_scheduler(link_ptr link) : link_(link) {}
+  // explicit job_scheduler(link_ptr link) : link_(link) {}
   // this is run in worker thread !
   void run() {
     if (!q_.empty()) {
       return;
     }
 
-    std::lock_guard<std::mutex> lock(m_);
-    // the handler (has message, and context)
-    auto job = q_.front();
-    job->run(link_);
+    std::function<void()> job = nullptr;
+    {
+      std::lock_guard<std::mutex> lock(m_);
+      // the handler (has message, and context)
+      job = q_.front();
+    }
+    job();
     run();
   }
 
-  void push(job* j) {
+  void push(job* j, link_ptr l) {
     std::lock_guard<std::mutex> lock(m_);
-    q_.push(job_ptr(j));
+    q_.push(std::bind(&job::run, job_ptr(j), l));
   }
 
-  void push_and_run(job* j) {
-    push(j);
+  void push_and_run(job* j, link_ptr l) {
+    push(j, l);
     run();
   }
 
  private:
-  std::queue<job_ptr> q_;
+  std::queue<std::function<void()>> q_;
   std::mutex m_;
-  link_ptr link_;
 };
 
 }  // namespace job

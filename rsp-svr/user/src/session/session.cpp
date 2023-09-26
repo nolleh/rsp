@@ -12,7 +12,7 @@ void session::on_recv(ReqLogin&& req_login) {
   std::cout << "session received req_login" << std::endl;
 
   rsp::user::job::job_login job{req_login};
-  scheduler_.push_and_run(&job);
+  scheduler_.push_and_run(&job, shared_from_this());
 }
 
 }  // namespace session
