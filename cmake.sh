@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 
-DEBUG=true
+DEBUG=false
 
 ## TODO(@nolleh) opts
 if [ "$1" == "-D" ]; then
-  DEBUG=True
+  DEBUG=true
 fi
 
 echo "debug?:" + $DEBUG
