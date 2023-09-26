@@ -22,14 +22,9 @@ class message_dispatcher {
    * CONTENT_LEN (4 Bytes) | TYPE (1 Bytes) | [0..LEN]
    * */
  public:
-  const size_t CONTENT_LEN = 4;
-  const size_t TYPE = 1;
-  static message_dispatcher& instance() {
-    std::call_once(message_dispatcher::s_flag, []() {
-      message_dispatcher::s_instance.reset(new message_dispatcher);
-    });
-    return *message_dispatcher::s_instance;
-  }
+  const size_t CONTENT_LEN = 8;
+  const size_t TYPE = 4;
+  static message_dispatcher& instance();
 
   /**
    * make sure register handler that running worker threads
@@ -46,12 +41,13 @@ class message_dispatcher {
     // TODO(@nolleh) worker thread::strand!
     //
 
+    std::cout << "dispatch..." << std::endl;
     auto iter = handlers_.find(type);
     if (handlers_.end() == iter) return;
 
-    handler handler;
-    std::tie(std::ignore, handler) = *iter;
-    handler(make_shared<std::vector<char>>(buffer));
+    handler handler = iter->second;
+    std::cout << "handler..." << &handler << std::endl;
+    handler(std::make_shared<std::vector<char>>(buffer));
   }
 
  private:

@@ -1,17 +1,23 @@
 #pragma once
+#include <bitset>
 #include <map>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/util.hpp"
 #include "rsplib/server/server_event.hpp"
 #include "session/session.hpp"
 
 namespace rsp {
 namespace user {
 namespace session {
+
+namespace message = rsp::libs::message;
 
 class session_manager {
   using logger = rsp::libs::logger::logger;
@@ -27,19 +33,19 @@ class session_manager {
   void add_session(const session& session) { add_session(session.conn_ptr()); }
 
   void add_session(const server::connection_ptr& conn) {
+    sessions_[conn].reset(new session(conn));
     ResLogin login;
     login.set_uid("nolleh");
     login.set_success(true);
-    // s.send_message(login);
-    sessions_[conn].reset(new session(conn));
-    // sessions_[conn]->send_message(MessageType::RES_LOGIN);
-    sessions_[conn]->send_message("1");
 
-    logger::instance().debug("mesasge size: " +
-                             std::to_string(login.ByteSizeLong()));
-    sessions_[conn]->send_message(login);
-    // sessions_[conn]->send_message("hello, anonymous, let me know who you
-    // are"); sessions_[conn]->send_message("test");
+    auto content_len = login.ByteSizeLong();
+    std::cout << content_len << "," << sizeof(content_len) << std::endl;
+    std::vector<char> message;
+    message::mset(&message, content_len);
+    message::mset(&message, static_cast<int>(MessageType::RES_LOGIN));
+    const auto str = login.SerializeAsString();
+    message.insert(message.end(), str.begin(), str.end());
+    sessions_[conn]->send_message(message);
   }
 
   void remove_session(const session& session) {

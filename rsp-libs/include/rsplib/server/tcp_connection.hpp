@@ -113,6 +113,9 @@ void tcp_connection::send(const char* msg);
 template <>
 void tcp_connection::send(std::basic_string<char> msg);
 
+template<>
+void tcp_connection::send(std::vector<char> msg);
+
 }  // namespace server
 }  // namespace libs
 }  // namespace rsp

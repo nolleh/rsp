@@ -1,3 +1,4 @@
+#pragma once
 #include <boost/asio.hpp>
 #include <memory>
 #include <string>
@@ -22,7 +23,11 @@ class shared_mutable_buffer {
   typedef boost::asio::mutable_buffer value_type;
   typedef const boost::asio::const_buffer* const_iterator;
   const boost::asio::mutable_buffer* begin() const { return &buffer_; }
-  const boost::asio::mutable_buffer* end() const { return &buffer_ + 1; }
+  const boost::asio::mutable_buffer* end() const {
+    return &buffer_ + data_->size();
+  }
+  std::vector<char>::iterator data_begin() const { return data_->begin(); }
+  std::vector<char>::iterator data_end() const { return data_->end(); }
 
  private:
   std::shared_ptr<std::vector<char>> data_;

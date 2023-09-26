@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "state/state.hpp"
+#include "rsplib/buffer/shared_mutable_buffer.hpp"
 
 // #include <boost/array.hpp>
 int main(int argc, char* argv[]) {
@@ -26,11 +27,12 @@ int main(int argc, char* argv[]) {
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
 
-    auto state = std::make_unique<rsp_cli::state::base_state>();
+    auto state = std::make_unique<rsp_cli::state::base_state>(&socket);
     for (;;) {
       std::array<char, 128> buf;
       boost::system::error_code error;
-
+      // std::vector<char> buf(22);
+      // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
       auto next = state->handle_buffer(buf, len);
       if (error == boost::asio::error::eof) {

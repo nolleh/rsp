@@ -1,11 +1,17 @@
 #pragma once
 #include <array>
+#include <boost/asio.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
+#include "rsplib/buffer/shared_mutable_buffer.hpp"
+#include "rsplib/logger/logger.hpp"
+#include "rsplib/message/conn_interpreter.hpp"
+#include "rsplib/message/message_dispatcher.hpp"
 
 namespace rsp {
 namespace cli {
@@ -19,15 +25,68 @@ enum class State {
 
 const size_t MESSAGE_TYPE_LEN = 1;
 
+using socket = boost::asio::ip::tcp::socket;
+using conn_interpreter = libs::message::conn_interpreter;
+using message_dispatcher = libs::message::message_dispatcher;
+using shared_const_buffer = libs::buffer::shared_const_buffer;
+using shared_mutable_buffer = libs::buffer::shared_mutable_buffer;
+using logger = libs::logger::logger;
+
 // TODO(@nolleh) refactor
 class base_state {
  public:
   State state = State::INIT;
+  explicit base_state(socket* socket)
+      : socket_(socket),
+        dispatcher_(message_dispatcher::instance()),
+        logger_(logger::instance()) {
+    // send_login();
+    dispatcher_.register_handler(
+        MessageType::RES_LOGIN,
+        std::bind(&base_state::handle_reslogin, this, std::placeholders::_1));
+  }
 
-  base_state* handle_buffer(std::array<char, 128> buf, size_t num) {
+  void send_login() {
+    ReqLogin login;
+    login.set_uid("nolleh");
+    auto payload = login.SerializeAsString();
+    const auto content_len = std::to_string(login.ByteSizeLong());
+    std::vector<char> message{content_len.begin(), content_len.end()};
+    message.emplace_back(MessageType::REQ_LOGIN);
+    message.insert(message.end(), payload.begin(), payload.end());
+    socket_->send(boost::asio::buffer(message));
+  }
+
+  base_state* handle_buffer(shared_mutable_buffer buf, size_t len) {
+    std::cout << "handle_buffer" << len << "," << buf.end() - buf.begin() << ","
+              << buf.data_end() - buf.data_begin() << std::endl;
+    // interpreter_.handle_buffer(buf);
+    return this;
+  }
+
+  base_state* handle_buffer(std::array<char, 128> buf, size_t len) {
+    interpreter_.handle_buffer(buf, len);
+    return this;
+  }
+
+  void handle_reslogin(std::shared_ptr<std::vector<char>> buffer) {
+    ResLogin login;
+    std::string str{buffer->begin(), buffer->end()};
+    if (!login.ParseFromString(str)) {
+      logger_.error("failed to parse reslogin");
+    }
+
+    if (!login.success()) {
+      std::cerr << "failed to login (" << login.uid()
+                << "), bytes: " << login.ByteSizeLong() << std::endl;
+    }
+    std::cout << "success to login:" << login.uid() << std::endl;
+  }
+
+  base_state* handle_buffer_old(std::array<char, 128> buf, size_t num) {
     if (reading_payload_) {
       auto remain = std::vector<char>(buf.begin(), buf.begin() + num);
-      return handle_payload(reading_payload_, remain, num);
+      return handle_payload_old(reading_payload_, remain, num);
     }
 
     // retreiving type
@@ -45,12 +104,13 @@ class base_state {
     if (num - remain_for_type > 0) {
       auto remain =
           std::vector<char>(buf.begin() + remain_for_type, buf.begin() + num);
-      return handle_payload(msgType, remain, num - remain_for_type);
+      return handle_payload_old(msgType, remain, num - remain_for_type);
     }
     return this;
   }
 
-  base_state* handle_payload(MessageType type, std::vector<char> buf, int num) {
+  base_state* handle_payload_old(MessageType type, std::vector<char> buf,
+                                 int num) {
     std::cout << "handle_payload" << num << std::endl;
     // proto buf calculate the size of message internally.
     // looks like not optimized way...
@@ -84,8 +144,12 @@ class base_state {
   }
 
  private:
+  socket* socket_;
   std::vector<char> buf_;
   MessageType reading_payload_;
+  conn_interpreter interpreter_;
+  message_dispatcher& dispatcher_;
+  logger& logger_;
 };
 
 // template <>

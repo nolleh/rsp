@@ -26,5 +26,6 @@ target_include_directories(Client PRIVATE
 )
 
 target_link_libraries(Client PRIVATE
+  ${PROJECT_BINARY_DIR}/../rsp-libs/libLibs.a
   protobuf
 )
