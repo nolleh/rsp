@@ -31,8 +31,8 @@ class session : public link {
  public:
   explicit session(server::connection_ptr conn)
       : link(conn),
-        scheduler_(shared_from_this()),
-        // job_scheduler_(std::dynamic_pointer_cast<link_ptr>(shared_from_this()),
+        // scheduler_(shared_from_this()),
+        // scheduler_(std::dynamic_pointer_cast<link_ptr>(shared_from_this())),
         state_(UserState::LOGOUTED) {
     session* me = this;
   }

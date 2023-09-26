@@ -34,8 +34,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void start(size_t len) {
     // TODO(@nolleh) std::wrap?
-    // send("welcome, client");
-
     buffer::shared_mutable_buffer buffer{std::vector<char>(len)};
     logger::instance().debug("start async read", len);
     socket_.async_read_some(
@@ -52,7 +50,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     if (!success) {
       logger::instance().error("failed to serialize message");
     }
-    // send(bytes);
     // REMARK(@nolleh) looks like template speiclaization is hard to deduce &
     // type. to avoid unneccessary copy, invoke impl function
     send_impl(bytes);
@@ -114,7 +111,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       return;
     }
 
-    // std::string s(buffer.begin(), buffer.end());
     logger::instance().trace("conn: read...message size(", bytes, ") message:");
     // start(std::stoi(s));
     start(1);
@@ -126,11 +122,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   const link::link* link_;
 };
 
+// TODO(@nolleh) refactor
 template <>
 void tcp_connection::send(const char* msg);
 template <>
 void tcp_connection::send(std::basic_string<char> msg);
-
 template <>
 void tcp_connection::send(std::vector<char> msg);
 
