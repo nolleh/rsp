@@ -35,18 +35,6 @@ class session_manager {
 
   void add_session(const server::connection_ptr& conn) {
     sessions_[conn].reset(new session(conn));
-    ResLogin login;
-    login.set_uid("nolleh");
-    login.set_success(true);
-
-    auto content_len = login.ByteSizeLong();
-    std::cout << content_len << "," << sizeof(content_len) << std::endl;
-    message::raw_buffer message;
-    message::mset(&message, content_len);
-    message::mset(&message, static_cast<int>(MessageType::RES_LOGIN));
-    const auto str = login.SerializeAsString();
-    message.insert(message.end(), str.begin(), str.end());
-    sessions_[conn]->send_message(message);
   }
 
   void remove_session(const session& session) {

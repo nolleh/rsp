@@ -1,8 +1,45 @@
+#pragma once
+
+#include <memory>
+#include "rsplib/server/tcp_connection.hpp"
+
+namespace rsp {
+namespace libs {
+namespace link {
+
+using connection_ptr = rsp::libs::server::connection_ptr;
+class link;
+using link_ptr = std::shared_ptr<link>;
+
 // eventhandler
-class link {
+class link : public std::enable_shared_from_this<link> {
  public:
-  virtual void on_closed() = 0;
-  virtual void on_recv() = 0;
+  explicit link(connection_ptr conn) : connection_(conn) {
+    const link* self = this;
+    conn->attach_link(self);
+  }
+  ~link() { connection_->stop(); }
+  virtual void on_connected() = 0;
+  virtual void on_closed() {
+    connection_->detach_link();
+  }
+
+  const server::connection_ptr& conn_ptr() const { return connection_; }
+
   template <typename Message>
-  void send(Message& msg) {}
+  void on_recv(Message&& msg) {}
+
+  template <typename Message>
+  void send(const Message& msg) {
+    connection_->send(msg);
+  }
+
+  void stop() { connection_->stop(); }
+
+ private:
+  // TODO(@nolleh) change to conn
+  const connection_ptr connection_;
 };
+}  // namespace link
+}  // namespace libs
+}  // namespace rsp
