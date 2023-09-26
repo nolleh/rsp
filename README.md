@@ -12,7 +12,7 @@ and also if you like this, press star. :)
 ## dependencies
 
 - tested on
-    - cxx - 17
+    - cxx-20
     - boost-1_83_0
     - cmake-3.25.1
     - gcc-12.3.0

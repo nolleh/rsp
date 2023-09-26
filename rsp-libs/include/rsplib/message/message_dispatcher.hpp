@@ -7,12 +7,11 @@
 
 #include "proto/common/message_type.pb.h"
 #include "rsplib/buffer/shared_const_buffer.hpp"
+#include "rsplib/message/types.hpp"
 
 namespace rsp {
 namespace libs {
 namespace message {
-
-using handler = std::function<void(std::shared_ptr<std::vector<char>>)>;
 
 // using ProtoMessage = ::PROTOBUF_NAMESPACE_ID::Message;
 /** this class used for regitering message handlers
@@ -34,7 +33,7 @@ class message_dispatcher {
     handlers_[type] = f;
   }
 
-  void dispatch(MessageType type, const std::vector<char>& buffer) const {
+  void dispatch(MessageType type, const raw_buffer& buffer) const {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler
 
@@ -47,7 +46,7 @@ class message_dispatcher {
 
     handler handler = iter->second;
     std::cout << "handler..." << &handler << std::endl;
-    handler(std::make_shared<std::vector<char>>(buffer));
+    handler(std::make_shared<raw_buffer>(buffer));
   }
 
  private:

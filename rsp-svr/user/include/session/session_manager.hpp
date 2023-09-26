@@ -9,7 +9,8 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/logger/logger.hpp"
-#include "rsplib/message/util.hpp"
+#include "rsplib/message/types.hpp"
+#include "rsplib/message/helper.hpp"
 #include "rsplib/server/server_event.hpp"
 #include "session/session.hpp"
 
@@ -40,7 +41,7 @@ class session_manager {
 
     auto content_len = login.ByteSizeLong();
     std::cout << content_len << "," << sizeof(content_len) << std::endl;
-    std::vector<char> message;
+    message::raw_buffer message;
     message::mset(&message, content_len);
     message::mset(&message, static_cast<int>(MessageType::RES_LOGIN));
     const auto str = login.SerializeAsString();

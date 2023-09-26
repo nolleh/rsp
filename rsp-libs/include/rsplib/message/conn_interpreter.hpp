@@ -1,15 +1,16 @@
 
 #pragma once
 #include <algorithm>
+#include <iterator>
 #include <string>
 #include <vector>
-#include <iterator>
 
 #include "proto/common/message_type.pb.h"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/helper.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
-#include "rsplib/message/util.hpp"
+#include "rsplib/message/types.hpp"
 
 namespace rsp {
 namespace libs {
@@ -56,7 +57,7 @@ class conn_interpreter {
 
     const auto type = static_cast<MessageType>(type_parts);
 
-    std::vector<char> payload;
+    raw_buffer payload;
     std::copy(buffer_.begin() + CONTENT_LEN + TYPE, buffer_.end(),
               back_inserter(payload));
 
@@ -67,7 +68,7 @@ class conn_interpreter {
 
  private:
   message_dispatcher& dispatcher_;
-  std::vector<char> buffer_;
+  raw_buffer buffer_;
 };
 
 }  // namespace message
