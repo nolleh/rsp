@@ -9,6 +9,7 @@
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
+#include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/types.hpp"
 
 namespace rsp {
@@ -28,11 +29,14 @@ using link = link::link;
 
 class tcp_connection;
 using connection_ptr = std::shared_ptr<tcp_connection>;
+using dispatcher = message::message_dispatcher_interface;
 
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
-  static connection_ptr create(boost::asio::io_context* io_context) {
-    return std::shared_ptr<tcp_connection>(new tcp_connection(io_context));
+  static connection_ptr create(boost::asio::io_context* io_context,
+                               dispatcher* dispatcher) {
+    return std::shared_ptr<tcp_connection>(
+        new tcp_connection(io_context, dispatcher));
   }
 
   tcp::socket& socket() { return socket_; }
@@ -72,8 +76,9 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
  private:
   // TODO(@nolleh) consider options for linger / nagle
-  explicit tcp_connection(boost::asio::io_context* io_context)
-      : socket_(*io_context) {}
+  explicit tcp_connection(boost::asio::io_context* io_context,
+                          dispatcher* dispatcher)
+      : socket_(*io_context), interpreter_(dispatcher) {}
 
   void send_impl(const std::string& msg) {
     // TODO(@nolleh) warp?
@@ -98,7 +103,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void handle_read(buffer::shared_mutable_buffer buffer,
                    const boost::system::error_code& error, size_t bytes) {
-
     if (boost::asio::error::eof == error) {
       logger::instance().debug("conn: closed");
       stop();

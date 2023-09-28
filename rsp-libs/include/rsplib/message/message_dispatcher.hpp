@@ -30,9 +30,12 @@ class message_dispatcher: public message_dispatcher_interface {
   const size_t TYPE = 4;
   static message_dispatcher& instance();
 
-  template <typename handler>
   void register_handler(MessageType type, handler f) {
     handlers_[type] = f;
+  }
+
+  void register_handler2(MessageType type, handler2 f) {
+    handlers2_[type] = f;
   }
 
   void dispatch(MessageType type, const raw_buffer& buffer) const {
