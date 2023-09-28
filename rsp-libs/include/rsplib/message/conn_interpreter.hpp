@@ -10,14 +10,21 @@
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/helper.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
+#include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/types.hpp"
 
 namespace rsp {
 namespace libs {
+
+namespace link {
+class link;
+}
+
 namespace message {
 
 using shared_mutable_buffer = buffer::shared_mutable_buffer;
 using logger = rsp::libs::logger::logger;
+using link = rsp::libs::link::link;
 /** this class instantiated(owned) per connection for buffering
  * no concern about stratgy (patt) for serializer, for now
  * */
@@ -28,7 +35,10 @@ class conn_interpreter {
  public:
   const size_t CONTENT_LEN = 8;
   const size_t TYPE = 4;
-  conn_interpreter() : dispatcher_(message_dispatcher::instance()) {}
+  conn_interpreter() : dispatcher_(&message_dispatcher::instance()) {}
+  conn_interpreter(message_dispatcher_interface* dispatcher,
+                   link* link = nullptr)
+      : dispatcher_(dispatcher) {}
 
   // aggregate message until ready.
   // void handle_buffer(shared_mutable_buffer buffer) {
@@ -63,11 +73,15 @@ class conn_interpreter {
 
     // TODO(@nolleh) optimize
     buffer_ = retrieve_v(buffer_, message_len, buffer_.size());
-    dispatcher_.dispatch(type, payload);
+    if (!link_)
+      dispatcher_->dispatch(type, payload);
+    else
+      dispatcher_->dispatch(type, payload, link_);
   }
 
  private:
-  message_dispatcher& dispatcher_;
+  link* link_;
+  message_dispatcher_interface* dispatcher_;
   raw_buffer buffer_;
 };
 

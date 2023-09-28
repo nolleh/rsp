@@ -1,20 +1,20 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <functional>
 
 #include "rsplib/job/job.hpp"
 #include "rsplib/link/link.hpp"
+#include "rsplib/link/types.hpp"
 #include "rsplib/message/types.hpp"
 namespace rsp {
 namespace libs {
 namespace job {
 
-using link = rsp::libs::link::link;
-using link_ptr = rsp::libs::link::link_ptr;
-using job_ptr = rsp::libs::job::job_ptr;
+using link_ptr = link::link_ptr;
+
 /**
  * has role running logic serialization.
  * */
