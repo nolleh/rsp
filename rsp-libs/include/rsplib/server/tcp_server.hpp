@@ -6,6 +6,7 @@
 #include <set>
 
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/server/server_event.hpp"
 #include "rsplib/server/tcp_connection.hpp"
 #include "rsplib/thread/thread_pool.hpp"
@@ -16,11 +17,12 @@ namespace server {
 
 class tcp_server {
   using tcp = boost::asio::ip::tcp;
+  using dispatcher = message::message_dispatcher_interface;
   // using logger = logger::logger;
 
  public:
   static const int LEN_BYTE = 1;
-  tcp_server()
+  explicit tcp_server(dispatcher* dispatcher)
       : acceptor_threads_(2),
         io_threads_(10),
         acceptor_(*acceptor_threads_.io_context(),
@@ -52,7 +54,7 @@ class tcp_server {
 
   void start_accept() {
     std::shared_ptr<tcp_connection> new_connection =
-        tcp_connection::create(io_threads_.io_context());
+        tcp_connection::create(io_threads_.io_context(), dispatcher_);
 
     logger::instance().info("start accepting");
     acceptor_.async_accept(new_connection->socket(),
@@ -74,6 +76,7 @@ class tcp_server {
   thread::thread_pool acceptor_threads_;
   thread::thread_pool io_threads_;
   tcp::acceptor acceptor_;
+  dispatcher* dispatcher_;
   std::set<server_event*> event_subscribers_;
 };
 }  // namespace server

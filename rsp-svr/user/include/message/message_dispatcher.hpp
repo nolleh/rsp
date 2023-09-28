@@ -7,26 +7,28 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
+#include "rsplib/message/types.hpp"
 #include "rsplib/message/imemstream.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 
 namespace rsp {
 namespace user {
-namespace mesasge {
+namespace message {
 
 namespace ph = std::placeholders;
 using dispatcher_interface = libs::message::message_dispatcher_interface;
 using lib_dispatcher = libs::message::message_dispatcher;
 using buffer_ptr = libs::message::buffer_ptr;
 using job_scheduler = libs::job::job_scheduler;
-using link = libs::link::link;
+using link = rsp::libs::link::link;
+using handler2 = rsp::libs::message::handler2;
 
 class message_dispatcher : public dispatcher_interface {
  public:
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
     // TODO(@nolleh) looks like it is better change this logic to macro
-    dispatcher_.register_handler(
+    dispatcher_.register_handler2(
         MessageType::REQ_LOGIN,
         std::bind(&message_dispatcher::handle_buffer_req_login, this, ph::_1,
                   ph::_2));
@@ -51,6 +53,6 @@ class message_dispatcher : public dispatcher_interface {
   lib_dispatcher& dispatcher_;
   job_scheduler* scheduler_;
 };
-}  // namespace mesasge
+}  // namespace message
 }  // namespace user
 }  // namespace rsp
