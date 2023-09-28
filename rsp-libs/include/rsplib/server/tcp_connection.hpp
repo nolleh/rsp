@@ -8,6 +8,8 @@
 #include "rsplib/buffer/shared_const_buffer.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/conn_interpreter.hpp"
+#include "rsplib/message/types.hpp"
 
 namespace rsp {
 namespace libs {
@@ -20,10 +22,13 @@ namespace server {
 using boost::asio::ip::tcp;
 
 namespace ph = std::placeholders;
-class tcp_connection;
-
-using connection_ptr = std::shared_ptr<tcp_connection>;
+using conn_interpreter = message::conn_interpreter;
 using logger = logger::logger;
+using link = link::link;
+
+class tcp_connection;
+using connection_ptr = std::shared_ptr<tcp_connection>;
+
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
   static connection_ptr create(boost::asio::io_context* io_context) {
@@ -55,7 +60,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     send_impl(bytes);
   }
 
-  void attach_link(const link::link* link) {
+  void attach_link(const link* link) {
     std::lock_guard<std::mutex> lock(m_);
     link_ = link;
   }
@@ -93,6 +98,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void handle_read(buffer::shared_mutable_buffer buffer,
                    const boost::system::error_code& error, size_t bytes) {
+
     if (boost::asio::error::eof == error) {
       logger::instance().debug("conn: closed");
       stop();
@@ -100,7 +106,9 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     }
 
     if (boost::asio::error::operation_aborted == error) {
-      logger::instance().debug("conn: canceld operation (aborted conn)");
+      logger::instance().debug(
+          "conn: canceld operation (aborted conn) socket is opend?:" +
+          socket_.is_open());
       return;
     }
 
@@ -117,9 +125,9 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   tcp::socket socket_;
-
+  conn_interpreter interpreter_;
   std::mutex m_;
-  const link::link* link_;
+  const link* link_;
 };
 
 // TODO(@nolleh) refactor

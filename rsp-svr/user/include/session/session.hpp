@@ -18,8 +18,6 @@ using job_scheduler = libs::job::job_scheduler;
 class session;
 using session_ptr = std::shared_ptr<session>;
 
-using link_ptr = std::shared_ptr<link>;
-
 enum class UserState {
   LOGOUTED,
   LOGGED_IN,
@@ -34,7 +32,8 @@ class session : public link {
         // scheduler_(shared_from_this()),
         // scheduler_(std::dynamic_pointer_cast<link_ptr>(shared_from_this())),
         state_(UserState::LOGOUTED) {
-    session* me = this;
+    session* self = this;
+    conn->attach_link(self);
   }
 
   ~session() {
@@ -52,7 +51,7 @@ class session : public link {
 
   template <typename Message>
   void on_recv(Message&& msg) {
-    std::cerr << "session - on_recv, unkown message" << std::endl;
+    std::cerr << "session - on_recv, unknown message" << std::endl;
     // throw std::exception();
   }
 

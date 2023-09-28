@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+
 #include "rsplib/server/tcp_connection.hpp"
 
 namespace rsp {
@@ -8,21 +9,15 @@ namespace libs {
 namespace link {
 
 using connection_ptr = rsp::libs::server::connection_ptr;
-class link;
-using link_ptr = std::shared_ptr<link>;
 
 // eventhandler
 class link : public std::enable_shared_from_this<link> {
  public:
-  explicit link(connection_ptr conn) : connection_(conn) {
-    const link* self = this;
-    conn->attach_link(self);
-  }
+  explicit link(connection_ptr conn) : connection_(conn) {}
   ~link() { connection_->stop(); }
+
   virtual void on_connected() = 0;
-  virtual void on_closed() {
-    connection_->detach_link();
-  }
+  virtual void on_closed() { connection_->detach_link(); }
 
   const server::connection_ptr& conn_ptr() const { return connection_; }
 

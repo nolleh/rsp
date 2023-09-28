@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 DEBUG=false
 
@@ -7,9 +7,9 @@ if [ "$1" == "-D" ]; then
   DEBUG=true
 fi
 
-echo "debug?:" + $DEBUG
+echo "debug?:" $DEBUG
 OPTION=""
-if [ $DEBUG == true ]; then
+if [ $DEBUG == "true" ]; then
 	# $OPTION='-E env CXXFLAGS="-Wall"'
   OPTION="-DCMAKE_BUILD_TYPE=Debug"
 else

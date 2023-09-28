@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "rsplib/link/link.hpp"
+#include "rsplib/link/types.hpp"
 
 namespace rsp {
 namespace libs {
