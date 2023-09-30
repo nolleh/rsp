@@ -33,6 +33,7 @@ using dispatcher = message::message_dispatcher_interface;
 
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
+  static const int LEN_BYTE = 128;
   static connection_ptr create(boost::asio::io_context* io_context,
                                dispatcher* dispatcher) {
     return std::shared_ptr<tcp_connection>(
@@ -117,15 +118,16 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     }
 
     if (error) {
-      logger::instance().error("failed to async_read: ",
-                               error.message().c_str());
+      logger::instance().error("failed to async_read: " +
+                               error.message());
       // start(1);
       return;
     }
 
     logger::instance().trace("conn: read...message size(", bytes, ") message:");
     // start(std::stoi(s));
-    start(1);
+    interpreter_.handle_buffer(buffer);
+    start(LEN_BYTE);
   }
 
   tcp::socket socket_;
