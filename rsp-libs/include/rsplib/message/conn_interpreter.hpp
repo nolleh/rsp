@@ -41,7 +41,43 @@ class conn_interpreter {
       : dispatcher_(dispatcher) {}
 
   // aggregate message until ready.
-  // void handle_buffer(shared_mutable_buffer buffer) {
+  void handle_buffer(shared_mutable_buffer buffer) {
+    const size_t len = buffer.end() - buffer.begin();
+    logger::instance().trace("handle_buffer, read size:" + std::to_string(len));
+
+    if (len + buffer_.size() < CONTENT_LEN + TYPE) {
+      buffer_.insert(buffer_.end(), buffer.data_begin(), buffer.data_end());
+      return;
+    }
+
+    buffer_.insert(buffer_.end(), buffer.data_begin(),
+                   buffer.data_begin() + len);
+    size_t content_length;
+    mget(buffer_, &content_length, 0);
+    const size_t message_len = CONTENT_LEN + TYPE + content_length;
+
+    if (buffer_.size() < message_len) {
+      return;
+    }
+
+    // full message is retrievend
+    int type_parts;
+    mget(buffer_, &type_parts, CONTENT_LEN);
+
+    const auto type = static_cast<MessageType>(type_parts);
+
+    raw_buffer payload;
+    std::copy(buffer_.begin() + CONTENT_LEN + TYPE, buffer_.end(),
+              back_inserter(payload));
+
+    // TODO(@nolleh) optimize
+    buffer_ = retrieve_v(buffer_, message_len, buffer_.size());
+    if (!link_)
+      dispatcher_->dispatch(type, payload);
+    else
+      dispatcher_->dispatch(type, payload, link_);
+  }
+
   void handle_buffer(std::array<char, 128> buffer, int len) {
     // const size_t len = buffer.end() - buffer.begin();
 
