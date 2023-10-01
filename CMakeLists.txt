@@ -11,6 +11,7 @@ set(Proto_DIR ${CMAKE_SOURCE_DIR}/gen_proto)
 
 file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/gen_proto/*.cc)
 
+add_subdirectory(gen_proto)
 add_subdirectory(rsp-libs)
 add_subdirectory(rsp-svr)
 add_subdirectory(rsp-cli)

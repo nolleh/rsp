@@ -10,13 +10,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if (NOT DEFINED PROTO) 
-  file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/proto/*.cc)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
 add_executable(Client
   ${SRC}
-  ${PROTO}
 )
 
 target_include_directories(Client PRIVATE
@@ -27,5 +25,6 @@ target_include_directories(Client PRIVATE
 
 target_link_libraries(Client PRIVATE
   ${PROJECT_BINARY_DIR}/../rsp-libs/libLibs.a
+  ${PROJECT_BINARY_DIR}/../gen_proto/libProto.a
   protobuf
 )

@@ -19,7 +19,6 @@ configure_file(
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if (NOT DEFINED PROTO) 
-  file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/../gen_proto/proto/*.cc)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
@@ -29,7 +28,6 @@ endif()
 
 add_executable(User
   ${SRC}
-  ${PROTO}
 )
 
 target_include_directories(User PRIVATE
@@ -46,5 +44,6 @@ target_link_directories(User PRIVATE
 
 target_link_libraries(User
   ${PROJECT_BINARY_DIR}/../../rsp-libs/libLibs.a
+  ${PROJECT_BINARY_DIR}/../../gen_proto/libProto.a
   protobuf
 )
