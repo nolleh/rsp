@@ -16,7 +16,7 @@ class shared_mutable_buffer {
       : data_(new std::vector<char>(data.begin(), data.end())),
         buffer_(boost::asio::buffer(*data_)) {}
   explicit shared_mutable_buffer(std::vector<char> data)
-      : data_(new std::vector<char>(data)),
+      : data_(new std::vector<char>(data.begin(), data.end())),
         buffer_(boost::asio::buffer(*data_)) {}
 
   // Implement the ConstBufferSequence requirements.
@@ -24,10 +24,11 @@ class shared_mutable_buffer {
   typedef const boost::asio::const_buffer* const_iterator;
   const boost::asio::mutable_buffer* begin() const { return &buffer_; }
   const boost::asio::mutable_buffer* end() const {
-    return &buffer_ + data_->size();
+    return &buffer_ + 1;
   }
   std::vector<char>::iterator data_begin() const { return data_->begin(); }
   std::vector<char>::iterator data_end() const { return data_->end(); }
+  size_t size() { return data_->size(); }
 
  private:
   std::shared_ptr<std::vector<char>> data_;

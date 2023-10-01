@@ -1,6 +1,7 @@
 
 #pragma once
 #include <algorithm>
+#include <bitset>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -38,12 +39,13 @@ class conn_interpreter {
   conn_interpreter() : dispatcher_(&message_dispatcher::instance()) {}
   conn_interpreter(message_dispatcher_interface* dispatcher,
                    link* link = nullptr)
-      : dispatcher_(dispatcher) {}
+      : dispatcher_(dispatcher) {
+  }
 
   // aggregate message until ready.
-  void handle_buffer(shared_mutable_buffer buffer) {
-    const size_t len = buffer.end() - buffer.begin();
-    logger::instance().trace("handle_buffer, read size:" + std::to_string(len));
+  void handle_buffer(shared_mutable_buffer buffer, size_t len) {
+    logger::instance().trace("handle_buffer, read size:" + std::to_string(len) +
+                             ", buf size:" + std::to_string(buffer.size()));
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
       buffer_.insert(buffer_.end(), buffer.data_begin(), buffer.data_end());
@@ -78,9 +80,7 @@ class conn_interpreter {
       dispatcher_->dispatch(type, payload, link_);
   }
 
-  void handle_buffer(std::array<char, 128> buffer, int len) {
-    // const size_t len = buffer.end() - buffer.begin();
-
+  void handle_buffer(const std::array<char, 128>& buffer, int len) {
     logger::instance().trace("handle_buffer, read size:" + std::to_string(len));
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
@@ -92,7 +92,6 @@ class conn_interpreter {
     size_t content_length;
     mget(buffer_, &content_length, 0);
     const size_t message_len = CONTENT_LEN + TYPE + content_length;
-
     if (buffer_.size() < message_len) {
       return;
     }
@@ -109,14 +108,22 @@ class conn_interpreter {
 
     // TODO(@nolleh) optimize
     buffer_ = retrieve_v(buffer_, message_len, buffer_.size());
-    if (!link_)
+    if (!link_) {
       dispatcher_->dispatch(type, payload);
-    else
+    } else {
       dispatcher_->dispatch(type, payload, link_);
+    }
+  }
+
+  void attach_link(link* link) {
+    // ts is garenteed from user.
+    // this is temp code.
+    link_ = link;
   }
 
  private:
-  link* link_;
+  link* link_ = nullptr;
+  // TODO(@nolleh) remove this?
   message_dispatcher_interface* dispatcher_;
   raw_buffer buffer_;
 };

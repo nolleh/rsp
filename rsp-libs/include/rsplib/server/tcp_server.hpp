@@ -21,12 +21,14 @@ class tcp_server {
   // using logger = logger::logger;
 
  public:
-  static const int LEN_BYTE = 1;
+  static const int LEN_BYTE = 128;
   explicit tcp_server(dispatcher* dispatcher)
       : acceptor_threads_(2),
         io_threads_(10),
         acceptor_(*acceptor_threads_.io_context(),
-                  tcp::endpoint(tcp::v4(), 8080)) {}
+                  tcp::endpoint(tcp::v4(), 8080)),
+        dispatcher_(dispatcher) {
+  }
 
   ~tcp_server() { stop(); }
 

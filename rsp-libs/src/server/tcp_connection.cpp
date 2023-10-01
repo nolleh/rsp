@@ -31,7 +31,6 @@ void tcp_connection::send(std::basic_string<char> msg) {
 template <>
 void tcp_connection::send(std::vector<char> msg) {
   // TODO(@nolleh) warp?
-  // logger::instance().debug(msg);
   buffer::shared_const_buffer buffer{msg};
   boost::asio::async_write(
       socket_, buffer,

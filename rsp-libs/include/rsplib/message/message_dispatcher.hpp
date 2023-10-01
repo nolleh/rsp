@@ -30,15 +30,15 @@ class message_dispatcher: public message_dispatcher_interface {
   const size_t TYPE = 4;
   static message_dispatcher& instance();
 
-  void register_handler(MessageType type, handler f) {
+  void register_handler(MessageType type, handler f) override {
     handlers_[type] = f;
   }
 
-  void register_handler2(MessageType type, handler2 f) {
+  void register_handler2(MessageType type, handler2 f) override {
     handlers2_[type] = f;
   }
 
-  void dispatch(MessageType type, const raw_buffer& buffer) const {
+  void dispatch(MessageType type, const raw_buffer& buffer) override {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler
     std::cout << "dispatch..." << std::endl;
@@ -52,7 +52,7 @@ class message_dispatcher: public message_dispatcher_interface {
 
   // TODO(@nolleh) refactor
   void dispatch(MessageType type, const raw_buffer& buffer,
-                link* link) const {
+                link* link) override {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler
 

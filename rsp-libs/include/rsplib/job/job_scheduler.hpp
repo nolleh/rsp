@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -13,7 +14,8 @@ namespace rsp {
 namespace libs {
 namespace job {
 
-using link_ptr = link::link_ptr;
+// using link_ptr = link::link_ptr;
+using link = link::link;
 
 /**
  * has role running logic serialization.
@@ -23,7 +25,7 @@ class job_scheduler {
   // explicit job_scheduler(link_ptr link) : link_(link) {}
   // this is run in worker thread !
   void run() {
-    if (!q_.empty()) {
+    if (q_.empty()) {
       return;
     }
 
@@ -32,17 +34,18 @@ class job_scheduler {
       std::lock_guard<std::mutex> lock(m_);
       // the handler (has message, and context)
       job = q_.front();
+      q_.pop();
     }
     job();
     run();
   }
 
-  void push(job* j, link_ptr l) {
+  void push(job_ptr j, link* l) {
     std::lock_guard<std::mutex> lock(m_);
-    q_.push(std::bind(&job::run, job_ptr(j), l));
+    q_.push(std::bind(&job::run, j, l));
   }
 
-  void push_and_run(job* j, link_ptr l) {
+  void push_and_run(job_ptr j, link* l) {
     push(j, l);
     run();
   }

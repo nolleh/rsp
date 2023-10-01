@@ -8,11 +8,11 @@ namespace user {
 namespace session {
 
 template <>
-void session::on_recv(ReqLogin&& req_login) {
-  std::cout << "session received req_login" << std::endl;
-
-  rsp::user::job::job_login job{req_login};
-  scheduler_.push_and_run(&job, shared_from_this());
+void session::on_recv(ReqLogin& req_login) {
+  namespace job = rsp::user::job;
+  auto login = std::make_shared<job::job_login>(req_login);
+  // current design is no need worry for session life. (need to consider)
+  scheduler_.push_and_run(login, this);
 }
 
 }  // namespace session
