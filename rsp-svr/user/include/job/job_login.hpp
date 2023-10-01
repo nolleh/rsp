@@ -23,7 +23,7 @@ using session = session::session;
 
 class job_login : public job {
  public:
-  explicit job_login(ReqLogin& login)
+  explicit job_login(const ReqLogin& login)
       : request_(login) {}
 
   void run(link* link) {
@@ -34,7 +34,7 @@ class job_login : public job {
     send_reslogin(request_.uid());
   }
 
-  void send_reslogin(std::string uid) {
+  void send_reslogin(std::string uid) const {
     ResLogin login;
     login.set_uid(uid);
     login.set_success(true);
@@ -46,11 +46,12 @@ class job_login : public job {
     const auto str = login.SerializeAsString();
     message.insert(message.end(), str.begin(), str.end());
     session_->send(message);
+    std::cout << "sent success login response for:" << uid << std::endl;
   }
 
  private:
-  ReqLogin request_;
-  session* session_;
+  const ReqLogin request_;
+  mutable session* session_;
 };
 
 }  // namespace job
