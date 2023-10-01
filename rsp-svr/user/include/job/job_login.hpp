@@ -16,20 +16,22 @@ namespace job {
 
 namespace message = rsp::libs::message;
 using job = rsp::libs::job::job;
-using link_ptr = rsp::libs::link::link_ptr;
+using link = rsp::libs::link::link;
+// using link_ptr = rsp::libs::link::link_ptr;
 using session = session::session;
-using session_ptr = rsp::user::session::session_ptr;
+// using session_ptr = rsp::user::session::session_ptr;
 
 class job_login : public job {
  public:
-  explicit job_login(ReqLogin login)
-      : request_(std::shared_ptr<ReqLogin>(&login)) {}
+  explicit job_login(ReqLogin& login)
+      : request_(login) {}
 
-  void run(link_ptr link) {
-    std::cout << "job_login: " << request_->uid() << std::endl;
+  void run(link* link) {
+    std::cout << "job_login: " << request_.uid() << std::endl;
     // TODO(@nolleh) signup / login process.
-    session_ = std::dynamic_pointer_cast<session>(link);
-    send_reslogin(request_->uid());
+    // session_ = std::dynamic_pointer_cast<session>(link);
+    session_ = dynamic_cast<session*>(link);
+    send_reslogin(request_.uid());
   }
 
   void send_reslogin(std::string uid) {
@@ -38,7 +40,6 @@ class job_login : public job {
     login.set_success(true);
 
     auto content_len = login.ByteSizeLong();
-    std::cout << content_len << "," << sizeof(content_len) << std::endl;
     message::raw_buffer message;
     message::mset(&message, content_len);
     message::mset(&message, static_cast<int>(MessageType::RES_LOGIN));
@@ -48,8 +49,8 @@ class job_login : public job {
   }
 
  private:
-  std::shared_ptr<ReqLogin> request_;
-  session_ptr session_;
+  ReqLogin request_;
+  session* session_;
 };
 
 }  // namespace job

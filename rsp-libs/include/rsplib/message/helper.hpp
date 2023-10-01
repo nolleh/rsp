@@ -1,7 +1,10 @@
 #pragma once
 #include <algorithm>
+#include <bitset>
+#include <ostream>
 #include <string>
 #include <vector>
+
 #include "rsplib/message/types.hpp"
 
 namespace rsp {
@@ -11,6 +14,9 @@ namespace message {
 template <typename Type>
 inline Type retrieve_parts(raw_buffer buf, int begin, int end) {
   // TODO(@nolleh) do not construct. change more efficiently.
+  if (begin >= end) {
+    return {};
+  }
   return Type{buf.begin() + begin, buf.begin() + end};
 }
 
@@ -38,6 +44,13 @@ inline void mget(const raw_buffer& src, T* dest, uint8_t offset) {
   const auto ptr = reinterpret_cast<const char*>(&src[0] + offset);
   // byte array, so you can use like this.
   std::copy(ptr, ptr + sizeof(*dest), dest);
+}
+
+template <typename T>
+// inline std::ostream& operator<<(std::ostream& os, T&& src) {
+inline std::bitset<sizeof(T) * 8> to_string(T&& src) {
+  // os << std::bitset<sizeof(T)>(src);
+  return std::bitset<sizeof(T) * 8>(src);
 }
 
 }  // namespace message

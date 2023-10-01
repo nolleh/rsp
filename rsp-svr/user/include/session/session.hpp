@@ -25,7 +25,7 @@ enum class UserState {
   IN_ROOM,
 };
 
-class session : public link {
+class session : public link, public std::enable_shared_from_this<session> {
  public:
   explicit session(server::connection_ptr conn)
       : link(conn),
@@ -40,12 +40,12 @@ class session : public link {
     // session destroy meaning logout
   }
 
-  virtual void on_connected() {
+  void on_connected() override {
     // TODO(@nolleh) notify to other servers that user attached
   }
 
   // connection was closed
-  virtual void on_closed() {
+  void on_closed() override {
     // TODO(@nolleh) notify to other servers that user detached
   }
 
@@ -62,7 +62,7 @@ class session : public link {
 };
 
 template <>
-void session::on_recv(ReqLogin&& msg);
+void session::on_recv(ReqLogin& msg);
 
 }  // namespace session
 }  // namespace user

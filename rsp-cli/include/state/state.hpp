@@ -11,6 +11,7 @@
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
+#include "rsplib/message/helper.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/types.hpp"
 
@@ -40,21 +41,35 @@ class base_state {
   explicit base_state(socket* socket)
       : socket_(socket),
         dispatcher_(message_dispatcher::instance()),
+        interpreter_(&dispatcher_),
         logger_(logger::instance()) {
     // send_login();
     dispatcher_.register_handler(
         MessageType::RES_LOGIN,
         std::bind(&base_state::handle_reslogin, this, std::placeholders::_1));
+
+    std::string uid;
+    std::cout << "type user name to login" << std::endl;
+    std::cin >> uid;
+    send_login(uid);
   }
 
-  void send_login() {
+  void send_login(const std::string& uid) {
     ReqLogin login;
-    login.set_uid("nolleh");
+    login.set_uid(uid);
     auto payload = login.SerializeAsString();
-    const auto content_len = std::to_string(login.ByteSizeLong());
-    raw_buffer message{content_len.begin(), content_len.end()};
-    message.emplace_back(MessageType::REQ_LOGIN);
+    const auto content_len = login.ByteSizeLong();
+    raw_buffer message;
+    namespace msg = rsp::libs::message;
+    msg::mset(&message, content_len);
+    msg::mset(&message, static_cast<int>(MessageType::REQ_LOGIN));
+    // std::cout << "message:" << msg::to_string(message) << std::endl;
+    std::cout << "type:"
+              << msg::to_string(static_cast<int>(MessageType::REQ_LOGIN))
+              << std::endl;
     message.insert(message.end(), payload.begin(), payload.end());
+    std::cout << "message size:" << message.size() << std::endl;
+    // std::cout << "message:" << msg::to_string(message) << std::endl;
     socket_->send(boost::asio::buffer(message));
   }
 
@@ -92,9 +107,8 @@ class base_state {
 
  private:
   socket* socket_;
-  MessageType reading_payload_;
-  conn_interpreter interpreter_;
   message_dispatcher& dispatcher_;
+  conn_interpreter interpreter_;
   logger& logger_;
 };
 

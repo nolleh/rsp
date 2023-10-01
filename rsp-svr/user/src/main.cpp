@@ -27,7 +27,7 @@ int main() {
     server.start();
     // TODO(@nolleh) more elegant way
     server.unsubscribe(&acceptor);
-  } catch (std::exception &e) {
+  } catch (std::exception& e) {
     logger::instance().error("exception ocurred", e.what());
   }
 }

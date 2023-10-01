@@ -11,12 +11,12 @@ namespace message {
 
 class message_dispatcher_interface {
  public:
-  void register_handler(MessageType type, handler f) {}
-  void register_handler2(MessageType type, handler2 f) {}
+  virtual void register_handler(MessageType type, handler f) {}
+  virtual void register_handler2(MessageType type, handler2 f) {}
 
-  void dispatch(MessageType type, const raw_buffer& buffer) const {}
-  void dispatch(MessageType type, const raw_buffer& buffer,
-                rsp::libs::link::link* link) const {}
+  virtual void dispatch(MessageType type, const raw_buffer& buffer) {}
+  virtual void dispatch(MessageType type, const raw_buffer& buffer,
+                        rsp::libs::link::link* link) {}
 };
 
 }  // namespace message

@@ -23,7 +23,8 @@ class shared_const_buffer {
   typedef const boost::asio::const_buffer* const_iterator;
   const boost::asio::const_buffer* begin() const { return &buffer_; }
   const boost::asio::const_buffer* end() const {
-    return &buffer_ + data_->size();
+    return &buffer_ + 1;
+    // return &buffer_ + data_->size();
   }
 
  private:

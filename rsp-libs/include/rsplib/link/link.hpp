@@ -11,7 +11,7 @@ namespace link {
 using connection_ptr = rsp::libs::server::connection_ptr;
 
 // eventhandler
-class link : public std::enable_shared_from_this<link> {
+class link {
  public:
   explicit link(connection_ptr conn) : connection_(conn) {}
   ~link() { connection_->stop(); }
