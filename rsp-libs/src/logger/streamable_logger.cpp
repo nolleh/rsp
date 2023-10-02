@@ -6,6 +6,7 @@ namespace logger {
 
 s_logger& s_logger::operator<<(flags flag) {
   if (is_null()) return *this;
+  if (!has_meet_level()) return *this;
   switch (flag) {
     case L_time:
       log_time();

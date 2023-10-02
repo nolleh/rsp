@@ -10,7 +10,7 @@ namespace logger {
 
 class console_logger : public s_logger {
  public:
-  static console_logger &instance();
+  static console_logger &instance(log_level level);
   s_logger *mirror_stream(ostream_ptr *mirror_stream) override {
     *mirror_stream = nullptr;
     return this;
@@ -20,14 +20,11 @@ class console_logger : public s_logger {
 
  protected:
   explicit console_logger(log_level level)
-      : s_logger(L_cout, std::clog),
-        ostream_(std::clog.rdbuf()),
-        level_(level) {}
+      : s_logger(L_cout, std::clog, level), ostream_(std::clog.rdbuf()) {}
 
   std::ostream ostream_;
   static std::once_flag s_flag;
   static std::unique_ptr<console_logger> s_instance;
-  log_level level_;
 
  private:
   static std::once_flag s_mirror_flag;
