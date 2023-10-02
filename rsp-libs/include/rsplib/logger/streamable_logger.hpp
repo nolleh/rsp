@@ -6,12 +6,12 @@
 #include <string>
 
 #include "rsplib/logger/flag.hpp"
-#include "rsplib/logger/logger.hpp"
 
 namespace rsp {
 namespace libs {
 namespace logger {
-// enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
+
+enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
 
 using streamable = std::ostream;
 
@@ -51,6 +51,31 @@ class s_logger {
 
   s_logger& operator<<(log_level level) {
     _streaming_level = level;
+    return *this;
+  }
+
+  s_logger& trace() {
+    *this << log_level::TRACE << L_time;
+    return *this;
+  }
+
+  s_logger& debug() {
+    *this << log_level::DEBUG << L_time;
+    return *this;
+  }
+
+  s_logger& info() {
+    *this << log_level::INFO << L_time;
+    return *this;
+  }
+
+  s_logger& warn() {
+    *this << log_level::WARN << L_time;
+    return *this;
+  }
+
+  s_logger& error() {
+    *this << log_level::ERROR << L_time;
     return *this;
   }
 

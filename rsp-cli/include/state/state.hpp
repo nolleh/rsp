@@ -30,9 +30,9 @@ using conn_interpreter = libs::message::conn_interpreter;
 using message_dispatcher = libs::message::message_dispatcher;
 using shared_const_buffer = libs::buffer::shared_const_buffer;
 using shared_mutable_buffer = libs::buffer::shared_mutable_buffer;
-using logger = libs::logger::logger;
 using raw_buffer = libs::message::raw_buffer;
 using buffer_ptr = libs::message::buffer_ptr;
+namespace lg = libs::logger;
 
 // TODO(@nolleh) refactor
 class base_state {
@@ -42,7 +42,7 @@ class base_state {
       : socket_(socket),
         dispatcher_(message_dispatcher::instance()),
         interpreter_(&dispatcher_),
-        logger_(logger::instance()) {
+        logger_(lg::logger(lg::log_level::DEBUG)) {
     // send_login();
     dispatcher_.register_handler(
         MessageType::RES_LOGIN,
@@ -64,18 +64,18 @@ class base_state {
     msg::mset(&message, content_len);
     msg::mset(&message, static_cast<int>(MessageType::REQ_LOGIN));
     // std::cout << "message:" << msg::to_string(message) << std::endl;
-    std::cout << "type:"
+    logger_.trace() << "type:"
               << msg::to_string(static_cast<int>(MessageType::REQ_LOGIN))
-              << std::endl;
+              << lg::L_endl;
     message.insert(message.end(), payload.begin(), payload.end());
-    std::cout << "message size:" << message.size() << std::endl;
+    logger_.debug() << "message size:" << message.size() << lg::L_endl;
     // std::cout << "message:" << msg::to_string(message) << std::endl;
     socket_->send(boost::asio::buffer(message));
   }
 
   base_state* handle_buffer(shared_mutable_buffer buf, size_t len) {
-    std::cout << "handle_buffer" << len << "," << buf.end() - buf.begin() << ","
-              << buf.data_end() - buf.data_begin() << std::endl;
+    logger_.debug() << "handle_buffer" << len << "," << buf.end() - buf.begin()
+                    << "," << buf.data_end() - buf.data_begin() << lg::L_endl;
     // interpreter_.handle_buffer(buf);
     return this;
   }
@@ -89,19 +89,19 @@ class base_state {
     ResLogin login;
     std::string str{buffer->begin(), buffer->end()};
     if (!login.ParseFromString(str)) {
-      logger_.error("failed to parse reslogin");
+      logger_.error() << "failed to parse reslogin" << lg::L_endl;
     }
 
     if (!login.success()) {
-      std::cerr << "failed to login (" << login.uid()
-                << "), bytes: " << login.ByteSizeLong() << std::endl;
+      logger_.error() << "failed to login (" << login.uid()
+                      << "), bytes: " << login.ByteSizeLong() << lg::L_endl;
     }
-    std::cout << "success to login:" << login.uid() << std::endl;
+    logger_.info() << "success to login:" << login.uid() << lg::L_endl;
   }
 
   template <typename Message>
   base_state* handle_message(Message&& message) {
-    std::cout << "init state handleMessage" << std::endl;
+    logger_.trace() << "init state handleMessage" << lg::L_endl;
     return this;
   }
 
@@ -109,7 +109,7 @@ class base_state {
   socket* socket_;
   message_dispatcher& dispatcher_;
   conn_interpreter interpreter_;
-  logger& logger_;
+  lg::s_logger& logger_;
 };
 
 // template <>

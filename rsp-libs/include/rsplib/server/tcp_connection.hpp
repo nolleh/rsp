@@ -24,7 +24,7 @@ using boost::asio::ip::tcp;
 
 namespace ph = std::placeholders;
 using conn_interpreter = message::conn_interpreter;
-using logger = logger::logger;
+namespace lg = logger;
 using link = link::link;
 
 class tcp_connection;
@@ -47,7 +47,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // std::vector<char> bufvec(len);
     // buffer::shared_mutable_buffer buffer{bufvec};
     // std::array<char, LEN_BYTE> bufarr;
-    logger::instance().debug("start async read", len);
+    lg::logger().info() << "start async read" << len << lg::L_endl;
     auto ptr = std::shared_ptr<std::array<char, LEN_BYTE>>(
         new std::array<char, LEN_BYTE>);
     socket_.async_read_some(boost::asio::buffer(*ptr),
@@ -62,7 +62,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     std::string bytes;
     auto success = msg.SerializeToString(&bytes);
     if (!success) {
-      logger::instance().error("failed to serialize message");
+      lg::logger().error() << "failed to serialize message" << lg::L_endl;
     }
     // REMARK(@nolleh) looks like template speiclaization is hard to deduce &
     // type. to avoid unneccessary copy, invoke impl function
@@ -88,7 +88,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void send_impl(const std::string& msg) {
     // TODO(@nolleh) warp?
-    logger::instance().debug(msg);
+    lg::logger().debug() << msg << lg::L_endl;
     buffer::shared_const_buffer buffer{msg};
     boost::asio::async_write(
         socket_, buffer,
@@ -99,12 +99,13 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   void handle_write(buffer::shared_const_buffer buffer,
                     const boost::system::error_code& error, size_t bytes) {
     if (error) {
-      logger::instance().error("failed to async_write: " + error.message());
+      lg::logger().error() << "failed to async_write: " + error.message()
+                           << lg::L_endl;
       return;
     }
-    // const std::string s{buffer.begin(), buffer.end()};
-    logger::instance().trace("conn: write message size(" +
-                             std::to_string(bytes) + "), message:");
+    lg::logger().trace() << "conn: write message size(" +
+                                std::to_string(bytes) + ")"
+                         << lg::L_endl;
   }
 
   void handle_read(
@@ -112,26 +113,28 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       const std::shared_ptr<std::array<char, LEN_BYTE>>& arr,
       const boost::system::error_code& error, size_t bytes) {
     if (boost::asio::error::eof == error) {
-      logger::instance().debug("conn: closed");
+      lg::logger().debug() << "conn: closed" << lg::L_endl;
       stop();
       return;
     }
 
     if (boost::asio::error::operation_aborted == error) {
-      logger::instance().debug(
-          "conn: canceld operation (aborted conn) socket is opend?:" +
-          std::to_string(socket_.is_open()));
+      lg::logger().debug()
+          << "conn: canceld operation (aborted conn) socket is opend?:" +
+                 std::to_string(socket_.is_open())
+          << lg::L_endl;
       return;
     }
 
     if (error) {
-      logger::instance().error("failed to async_read: " + error.message());
+      lg::logger().error() << "failed to async_read: " + error.message()
+                           << lg::L_endl;
       // start(1);
       return;
     }
 
-    logger::instance().trace("conn: read...message size(", bytes, ") message:");
-    // start(std::stoi(s));
+    lg::logger().trace() << "conn: read...message size(" << bytes << ")"
+                         << lg::L_endl;
     interpreter_.handle_buffer(*arr, bytes);
     start(LEN_BYTE);
   }

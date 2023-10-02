@@ -8,7 +8,6 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
-#include "rsplib/logger/logger.hpp"
 #include "rsplib/message/types.hpp"
 #include "rsplib/message/helper.hpp"
 #include "rsplib/server/server_event.hpp"
@@ -21,8 +20,6 @@ namespace session {
 namespace message = rsp::libs::message;
 
 class session_manager {
-  using logger = rsp::libs::logger::logger;
-
  public:
   static session_manager& instance() {
     std::call_once(session_manager::s_flag, []() {
