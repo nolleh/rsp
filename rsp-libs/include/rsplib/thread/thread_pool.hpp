@@ -12,7 +12,8 @@ namespace asio = boost::asio;
 namespace rsp {
 namespace libs {
 namespace thread {
-using logger = logger::logger;
+
+namespace log = rsp::libs::logger;
 class thread_pool {
  public:
   explicit thread_pool(size_t pool_size) : size_(pool_size) {}
@@ -24,8 +25,7 @@ class thread_pool {
     if (!thread_pool_) {
       thread_pool_ = std::make_unique<boost::asio::detail::thread_group>();
     }
-    logger::instance().debug("start # of thread (" + std::to_string(size_) +
-                             ")");
+    log::logger().info() << "start # of thread (" + std::to_string(size_) + ")" << log::L_endl;
     // start processing loop. make post() start executing
     asio::io_context::work work(io_context_);
     for (std::size_t i = 0; i < size_; ++i) {
@@ -36,9 +36,9 @@ class thread_pool {
   }
 
   void join() {
-    logger::instance().debug("join for tgroup");
+    log::logger().debug() << "join for tgroup" << log::L_endl;
     thread_pool_->join();
-    logger::instance().debug("end of join for tgroup");
+    log::logger().debug() << "end of join for tgroup" << log::L_endl;
   }
 
   void stop() {
@@ -46,7 +46,7 @@ class thread_pool {
       return;
     }
 
-    logger::instance().debug("stop # of thread(" + std::to_string(size_) + ")");
+    log::logger().debug() << "stop # of thread(" + std::to_string(size_) + ")" << log::L_endl;
     io_context_.stop();
     thread_pool_->join();
     thread_pool_.reset();

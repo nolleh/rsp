@@ -10,7 +10,7 @@ namespace logger {
 
 class console_logger : public s_logger {
  public:
-  static console_logger &instance(log_level level);
+  static console_logger &instance(log_level level = log_level::TRACE);
   s_logger *mirror_stream(ostream_ptr *mirror_stream) override {
     *mirror_stream = nullptr;
     return this;

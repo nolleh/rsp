@@ -23,8 +23,8 @@ class link;
 
 namespace message {
 
+namespace lg = rsp::libs::logger;
 using shared_mutable_buffer = buffer::shared_mutable_buffer;
-using logger = rsp::libs::logger::logger;
 using link = rsp::libs::link::link;
 /** this class instantiated(owned) per connection for buffering
  * no concern about stratgy (patt) for serializer, for now
@@ -44,8 +44,8 @@ class conn_interpreter {
 
   // aggregate message until ready.
   void handle_buffer(shared_mutable_buffer buffer, size_t len) {
-    logger::instance().trace("handle_buffer, read size:" + std::to_string(len) +
-                             ", buf size:" + std::to_string(buffer.size()));
+    lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len) +
+                             ", buf size:" + std::to_string(buffer.size()) << lg::L_endl;
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
       buffer_.insert(buffer_.end(), buffer.data_begin(), buffer.data_end());
@@ -81,7 +81,7 @@ class conn_interpreter {
   }
 
   void handle_buffer(const std::array<char, 128>& buffer, int len) {
-    logger::instance().trace("handle_buffer, read size:" + std::to_string(len));
+    lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len) << lg::L_endl;
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
       buffer_.insert(buffer_.end(), buffer.begin(), buffer.end());

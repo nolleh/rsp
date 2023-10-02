@@ -15,6 +15,8 @@ namespace rsp {
 namespace libs {
 namespace server {
 
+namespace lg = logger;
+
 class tcp_server {
   using tcp = boost::asio::ip::tcp;
   using dispatcher = message::message_dispatcher_interface;
@@ -58,7 +60,7 @@ class tcp_server {
     std::shared_ptr<tcp_connection> new_connection =
         tcp_connection::create(io_threads_.io_context(), dispatcher_);
 
-    logger::instance().info("start accepting");
+    lg::logger().info() << "start accepting" << lg::L_endl;
     acceptor_.async_accept(new_connection->socket(),
                            std::bind(&tcp_server::handle_accept, this,
                                      new_connection, std::placeholders::_1));

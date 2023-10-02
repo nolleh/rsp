@@ -6,6 +6,7 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job.hpp"
+#include "rsplib/logger/logger.hpp"
 #include "rsplib/message/helper.hpp"
 #include "rsplib/message/types.hpp"
 #include "session/session.hpp"
@@ -15,6 +16,8 @@ namespace user {
 namespace job {
 
 namespace message = rsp::libs::message;
+namespace lg = rsp::libs::logger;
+
 using job = rsp::libs::job::job;
 using link = rsp::libs::link::link;
 // using link_ptr = rsp::libs::link::link_ptr;
@@ -23,11 +26,10 @@ using session = session::session;
 
 class job_login : public job {
  public:
-  explicit job_login(const ReqLogin& login)
-      : request_(login) {}
+  explicit job_login(const ReqLogin& login) : request_(login) {}
 
   void run(link* link) {
-    std::cout << "job_login: " << request_.uid() << std::endl;
+    lg::logger().debug() << "job_login: " << request_.uid() << lg::L_endl;
     // TODO(@nolleh) signup / login process.
     // session_ = std::dynamic_pointer_cast<session>(link);
     session_ = dynamic_cast<session*>(link);
@@ -46,7 +48,8 @@ class job_login : public job {
     const auto str = login.SerializeAsString();
     message.insert(message.end(), str.begin(), str.end());
     session_->send(message);
-    std::cout << "sent success login response for:" << uid << std::endl;
+    lg::logger().debug() << "sent success login response for:" << uid
+                         << lg::L_endl;
   }
 
  private:

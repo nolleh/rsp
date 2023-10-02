@@ -2,22 +2,26 @@
 #include <iostream>
 #include <memory>
 
-#include "state/state.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
+#include "rsplib/logger/logger.hpp"
+#include "state/state.hpp"
 
 // #include <boost/array.hpp>
 int main(int argc, char* argv[]) {
+  namespace lg = rsp::libs::logger;
+
+  namespace ip = boost::asio::ip;
+  namespace rsp_cli = rsp::cli;
+  auto& logger = lg::logger(lg::log_level::TRACE);
+
   try {
     if (argc != 2) {
       std::cerr << "Usage: client <host>" << std::endl;
       return 1;
     }
 
-    std::cout << "connect to ... " << argv[1] << std::endl;
+    logger.debug() << "connect to ... " << argv[1] << lg::L_endl;
     boost::asio::io_context io_context;
-
-    namespace ip = boost::asio::ip;
-    namespace rsp_cli = rsp::cli;
 
     ip::tcp::resolver resolver(io_context);
     ip::tcp::resolver::query query(argv[1], "8080");
@@ -36,7 +40,7 @@ int main(int argc, char* argv[]) {
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
       auto next = state->handle_buffer(buf, len);
       if (error == boost::asio::error::eof) {
-        std::cout << "closed" << std::endl;
+        logger.debug() << "closed" << lg::L_endl;
         break;
       } else if (error) {
         throw boost::system::system_error(error);
@@ -47,6 +51,6 @@ int main(int argc, char* argv[]) {
       // std::cout.write(buf.data(), len);
     }
   } catch (std::exception& e) {
-    std::cerr << e.what() << std::endl;
+    logger.error() << e.what() << lg::L_endl;
   }
 }
