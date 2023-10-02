@@ -14,9 +14,10 @@ int main() {
   namespace user_server = rsp::user::server;
   namespace lg = rsp::libs::logger;
   using dispatcher = rsp::user::message::message_dispatcher;
-  auto& logger = lg::console_logger::instance();
-  logger << lg::L_time << "User Version: " << User_VERSION_MAJOR
-         << User_VERSION_MINOR << lg::L_endl;
+  auto& logger = lg::console_logger::instance(lg::log_level::INFO);
+  logger << lg::log_level::DEBUG << lg::L_time
+         << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
+         << lg::L_endl;
 
   try {
     std::cout << func(1, 2) << std::endl;
@@ -30,6 +31,7 @@ int main() {
     // TODO(@nolleh) more elegant way
     server.unsubscribe(&acceptor);
   } catch (std::exception& e) {
-    logger << "exception ocurred" << e.what() << lg::L_endl;
+    logger << lg::log_level::ERROR << "exception ocurred" << e.what()
+           << lg::L_endl;
   }
 }

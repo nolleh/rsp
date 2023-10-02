@@ -49,6 +49,11 @@ class s_logger {
     return *this;
   }
 
+  s_logger& operator<<(log_level level) {
+    _streaming_level = level;
+    return *this;
+  }
+
   virtual streamable& stream() = 0;
 
   using ostream_ptr = streamable*;
@@ -56,9 +61,11 @@ class s_logger {
   virtual s_logger* mirror_stream(ostream_ptr* mirror_stream) = 0;
 
  protected:
-  explicit s_logger(flags initFlag = L_null) : _flags{initFlag} {}
-  explicit s_logger(flags initFlag = L_null, streamable& = std::clog)
-      : _flags{initFlag} {}
+  explicit s_logger(flags initFlag = L_null, log_level level = log_level::TRACE)
+      : _flags{initFlag}, _level(level) {}
+  explicit s_logger(flags initFlag = L_null, streamable& = std::clog,
+                    log_level level = log_level::TRACE)
+      : _flags{initFlag}, _level(level) {}
 
   virtual s_logger& log_time();
 
@@ -69,6 +76,7 @@ class s_logger {
   bool is_null() const { return _flags == L_null; }
   bool is_cout() const { return _flags & L_cout; }
   bool has_time() const { return (_flags & 7) == L_time; }
+  bool has_meet_level() const { return _streaming_level >= _level; }
 
   friend class file_name_generator;
 
@@ -80,6 +88,8 @@ class s_logger {
   } inline static log_date{0, 0};
 
   flags _flags = L_startWithFlushing;
+  log_level _level;
+  log_level _streaming_level = log_level::TRACE;
 };
 
 template <typename T>
@@ -100,6 +110,7 @@ s_logger& s_logger::log(T value) {
 
 template <typename T>
 s_logger& operator<<(s_logger& logger, T value) {
+  if (!logger.has_meet_level()) return logger;
   return logger.log(value);
 }
 
