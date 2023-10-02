@@ -1,14 +1,17 @@
-// https://www.cppstories.com/2021/stream-logger/ 
+// https://www.cppstories.com/2021/stream-logger/
 #pragma once
 
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include "rsplib/logger/flag.hpp"
+#include "rsplib/logger/logger.hpp"
 
 namespace rsp {
 namespace libs {
 namespace logger {
+// enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
 
 using streamable = std::ostream;
 
@@ -46,18 +49,15 @@ class s_logger {
     return *this;
   }
 
-  virtual streamable& stream();
+  virtual streamable& stream() = 0;
 
   using ostream_ptr = streamable*;
 
-  virtual s_logger* mirror_stream(ostream_ptr& mirror_stream) {
-    mirror_stream = nullptr;
-    return this;
-  }
+  virtual s_logger* mirror_stream(ostream_ptr* mirror_stream) = 0;
 
  protected:
-  s_logger(flags initFlag = L_null) : _flags{initFlag} {}
-  s_logger(flags initFlag = L_null, streamable& = std::clog)
+  explicit s_logger(flags initFlag = L_null) : _flags{initFlag} {}
+  explicit s_logger(flags initFlag = L_null, streamable& = std::clog)
       : _flags{initFlag} {}
 
   virtual s_logger& log_time();
@@ -81,6 +81,28 @@ class s_logger {
 
   flags _flags = L_startWithFlushing;
 };
+
+template <typename T>
+s_logger& s_logger::log(T value) {
+  if (is_null()) return *this;
+  auto stream_ptr = &stream();
+  s_logger* logger = this;
+  do {
+    if (is_tabs()) {
+      *stream_ptr << "\t";
+    }
+    *stream_ptr << value;
+    logger = logger->mirror_stream(&stream_ptr);
+  } while (stream_ptr);
+  remove_flag(L_time);
+  return *this;
+}
+
+template <typename T>
+s_logger& operator<<(s_logger& logger, T value) {
+  return logger.log(value);
+}
+
 }  // namespace logger
 }  // namespace libs
 }  // namespace rsp

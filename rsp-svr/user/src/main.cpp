@@ -3,19 +3,21 @@
 
 #include "config.h"
 #include "message/message_dispatcher.hpp"
+#include "rsplib/logger/console_logger.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/server/tcp_server.hpp"
 #include "server/connection.hpp"
 #include "test.hpp"
 
 int main() {
-  std::cout << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
-            << std::endl;
-
   namespace server = rsp::libs::server;
   namespace user_server = rsp::user::server;
-  using logger = rsp::libs::logger::logger;
+  namespace lg = rsp::libs::logger;
   using dispatcher = rsp::user::message::message_dispatcher;
+  auto& logger = lg::console_logger::instance();
+  logger << lg::L_time << "User Version: " << User_VERSION_MAJOR
+         << User_VERSION_MINOR << lg::L_endl;
+
   try {
     std::cout << func(1, 2) << std::endl;
 
@@ -28,6 +30,6 @@ int main() {
     // TODO(@nolleh) more elegant way
     server.unsubscribe(&acceptor);
   } catch (std::exception& e) {
-    logger::instance().error("exception ocurred", e.what());
+    logger << "exception ocurred" << e.what() << lg::L_endl;
   }
 }
