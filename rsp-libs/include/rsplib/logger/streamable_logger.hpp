@@ -1,3 +1,5 @@
+/** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
+
 // https://www.cppstories.com/2021/stream-logger/
 #pragma once
 
