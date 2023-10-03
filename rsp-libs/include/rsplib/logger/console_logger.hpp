@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "rsplib/logger/streamable_logger.hpp"
 
@@ -17,6 +18,12 @@ class console_logger : public s_logger {
   }
 
   streamable &stream() override { return ostream_; }
+
+  s_logger& print_level() override {
+    std::string represent = represent_level(_level);
+    stream() << "[" << represent << "]";
+    return *this;
+  }
 
  protected:
   explicit console_logger(log_level level)

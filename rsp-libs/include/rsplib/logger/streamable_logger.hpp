@@ -3,6 +3,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <source_location>
 #include <string>
 
 #include "rsplib/logger/flag.hpp"
@@ -11,6 +12,7 @@ namespace rsp {
 namespace libs {
 namespace logger {
 
+#define L_location = location();
 enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
 
 using streamable = std::ostream;
@@ -49,33 +51,44 @@ class s_logger {
     return *this;
   }
 
-  s_logger& operator<<(log_level level) {
+  virtual s_logger& operator<<(log_level level) {
     _streaming_level = level;
     return *this;
   }
 
-  s_logger& trace() {
-    *this << log_level::TRACE << L_time;
+  s_logger& operator<<(const std::source_location& s) {
+    const auto name = [](const std::source_location& s) {
+      const std::string filename = s.file_name();
+      return filename.substr(filename.find_last_of('/') + 1);
+    };
+    stream() << name(s) << "::" << s.line();
     return *this;
   }
 
-  s_logger& debug() {
-    *this << log_level::DEBUG << L_time;
+  virtual s_logger& print_level() = 0;
+
+  s_logger& trace(std::source_location s = std::source_location::current()) {
+    *this << log_level::TRACE << L_time << L_space << s << L_space << L_level;
     return *this;
   }
 
-  s_logger& info() {
-    *this << log_level::INFO << L_time;
+  s_logger& debug(std::source_location s = std::source_location::current()) {
+    *this << log_level::DEBUG << L_time << L_space << s << L_space << L_level;
     return *this;
   }
 
-  s_logger& warn() {
-    *this << log_level::WARN << L_time;
+  s_logger& info(std::source_location s = std::source_location::current()) {
+    *this << log_level::INFO << L_time << L_space << s << L_space << L_level;
     return *this;
   }
 
-  s_logger& error() {
-    *this << log_level::ERROR << L_time;
+  s_logger& warn(std::source_location s = std::source_location::current()) {
+    *this << log_level::WARN << L_time << L_space << s << L_space << L_level;
+    return *this;
+  }
+
+  s_logger& error(std::source_location s = std::source_location::current()) {
+    *this << log_level::ERROR << L_time << L_space << s << L_space << L_level;
     return *this;
   }
 
@@ -84,6 +97,23 @@ class s_logger {
   using ostream_ptr = streamable*;
 
   virtual s_logger* mirror_stream(ostream_ptr* mirror_stream) = 0;
+
+  std::string represent_level(const log_level& level) {
+    switch (level) {
+      case log_level::TRACE:
+        return "TRACE";
+      case log_level::DEBUG:
+        return "DEBUG";
+      case log_level::INFO:
+        return "INFO";
+      case log_level::WARN:
+        return "WRAN";
+      case log_level::ERROR:
+        return "ERROR";
+      default:
+        return "UNKNOWN";
+    }
+  }
 
  protected:
   explicit s_logger(flags initFlag = L_null, log_level level = log_level::TRACE)
@@ -94,13 +124,20 @@ class s_logger {
 
   virtual s_logger& log_time();
 
+  s_logger& location(
+      const std::source_location& s = std::source_location::current()) {
+    *this << s;
+    return *this;
+  }
+
   template <class T>
   friend s_logger& operator<<(s_logger& s_logger, T value);
-
-  bool is_tabs() const { return _flags & L_tabs || has_time(); }
+  bool is_space() const { return _flags & L_space; }
+  bool is_tabs() const { return _flags & L_tabs || has_level(); }
   bool is_null() const { return _flags == L_null; }
   bool is_cout() const { return _flags & L_cout; }
-  bool has_time() const { return (_flags & 7) == L_time; }
+  bool has_time() const { return _flags & L_time; }
+  bool has_level() const { return _flags & L_level; }
   bool has_meet_level() const { return _streaming_level >= _level; }
 
   friend class file_name_generator;
@@ -123,6 +160,9 @@ s_logger& s_logger::log(T value) {
   auto stream_ptr = &stream();
   s_logger* logger = this;
   do {
+    if (is_space()) {
+      *stream_ptr << ' ';
+    }
     if (is_tabs()) {
       *stream_ptr << "\t";
     }
