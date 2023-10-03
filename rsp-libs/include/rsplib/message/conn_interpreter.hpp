@@ -39,13 +39,13 @@ class conn_interpreter {
   conn_interpreter() : dispatcher_(&message_dispatcher::instance()) {}
   conn_interpreter(message_dispatcher_interface* dispatcher,
                    link* link = nullptr)
-      : dispatcher_(dispatcher) {
-  }
+      : dispatcher_(dispatcher) {}
 
   // aggregate message until ready.
   void handle_buffer(shared_mutable_buffer buffer, size_t len) {
     lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len) +
-                             ", buf size:" + std::to_string(buffer.size()) << lg::L_endl;
+                                ", buf size:" + std::to_string(buffer.size())
+                         << lg::L_endl;
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
       buffer_.insert(buffer_.end(), buffer.data_begin(), buffer.data_end());
@@ -81,7 +81,8 @@ class conn_interpreter {
   }
 
   void handle_buffer(const std::array<char, 128>& buffer, int len) {
-    lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len) << lg::L_endl;
+    lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len)
+                         << lg::L_endl;
 
     if (len + buffer_.size() < CONTENT_LEN + TYPE) {
       buffer_.insert(buffer_.end(), buffer.begin(), buffer.end());

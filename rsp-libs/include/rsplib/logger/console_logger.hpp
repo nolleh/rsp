@@ -20,7 +20,7 @@ class console_logger : public s_logger {
   streamable &stream() override { return ostream_; }
 
   s_logger& print_level() override {
-    std::string represent = represent_level(_level);
+    std::string represent = represent_level(_streaming_level);
     stream() << "[" << represent << "]";
     return *this;
   }

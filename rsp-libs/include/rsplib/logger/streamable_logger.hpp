@@ -6,14 +6,15 @@
 #include <source_location>
 #include <string>
 
+#include "rsplib/logger/color.hpp"
 #include "rsplib/logger/flag.hpp"
+#include "rsplib/logger/level.hpp"
 
 namespace rsp {
 namespace libs {
 namespace logger {
 
 #define L_location = location();
-enum class log_level { TRACE, DEBUG, INFO, WARN, ERROR };
 
 using streamable = std::ostream;
 
@@ -27,6 +28,7 @@ class s_logger {
   flags remove_flag(flags flag) { return _flags -= flag; }
 
   virtual void flush() {
+    if (color()) stream() << "\x1b[0m";
     stream().flush();
     _flags -= L_startWithFlushing;
   }
@@ -61,7 +63,7 @@ class s_logger {
       const std::string filename = s.file_name();
       return filename.substr(filename.find_last_of('/') + 1);
     };
-    stream() << name(s) << "::" << s.line();
+    stream() << name(s) << ":" << s.line();
     return *this;
   }
 
@@ -139,6 +141,7 @@ class s_logger {
   bool has_time() const { return _flags & L_time; }
   bool has_level() const { return _flags & L_level; }
   bool has_meet_level() const { return _streaming_level >= _level; }
+  bool color() const { return true; }
 
   friend class file_name_generator;
 
@@ -158,6 +161,7 @@ template <typename T>
 s_logger& s_logger::log(T value) {
   if (is_null()) return *this;
   auto stream_ptr = &stream();
+  if (color()) *stream_ptr << "\x1b[" << color_code(_streaming_level) << "m";
   s_logger* logger = this;
   do {
     if (is_space()) {
@@ -170,6 +174,7 @@ s_logger& s_logger::log(T value) {
     logger = logger->mirror_stream(&stream_ptr);
   } while (stream_ptr);
   remove_flag(L_time);
+  // REMARK(@nolleh) color code reset will be performed when flush
   return *this;
 }
 
