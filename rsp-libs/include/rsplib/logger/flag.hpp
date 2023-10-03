@@ -9,14 +9,15 @@ enum flags {
   L_concat,
   L_time,
   L_flush,
-  L_level,
   L_endl,
   L_startWithFlushing,
   L_null,
-  L_cout = 9,
-  L_tabs = 16,
+  L_cout,
   L_space,
-  L_allwaysFlush = 32
+  L_color = 16,
+  L_tabs = 32,
+  L_allwaysFlush = 64,
+  L_level = 128
 };
 
 // semantic addition and substraction for flag enum
