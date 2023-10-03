@@ -1,3 +1,5 @@
+/** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
+
 #pragma once
 #include "proto/common/message_type.pb.h"
 #include "rsplib/message/types.hpp"

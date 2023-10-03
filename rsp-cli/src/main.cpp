@@ -1,3 +1,5 @@
+/** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
+
 #include <boost/asio.hpp>
 #include <iostream>
 #include <memory>
