@@ -25,7 +25,8 @@ class thread_pool {
     if (!thread_pool_) {
       thread_pool_ = std::make_unique<boost::asio::detail::thread_group>();
     }
-    log::logger().info() << "start # of thread (" + std::to_string(size_) + ")" << log::L_endl;
+    log::logger().info() << "start # of thread (" + std::to_string(size_) + ")"
+                         << log::L_endl;
     // start processing loop. make post() start executing
     asio::io_context::work work(io_context_);
     for (std::size_t i = 0; i < size_; ++i) {
@@ -46,7 +47,8 @@ class thread_pool {
       return;
     }
 
-    log::logger().debug() << "stop # of thread(" + std::to_string(size_) + ")" << log::L_endl;
+    log::logger().debug() << "stop # of thread(" + std::to_string(size_) + ")"
+                          << log::L_endl;
     io_context_.stop();
     thread_pool_->join();
     thread_pool_.reset();

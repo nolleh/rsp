@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(Libs)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(Boost)
 # find_package(Protobuf)
 

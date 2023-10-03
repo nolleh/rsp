@@ -14,7 +14,6 @@ inline console_logger& logger(log_level level = log_level::TRACE) {
   return console_logger::instance(level);
 }
 
-
 }  // namespace logger
 }  // namespace libs
 }  // namespace rsp

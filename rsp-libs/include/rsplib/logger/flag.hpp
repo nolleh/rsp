@@ -9,11 +9,13 @@ enum flags {
   L_concat,
   L_time,
   L_flush,
+  L_level,
   L_endl,
   L_startWithFlushing,
   L_null,
-  L_cout = 8,
+  L_cout = 9,
   L_tabs = 16,
+  L_space,
   L_allwaysFlush = 32
 };
 

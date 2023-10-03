@@ -47,7 +47,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // std::vector<char> bufvec(len);
     // buffer::shared_mutable_buffer buffer{bufvec};
     // std::array<char, LEN_BYTE> bufarr;
-    lg::logger().info() << "start async read" << len << lg::L_endl;
+    lg::logger().info() << "start async read, len:" << len << lg::L_endl;
     auto ptr = std::shared_ptr<std::array<char, LEN_BYTE>>(
         new std::array<char, LEN_BYTE>);
     socket_.async_read_some(boost::asio::buffer(*ptr),

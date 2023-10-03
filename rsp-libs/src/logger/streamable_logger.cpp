@@ -1,3 +1,4 @@
+
 #include "rsplib/logger/streamable_logger.hpp"
 
 namespace rsp {
@@ -15,6 +16,13 @@ s_logger& s_logger::operator<<(flags flag) {
       _flags = static_cast<flags>(_flags & L_allwaysFlush);
       *this << " |F|\n";
       flush();
+      break;
+    case L_level:
+      print_level();
+      add_flag(L_level);
+      break;
+    case L_space:
+      *this << ' ';
       break;
     case L_endl: {
       if (_flags & L_allwaysFlush) {
