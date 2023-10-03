@@ -24,6 +24,10 @@ s_logger& s_logger::operator<<(flags flag) {
     case L_space:
       *this << ' ';
       break;
+    case L_tabs:
+      std::cout << "test";
+      stream() << "\t";
+      break;
     case L_endl: {
       if (_flags & L_allwaysFlush) {
         *this << " |F|";
