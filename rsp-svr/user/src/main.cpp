@@ -14,8 +14,8 @@ int main() {
   namespace lg = rsp::libs::logger;
   using dispatcher = rsp::user::message::message_dispatcher;
 
-  auto& logger = lg::logger(lg::log_level::DEBUG);
-  logger.debug() << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
+  auto& logger = lg::logger(lg::log_level::TRACE);
+  logger.info() << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
                  << lg::L_endl;
 
   try {
