@@ -64,7 +64,7 @@ class s_logger {
       return filename.substr(filename.find_last_of('/') + 1);
     };
     stream() << name(s) << ":" << s.line();
-    return *this;
+    return *this << L_tabs;
   }
 
   virtual s_logger& print_level() = 0;
