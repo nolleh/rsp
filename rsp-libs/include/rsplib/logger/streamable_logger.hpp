@@ -103,23 +103,6 @@ class s_logger {
 
   virtual s_logger* mirror_stream(ostream_ptr* mirror_stream) = 0;
 
-  std::string represent_level(const log_level& level) {
-    switch (level) {
-      case log_level::TRACE:
-        return "TRACE";
-      case log_level::DEBUG:
-        return "DEBUG";
-      case log_level::INFO:
-        return "INFO";
-      case log_level::WARN:
-        return "WRAN";
-      case log_level::ERROR:
-        return "ERROR";
-      default:
-        return "UNKNOWN";
-    }
-  }
-
  protected:
   explicit s_logger(flags initFlag = L_null, log_level level = log_level::TRACE)
       : _global_flags{initFlag}, _flags{initFlag}, _level(level) {}
