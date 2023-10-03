@@ -1,6 +1,7 @@
 // https://www.cppstories.com/2021/stream-logger/
 #pragma once
 
+#include <bitset>
 #include <iomanip>
 #include <iostream>
 #include <source_location>
@@ -28,7 +29,7 @@ class s_logger {
   flags remove_flag(flags flag) { return _flags -= flag; }
 
   virtual void flush() {
-    if (color()) stream() << "\x1b[0m";
+    if (has_color()) stream() << "\x1b[0m";
     stream().flush();
     _flags -= L_startWithFlushing;
   }
@@ -55,6 +56,8 @@ class s_logger {
 
   virtual s_logger& operator<<(log_level level) {
     _streaming_level = level;
+    if (has_color()) stream() << "\x1b[" << color_code(_streaming_level) << "m";
+    // REMARK(@nolleh) color code reset will be performed when flush
     return *this;
   }
 
@@ -64,7 +67,7 @@ class s_logger {
       return filename.substr(filename.find_last_of('/') + 1);
     };
     stream() << name(s) << ":" << s.line();
-    return *this << L_tabs;
+    return *this;
   }
 
   virtual s_logger& print_level() = 0;
@@ -119,10 +122,10 @@ class s_logger {
 
  protected:
   explicit s_logger(flags initFlag = L_null, log_level level = log_level::TRACE)
-      : _flags{initFlag}, _level(level) {}
+      : _global_flags{initFlag}, _flags{initFlag}, _level(level) {}
   explicit s_logger(flags initFlag = L_null, streamable& = std::clog,
                     log_level level = log_level::TRACE)
-      : _flags{initFlag}, _level(level) {}
+      : _global_flags{initFlag}, _flags{initFlag}, _level(level) {}
 
   virtual s_logger& log_time();
 
@@ -138,10 +141,10 @@ class s_logger {
   bool is_tabs() const { return _flags & L_tabs || has_level(); }
   bool is_null() const { return _flags == L_null; }
   bool is_cout() const { return _flags & L_cout; }
-  bool has_time() const { return _flags & L_time; }
-  bool has_level() const { return _flags & L_level; }
+  bool has_time() const { return (_flags & L_time) == L_time; }
+  bool has_level() const { return (_flags & L_level) == L_level; }
+  bool has_color() const { return (_flags & L_color) == L_color; }
   bool has_meet_level() const { return _streaming_level >= _level; }
-  bool color() const { return true; }
 
   friend class file_name_generator;
 
@@ -152,6 +155,7 @@ class s_logger {
     unsigned char monthNo;
   } inline static log_date{0, 0};
 
+  flags _global_flags;
   flags _flags = L_startWithFlushing;
   log_level _level;
   log_level _streaming_level = log_level::TRACE;
@@ -161,7 +165,6 @@ template <typename T>
 s_logger& s_logger::log(T value) {
   if (is_null()) return *this;
   auto stream_ptr = &stream();
-  if (color()) *stream_ptr << "\x1b[" << color_code(_streaming_level) << "m";
   s_logger* logger = this;
   do {
     if (is_space()) {
@@ -174,7 +177,6 @@ s_logger& s_logger::log(T value) {
     logger = logger->mirror_stream(&stream_ptr);
   } while (stream_ptr);
   remove_flag(L_time);
-  // REMARK(@nolleh) color code reset will be performed when flush
   return *this;
 }
 
