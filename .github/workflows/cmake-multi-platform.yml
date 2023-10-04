@@ -28,9 +28,9 @@ jobs:
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+          # - os: windows-latest
+          #   c_compiler: cl
+          #   cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
@@ -59,7 +59,7 @@ jobs:
       run: |
         sudo apt-get update
         # hum.. this is latest.. in window..? let's think about later.. :(
-        sudo apt-get install libboost1.81
+        sudo apt-get install libboost
         sudo apt-get install protobuf-compiler
 
     - name: Prepare Proto
