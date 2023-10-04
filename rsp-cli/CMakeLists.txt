@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE SRC src/*.cpp)
-if (NOT DEFINED PROTO) 
+if(NOT DEFINED PROTO)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 

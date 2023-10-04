@@ -81,7 +81,7 @@ class message_dispatcher: public message_dispatcher_interface {
   std::map<MessageType, handler> handlers_;
   // TODO(@nolleh) refactor
   std::map<MessageType, handler2> handlers2_;
-  
+
   lg::s_logger& logger_;
 };
 

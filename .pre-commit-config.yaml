@@ -1,5 +1,22 @@
 repos:
--   repo: https://github.com/cpplint/cpplint
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+      - id: trailing-whitespace
+        exclude: md
+
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shfmt
+
+  - repo: https://github.com/cpplint/cpplint
     rev: 1.6.1
     hooks:
     -   id: cpplint
+
+  - repo: https://github.com/cmake-lint/cmake-lint
+    rev: 1.4.2
+    hooks:
+    -   id: cmakelint

@@ -4,18 +4,17 @@ DEBUG=false
 
 ## TODO(@nolleh) opts
 if [ "$1" == "-D" ]; then
-  DEBUG=true
+	DEBUG=true
 fi
 
 echo "debug?:" $DEBUG
 OPTION=""
 if [ $DEBUG == "true" ]; then
 	# $OPTION='-E env CXXFLAGS="-Wall"'
-  OPTION="-DCMAKE_BUILD_TYPE=Debug"
+	OPTION="-DCMAKE_BUILD_TYPE=Debug"
 else
-  OPTION="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+	OPTION="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
 fi
-
 
 mkdir -p build
 

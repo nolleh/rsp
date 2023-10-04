@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-cmake -B ../build/rsp-cli  .
+cmake -B ../build/rsp-cli .

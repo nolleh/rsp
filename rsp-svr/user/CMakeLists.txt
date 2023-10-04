@@ -18,11 +18,11 @@ configure_file(
 # )
 
 file(GLOB_RECURSE SRC src/*.cpp)
-if (NOT DEFINED PROTO) 
+if(NOT DEFINED PROTO)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
-if (NOT DEFINED Libs_DIR) 
+if(NOT DEFINED Libs_DIR)
   set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
 endif()
 

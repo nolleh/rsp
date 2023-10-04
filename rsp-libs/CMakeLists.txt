@@ -9,7 +9,7 @@ find_package(Boost)
 # find_package(Protobuf)
 
 file(GLOB_RECURSE SRC src/*.cpp)
-if (NOT DEFINED PROTO) 
+if(NOT DEFINED PROTO)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
