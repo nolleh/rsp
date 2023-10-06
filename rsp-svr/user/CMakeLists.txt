@@ -8,7 +8,7 @@ find_package(Protobuf)
 
 configure_file(
   config.h.in
-  config.h
+  ${PROJECT_SOURCE_DIR}/include/user/config.h
 )
 
 # source_group("cpp"
@@ -35,7 +35,6 @@ target_include_directories(User PRIVATE
   ${Libs_DIR}/include
   ${Proto_DIR}
   ${PROJECT_SOURCE_DIR}/include
-  ${PROJECT_BINARY_DIR}
 )
 
 target_link_directories(User PRIVATE

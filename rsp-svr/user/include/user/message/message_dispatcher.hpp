@@ -5,7 +5,6 @@
 #include <memory>
 #include <streambuf>
 
-#include "job/job_login.hpp"
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
@@ -13,7 +12,8 @@
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/types.hpp"
-#include "session/session.hpp"
+#include "user/job/job_login.hpp"
+#include "user/session/session.hpp"
 
 namespace rsp {
 namespace user {
