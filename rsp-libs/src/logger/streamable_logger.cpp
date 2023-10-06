@@ -15,7 +15,7 @@ s_logger& s_logger::operator<<(flags flag) {
       log_time();
       break;
     case L_flush:
-      _flags = static_cast<flags>(_flags & L_allwaysFlush);
+      flags_ = static_cast<flags>(flags_ & L_allwaysFlush);
       *this << " |F|\n";
       flush();
       break;
@@ -27,9 +27,9 @@ s_logger& s_logger::operator<<(flags flag) {
       *this << ' ';
       break;
     case L_endl: {
-      if (_flags & L_allwaysFlush) {
+      if (flags_ & L_allwaysFlush) {
         *this << " |F|";
-      } else if (_flags == L_startWithFlushing) {
+      } else if (flags_ == L_startWithFlushing) {
         *this << " |SF|";
       }
       auto stream_ptr = &stream();
@@ -38,17 +38,17 @@ s_logger& s_logger::operator<<(flags flag) {
         *stream_ptr << "\n";
         logger = logger->mirror_stream(&stream_ptr);
       } while (stream_ptr);
-      if (_flags & L_allwaysFlush || _flags == L_startWithFlushing) flush();
+      if (flags_ & L_allwaysFlush || flags_ == L_startWithFlushing) flush();
     }
       [[fallthrough]];
     case L_clearflags:
-      if (_flags != L_startWithFlushing) {
-        _flags = static_cast<flags>(_flags & L_allwaysFlush);
-        _flags += _global_flags;
+      if (flags_ != L_startWithFlushing) {
+        flags_ = static_cast<flags>(flags_ & L_allwaysFlush);
+        flags_ += global_flags_;
       }
       break;
     case L_allwaysFlush:
-      _flags += L_allwaysFlush;
+      flags_ += L_allwaysFlush;
       break;
     case L_concat:
       remove_flag(L_tabs);
@@ -62,14 +62,14 @@ s_logger& s_logger::operator<<(flags flag) {
 tm* s_logger::get_time() {
   std::time_t now = std::time(nullptr);
   auto localTime = std::localtime(&now);
-  log_date.dayNo = localTime->tm_mday;
-  log_date.monthNo = localTime->tm_mon + 1;
+  log_date.day_no = localTime->tm_mday;
+  log_date.month_no = localTime->tm_mon + 1;
   return localTime;
 }
 
 s_logger& s_logger::log_time() {
   *this << std::put_time(get_time(), "%d/%m/%y %H:%M:%S");
-  _flags += L_time;
+  flags_ += L_time;
   return *this;
 }
 

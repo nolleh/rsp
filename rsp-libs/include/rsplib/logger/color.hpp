@@ -19,15 +19,15 @@ enum color {
 
 inline int color_code(const log_level& level) {
   switch (level) {
-    case log_level::TRACE:
+    case log_level::kTrace:
       return color::C_gray;
-    case log_level::DEBUG:
+    case log_level::kDebug:
       return color::C_darkBlue;
-    case log_level::INFO:
+    case log_level::kInfo:
       return color::C_green;
-    case log_level::WARN:
+    case log_level::kWarn:
       return color::C_yellow;
-    case log_level::ERROR:
+    case log_level::kError:
       return color::C_red;
   }
   return 0;

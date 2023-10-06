@@ -14,9 +14,9 @@ repos:
   - repo: https://github.com/cpplint/cpplint
     rev: 1.6.1
     hooks:
-    -   id: cpplint
+      - id: cpplint
 
   - repo: https://github.com/cmake-lint/cmake-lint
     rev: 1.4.2
     hooks:
-    -   id: cmakelint
+      - id: cmakelint

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
 enum MessageType {
-  REQ_LOGIN = 0;
-  RES_LOGIN = 1;
+  kReqLogin = 0;
+  kResLogin = 1;
 }

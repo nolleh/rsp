@@ -1,7 +1,8 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
-#include <boost/asio.hpp>
 #include <iostream>
+
+#include <boost/asio.hpp>
 
 #include "config.h"
 #include "message/message_dispatcher.hpp"
@@ -16,9 +17,9 @@ int main() {
   namespace lg = rsp::libs::logger;
   using dispatcher = rsp::user::message::message_dispatcher;
 
-  auto& logger = lg::logger(lg::log_level::TRACE);
+  auto& logger = lg::logger(lg::log_level::kTrace);
   logger.info() << "User Version: " << User_VERSION_MAJOR << User_VERSION_MINOR
-                 << lg::L_endl;
+                << lg::L_endl;
 
   try {
     std::cout << func(1, 2) << std::endl;
@@ -27,7 +28,7 @@ int main() {
     user_server::acceptor acceptor;
     server.subscribe(&acceptor);
     server.start();
-    // TODO(@nolleh) more elegant way
+    // TODO(@nolleh) more elegant wayk
     server.unsubscribe(&acceptor);
   } catch (std::exception& e) {
     logger.error() << "exception ocurred" << e.what() << lg::L_endl;

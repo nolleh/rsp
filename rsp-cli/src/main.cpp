@@ -1,20 +1,20 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
-#include <boost/asio.hpp>
 #include <iostream>
 #include <memory>
+#include <boost/asio.hpp>
 
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "state/state.hpp"
 
 // #include <boost/array.hpp>
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   namespace lg = rsp::libs::logger;
 
   namespace ip = boost::asio::ip;
   namespace rsp_cli = rsp::cli;
-  auto& logger = lg::logger(lg::log_level::TRACE);
+  auto &logger = lg::logger(lg::log_level::kTrace);
 
   try {
     if (argc != 2) {
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
       // std::cout << buf.data() << std::endl;
       // std::cout.write(buf.data(), len);
     }
-  } catch (std::exception& e) {
+  } catch (std::exception &e) {
     logger.error() << e.what() << lg::L_endl;
   }
 }

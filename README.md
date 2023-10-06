@@ -57,6 +57,10 @@ for now, not supply binaries. so after build by your self, then ./run-svr.sh and
 
 basically, follow [google c++ style guide](https://google.github.io/styleguide/cppguide.html)
 - but used c++20 features(my curiosity) if needed, which is opposite that guide
+- but used snakecase on class names (except proto)
+- but used snakecase on function names 
+
+used cpplint, which will be checked in CI level.  
 
 ## project
 

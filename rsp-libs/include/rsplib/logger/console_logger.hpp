@@ -13,7 +13,7 @@ namespace logger {
 
 class console_logger : public s_logger {
  public:
-  static console_logger &instance(log_level level = log_level::TRACE,
+  static console_logger &instance(log_level level = log_level::kTrace,
                                   flags options = L_color);
   s_logger *mirror_stream(ostream_ptr *mirror_stream) override {
     *mirror_stream = nullptr;
@@ -23,7 +23,7 @@ class console_logger : public s_logger {
   streamable &stream() override { return ostream_; }
 
   s_logger &print_level() override {
-    std::string represent = represent_level(_streaming_level);
+    std::string represent = represent_level(streaming_level_);
     stream() << "[" << represent << "]";
     return *this;
   }
