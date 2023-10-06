@@ -12,7 +12,7 @@ namespace rsp {
 namespace libs {
 namespace logger {
 
-inline console_logger& logger(log_level level = log_level::TRACE,
+inline console_logger& logger(log_level level = log_level::kTrace,
                               flags options = L_color) {
   return console_logger::instance(level, options);
 }

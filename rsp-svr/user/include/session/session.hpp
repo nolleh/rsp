@@ -21,10 +21,10 @@ class session;
 using session_ptr = std::shared_ptr<session>;
 
 enum class UserState {
-  LOGOUTED,
-  LOGGED_IN,
-  DETACHED,
-  IN_ROOM,
+  kLogouted,
+  kLoggedIn,
+  kDetached,
+  kInRoom,
 };
 
 class session : public link, public std::enable_shared_from_this<session> {
@@ -33,7 +33,7 @@ class session : public link, public std::enable_shared_from_this<session> {
       : link(conn),
         // scheduler_(shared_from_this()),
         // scheduler_(std::dynamic_pointer_cast<link_ptr>(shared_from_this())),
-        state_(UserState::LOGOUTED) {
+        state_(UserState::kLogouted) {
     session* self = this;
     conn->attach_link(self);
   }

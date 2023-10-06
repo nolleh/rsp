@@ -1,12 +1,13 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
+
 #include <array>
-#include <boost/asio.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
+#include <boost/asio.hpp>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
@@ -22,9 +23,9 @@ namespace cli {
 namespace state {
 
 enum class State {
-  INIT,
-  LOGGED_IN,
-  IN_ROOM,
+  kInit,
+  kLoggedIn,
+  kInRoom,
 };
 
 using socket = boost::asio::ip::tcp::socket;
@@ -39,15 +40,14 @@ namespace lg = libs::logger;
 // TODO(@nolleh) refactor
 class base_state {
  public:
-  State state = State::INIT;
+  State state = State::kInit;
   explicit base_state(socket* socket)
       : socket_(socket),
         dispatcher_(message_dispatcher::instance()),
         interpreter_(&dispatcher_),
-        logger_(lg::logger(lg::log_level::DEBUG)) {
-    // send_login();
+        logger_(lg::logger()) {
     dispatcher_.register_handler(
-        MessageType::RES_LOGIN,
+        MessageType::kResLogin,
         std::bind(&base_state::handle_reslogin, this, std::placeholders::_1));
 
     std::string uid;
@@ -64,11 +64,11 @@ class base_state {
     raw_buffer message;
     namespace msg = rsp::libs::message;
     msg::mset(&message, content_len);
-    msg::mset(&message, static_cast<int>(MessageType::REQ_LOGIN));
+    msg::mset(&message, static_cast<int>(MessageType::kReqLogin));
     // std::cout << "message:" << msg::to_string(message) << std::endl;
     logger_.trace() << "type:"
-              << msg::to_string(static_cast<int>(MessageType::REQ_LOGIN))
-              << lg::L_endl;
+                    << msg::to_string(static_cast<int>(MessageType::kReqLogin))
+                    << lg::L_endl;
     message.insert(message.end(), payload.begin(), payload.end());
     logger_.debug() << "message size:" << message.size() << lg::L_endl;
     // std::cout << "message:" << msg::to_string(message) << std::endl;

@@ -1,0 +1,14 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# https://gist.github.com/idelsink/c25049d8c987890935f4
+BasedOnStyle: Google
+IncludeCategories:
+  - Regex: '^<source_location'
+    Priority: 1
+  - Regex: '^(<(boost)/)'
+    Priority: 3
+  - Regex: '^<.*'
+    Priority: 2
+  # - Regex: '^(<(llvm|llvm-c|clang|calng-c|.*)/)'
+  - Regex: '^".*'
+    Priority: 4
+    CaseSensitive: true

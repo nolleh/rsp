@@ -33,7 +33,7 @@ class message_dispatcher : public dispatcher_interface {
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
     // TODO(@nolleh) looks like it is better change this logic to macro
     dispatcher_.register_handler2(
-        MessageType::REQ_LOGIN,
+        MessageType::kReqLogin,
         std::bind(&message_dispatcher::handle_buffer_req_login, this, ph::_1,
                   ph::_2));
   }

@@ -46,7 +46,7 @@ class job_login : public job {
     auto content_len = login.ByteSizeLong();
     message::raw_buffer message;
     message::mset(&message, content_len);
-    message::mset(&message, static_cast<int>(MessageType::RES_LOGIN));
+    message::mset(&message, static_cast<int>(MessageType::kResLogin));
     const auto str = login.SerializeAsString();
     message.insert(message.end(), str.begin(), str.end());
     session_->send(message);
