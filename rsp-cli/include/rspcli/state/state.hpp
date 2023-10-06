@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include <boost/asio.hpp>
 
 #include "proto/common/message_type.pb.h"

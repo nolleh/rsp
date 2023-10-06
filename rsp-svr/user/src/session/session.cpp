@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "job/job_login.hpp"
-#include "session/session.hpp"
+#include "user/job/job_login.hpp"
+#include "user/session/session.hpp"
 
 namespace rsp {
 namespace user {

@@ -13,7 +13,7 @@
 #include "rsplib/message/types.hpp"
 #include "rsplib/message/helper.hpp"
 #include "rsplib/server/server_event.hpp"
-#include "session/session.hpp"
+#include "user/session/session.hpp"
 
 namespace rsp {
 namespace user {

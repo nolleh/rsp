@@ -6,7 +6,7 @@
 
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
-#include "state/state.hpp"
+#include "rspcli/state/state.hpp"
 
 // #include <boost/array.hpp>
 int main(int argc, char *argv[]) {

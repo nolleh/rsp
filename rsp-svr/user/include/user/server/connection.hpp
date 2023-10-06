@@ -1,8 +1,9 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
+#pragma once
 
 #include "rsplib/server/server_event.hpp"
-#include "session/session.hpp"
-#include "session/session_manager.hpp"
+#include "user/session/session.hpp"
+#include "user/session/session_manager.hpp"
 
 namespace rsp {
 namespace user {
