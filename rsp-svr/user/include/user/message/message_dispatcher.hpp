@@ -8,6 +8,7 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
+#include "rsplib/logger/logger.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/serializer.hpp"
@@ -25,9 +26,7 @@ using dispatcher_interface = libs::message::message_dispatcher_interface;
 using lib_dispatcher = libs::message::message_dispatcher;
 using raw_buffer = libs::message::raw_buffer;
 using buffer_ptr = libs::message::buffer_ptr;
-using job_scheduler = libs::job::job_scheduler;
 using link = rsp::libs::link::link;
-using handler2 = rsp::libs::message::handler2;
 
 #define REG_HANDLER(dispatcher, type, handler) \
   dispatcher.register_handler2(                \
@@ -62,8 +61,10 @@ class message_dispatcher : public dispatcher_interface {
   void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
     auto success = message::serializer::deserialize(*buffer, message);
     if (!success) {
-      std::cout << "something wrong. failed to parse login message"
-                << std::endl;
+      namespace lg = rsp::libs::logger;
+      auto& logger = lg::logger();
+      logger.error() << "something wrong. failed to parse login message"
+                     << lg::L_endl;
       return;
     }
 

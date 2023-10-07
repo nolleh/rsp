@@ -10,7 +10,7 @@ find_package(Boost)
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)
-  set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
+  set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen-proto)
 endif()
 
 ## add cpp
@@ -26,6 +26,6 @@ target_include_directories(Libs PRIVATE
 
 target_link_directories(Libs PRIVATE
   ${Boost_DIR}/lib
-  ${PROJECT_BINARY_DIR}/../../gen_proto/libProto.a
+  ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
   protobuf
 )

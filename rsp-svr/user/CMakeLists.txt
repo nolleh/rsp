@@ -43,6 +43,6 @@ target_link_directories(User PRIVATE
 
 target_link_libraries(User
   ${PROJECT_BINARY_DIR}/../../rsp-libs/libLibs.a
-  ${PROJECT_BINARY_DIR}/../../gen_proto/libProto.a
+  ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
   protobuf
 )
