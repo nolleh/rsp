@@ -2,11 +2,13 @@
 
 #include <iostream>
 #include <memory>
+
 #include <boost/asio.hpp>
 
+#include "rspcli/state/factory.hpp"
+#include "rspcli/state/state.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
-#include "rspcli/state/state.hpp"
 
 // #include <boost/array.hpp>
 int main(int argc, char *argv[]) {
@@ -14,7 +16,7 @@ int main(int argc, char *argv[]) {
 
   namespace ip = boost::asio::ip;
   namespace rsp_cli = rsp::cli;
-  auto &logger = lg::logger(lg::log_level::kTrace);
+  auto &logger = lg::logger(lg::log_level::kInfo);
 
   try {
     if (argc != 2) {
@@ -33,24 +35,24 @@ int main(int argc, char *argv[]) {
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
 
-    auto state = std::make_unique<rsp_cli::state::base_state>(&socket);
+    // auto state = std::make_unique<rsp_cli::state::base_state>(&socket);
+    auto next = rsp_cli::state::State::kInit;
     for (;;) {
+      auto client = rsp_cli::state::factory::create(next, &socket);
+      client->init();
       std::array<char, 128> buf;
       boost::system::error_code error;
       // std::vector<char> buf(22);
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
-      auto next = state->handle_buffer(buf, len);
+
       if (error == boost::asio::error::eof) {
         logger.debug() << "closed" << lg::L_endl;
         break;
       } else if (error) {
         throw boost::system::system_error(error);
       }
-
-      // state.reset(next);
-      // std::cout << buf.data() << std::endl;
-      // std::cout.write(buf.data(), len);
+      next = client->handle_buffer(buf, len);
     }
   } catch (std::exception &e) {
     logger.error() << e.what() << lg::L_endl;

@@ -1,6 +1,11 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
+
+#include <memory>
+#include <string>
+
+#include "proto/common/message_type.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
@@ -9,17 +14,51 @@ namespace state {
 
 class state_login : public base_state {
  public:
-  State state = State::LOGGED_IN;
-  base_state* handle_buffer(std::array<char, 128> buf, size_t len) {
-    std::cout << "loggedin state handle buffer" << std::endl;
-    return this;
+  static std::shared_ptr<base_state> create(socket* socket) {
+    return std::shared_ptr<state_login>(new state_login(socket));
   }
 
-  template <typename Message>
-  class base_state* handle_message(Message&& message) {
-    std::cout << "loggedin state handleMessage" << std::endl;
-    return this;
+  ~state_login() { dispatcher_.unregister_handler(MessageType::kResLogout); }
+
+  void init() override {
+    dispatcher_.register_handler(MessageType::kResLogout,
+                                 std::bind(&state_login::handle_res_logout,
+                                           this, std::placeholders::_1));
+
+    std::string command;
+    prompt_ << "possible command \n1) logout";
+    std::cout << "> ";
+    std::cin >> command;
+
+    if (command == "1") {
+      send_logout();
+    }
   }
+
+ protected:
+  explicit state_login(socket* socket) : base_state(socket) {
+    state_ = State::kLoggedIn;
+  }
+
+ private:
+  void handle_res_logout(buffer_ptr buffer) {
+    ResLogout logout;
+    if (!rsp::libs::message::serializer::deserialize(*buffer, &logout)) {
+      logger_.error() << "failed to parse logout" << lg::L_endl;
+      return;
+    }
+
+    logger_.info() << "success to logout:" << logout.uid() << lg::L_endl;
+    next_ = State::kInit;
+  }
+
+  void send_logout() {
+    ReqLogout logout;
+    auto message = rsp::libs::message::serializer::serialize(
+        MessageType::kReqLogout, logout);
+    socket_->send(boost::asio::buffer(message));
+  }
+  // prompt<state_login> prompt_;
 };
 }  // namespace state
 }  // namespace cli

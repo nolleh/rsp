@@ -6,8 +6,25 @@ namespace rsp {
 namespace cli {
 namespace state {
 
-// template <>
-// base_state* base_state::handle_message(std::array<char, 128> buf) {}
+std::ostream& operator<<(std::ostream& os, const base_state& state) {
+  std::string str;
+  switch (state.state_) {
+    case State::kInit:
+      str = "Init";
+      break;
+
+    case State::kLoggedIn:
+      str = "LoggedIn";
+      break;
+
+    case State::kInRoom:
+      str = "InRoom";
+      break;
+  }
+  os << "[Client:" << &state << "] current state: " << str;
+  return os;
+}
+
 }  // namespace state
 }  // namespace cli
 }  // namespace rsp

@@ -41,6 +41,18 @@ class message_dispatcher: public message_dispatcher_interface {
     handlers2_[type] = f;
   }
 
+  void unregister_handler(MessageType type) override {
+    auto find = handlers_.find(type);
+    if (handlers_.end() != find) {
+      handlers_.erase(find);
+    }
+
+    auto find2 = handlers2_.find(type);
+    if (handlers2_.end() != find2) {
+      handlers2_.erase(find2);
+    }
+  }
+
   void dispatch(MessageType type, const raw_buffer& buffer) override {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler

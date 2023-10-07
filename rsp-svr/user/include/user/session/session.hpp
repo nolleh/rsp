@@ -72,6 +72,8 @@ class session : public link, public std::enable_shared_from_this<session> {
 template <>
 void session::on_recv(ReqLogin& msg);
 
+template <>
+void session::on_recv(ReqLogout& msg);
 }  // namespace session
 }  // namespace user
 }  // namespace rsp

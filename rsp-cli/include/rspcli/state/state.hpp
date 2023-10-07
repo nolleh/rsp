@@ -12,6 +12,7 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
+#include "rspcli/prompt/prompt.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
@@ -19,7 +20,6 @@
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
-#include "rspcli/prompt/prompt.hpp"
 
 namespace rsp {
 namespace cli {
@@ -39,22 +39,22 @@ using buffer_ptr = libs::message::buffer_ptr;
 namespace lg = libs::logger;
 
 // TODO(@nolleh) refactor
+// 1.seperate client <-> state
+// 2.seperate base <-> init
 class base_state {
  public:
-  State state = State::kInit;
-  explicit base_state(socket* socket)
-      : socket_(socket),
-        dispatcher_(message_dispatcher::instance()),
-        interpreter_(&dispatcher_),
-        logger_(lg::logger()) {
-    dispatcher_.register_handler(
-        MessageType::kResLogin,
-        std::bind(&base_state::handle_reslogin, this, std::placeholders::_1));
+  static std::shared_ptr<base_state> create(socket* socket) {
+    return std::shared_ptr<base_state>(new base_state(socket));
+  }
 
-    std::string uid;
-    prompt() << "type user name to login";
-    std::cin >> uid;
-    send_login(uid);
+  ~base_state() {
+    // REMARK(@nolleh) register/unregister per state is not good pattern,
+    // but client has only one conn/state,
+    // this is okay to use like this.
+    // if this precondition is not effective, then change the implementation as
+    // server pattern.
+    // and, for convient dev, remove by type for now
+    dispatcher_.unregister_handler(MessageType::kResLogin);
   }
 
   void send_login(const std::string& uid) {
@@ -65,35 +65,56 @@ class base_state {
     socket_->send(boost::asio::buffer(message));
   }
 
-  base_state* handle_buffer(std::array<char, 128> buf, size_t len) {
+  State handle_buffer(std::array<char, 128> buf, size_t len) {
     interpreter_.handle_buffer(buf, len);
-    return this;
+    return next_;
   }
 
-  void handle_reslogin(buffer_ptr buffer) {
+  void handle_res_login(buffer_ptr buffer) {
     ResLogin login;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &login)) {
       logger_.error() << "failed to parse reslogin" << lg::L_endl;
+      return;
     }
 
     logger_.info() << "success to login:" << login.uid() << lg::L_endl;
+    next_ = State::kLoggedIn;
   }
 
-  template <typename Message>
-  base_state* handle_message(Message&& message) {
-    logger_.trace() << "init state handleMessage" << lg::L_endl;
-    return this;
+  virtual void init() {
+    dispatcher_.register_handler(
+        MessageType::kResLogin,
+        std::bind(&base_state::handle_res_login, this, std::placeholders::_1));
+
+    std::string uid;
+    prompt_ << "type user name to login";
+    std::cout << "> ";
+    std::cin >> uid;
+    send_login(uid);
   }
 
- private:
+  friend std::ostream& operator<<(std::ostream&, const base_state&);
+
+ protected:
+  explicit base_state(socket* socket)
+      : socket_(socket),
+        dispatcher_(message_dispatcher::instance()),
+        interpreter_(&dispatcher_),
+        logger_(lg::logger()),
+        prompt_(this) {
+    // init();
+  }
+
+  State state_ = State::kInit;
   socket* socket_;
   message_dispatcher& dispatcher_;
-  conn_interpreter interpreter_;
+  State next_;
   lg::s_logger& logger_;
-};
+  prompt<base_state> prompt_;
 
-// template <>
-// base_state* base_state::handle_message(ResLogin&& login);
+ private:
+  conn_interpreter interpreter_;
+};
 
 }  // namespace state
 }  // namespace cli
