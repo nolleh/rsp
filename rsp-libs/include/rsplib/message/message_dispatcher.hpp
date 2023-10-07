@@ -31,8 +31,6 @@ class message_dispatcher: public message_dispatcher_interface {
    * CONTENT_LEN (4 Bytes) | TYPE (1 Bytes) | [0..LEN]
    * */
  public:
-  const size_t CONTENT_LEN = 8;
-  const size_t TYPE = 4;
   static message_dispatcher& instance();
 
   void register_handler(MessageType type, handler f) override {

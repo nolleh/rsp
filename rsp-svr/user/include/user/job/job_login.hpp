@@ -9,8 +9,7 @@
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job.hpp"
 #include "rsplib/logger/logger.hpp"
-#include "rsplib/message/helper.hpp"
-#include "rsplib/message/types.hpp"
+#include "rsplib/message/serializer.hpp"
 #include "user/session/session.hpp"
 
 namespace rsp {
@@ -43,13 +42,9 @@ class job_login : public job {
     login.set_uid(uid);
     login.set_success(true);
 
-    auto content_len = login.ByteSizeLong();
-    message::raw_buffer message;
-    message::mset(&message, content_len);
-    message::mset(&message, static_cast<int>(MessageType::kResLogin));
-    const auto str = login.SerializeAsString();
-    message.insert(message.end(), str.begin(), str.end());
-    session_->send(message);
+    const auto buffer =
+        message::serializer::serialize(MessageType::kResLogin, login);
+    session_->send(buffer);
     lg::logger().debug() << "sent success login response for:" << uid
                          << lg::L_endl;
   }
