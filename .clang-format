@@ -11,4 +11,3 @@ IncludeCategories:
   # - Regex: '^(<(llvm|llvm-c|clang|calng-c|.*)/)'
   - Regex: '^".*'
     Priority: 4
-    CaseSensitive: true

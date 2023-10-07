@@ -17,7 +17,9 @@
 #include "rsplib/message/conn_interpreter.hpp"
 #include "rsplib/message/helper.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
+#include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
+#include "rspcli/prompt/prompt.hpp"
 
 namespace rsp {
 namespace cli {
@@ -32,8 +34,6 @@ enum class State {
 using socket = boost::asio::ip::tcp::socket;
 using conn_interpreter = libs::message::conn_interpreter;
 using message_dispatcher = libs::message::message_dispatcher;
-using shared_const_buffer = libs::buffer::shared_const_buffer;
-using shared_mutable_buffer = libs::buffer::shared_mutable_buffer;
 using raw_buffer = libs::message::raw_buffer;
 using buffer_ptr = libs::message::buffer_ptr;
 namespace lg = libs::logger;
@@ -52,7 +52,7 @@ class base_state {
         std::bind(&base_state::handle_reslogin, this, std::placeholders::_1));
 
     std::string uid;
-    std::cout << "type user name to login" << std::endl;
+    prompt() << "type user name to login";
     std::cin >> uid;
     send_login(uid);
   }
@@ -60,27 +60,9 @@ class base_state {
   void send_login(const std::string& uid) {
     ReqLogin login;
     login.set_uid(uid);
-    auto payload = login.SerializeAsString();
-    const auto content_len = login.ByteSizeLong();
-    raw_buffer message;
-    namespace msg = rsp::libs::message;
-    msg::mset(&message, content_len);
-    msg::mset(&message, static_cast<int>(MessageType::kReqLogin));
-    // std::cout << "message:" << msg::to_string(message) << std::endl;
-    logger_.trace() << "type:"
-                    << msg::to_string(static_cast<int>(MessageType::kReqLogin))
-                    << lg::L_endl;
-    message.insert(message.end(), payload.begin(), payload.end());
-    logger_.debug() << "message size:" << message.size() << lg::L_endl;
-    // std::cout << "message:" << msg::to_string(message) << std::endl;
+    auto message = rsp::libs::message::serializer::serialize(
+        MessageType::kReqLogin, login);
     socket_->send(boost::asio::buffer(message));
-  }
-
-  base_state* handle_buffer(shared_mutable_buffer buf, size_t len) {
-    logger_.debug() << "handle_buffer" << len << "," << buf.end() - buf.begin()
-                    << "," << buf.data_end() - buf.data_begin() << lg::L_endl;
-    // interpreter_.handle_buffer(buf);
-    return this;
   }
 
   base_state* handle_buffer(std::array<char, 128> buf, size_t len) {
@@ -90,15 +72,10 @@ class base_state {
 
   void handle_reslogin(buffer_ptr buffer) {
     ResLogin login;
-    std::string str{buffer->begin(), buffer->end()};
-    if (!login.ParseFromString(str)) {
+    if (!rsp::libs::message::serializer::deserialize(*buffer, &login)) {
       logger_.error() << "failed to parse reslogin" << lg::L_endl;
     }
 
-    if (!login.success()) {
-      logger_.error() << "failed to login (" << login.uid()
-                      << "), bytes: " << login.ByteSizeLong() << lg::L_endl;
-    }
     logger_.info() << "success to login:" << login.uid() << lg::L_endl;
   }
 
