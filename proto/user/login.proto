@@ -7,4 +7,14 @@ message ReqLogin {
 message ResLogin {
   bool success = 1;
   string uid = 2;
+  bool is_attached = 3;
+  int32 room_id = 4;
+}
+
+message ReqLogout {
+  string uid = 1;
+}
+
+message ResLogout {
+  string uid = 1;
 }

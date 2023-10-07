@@ -29,14 +29,15 @@ using job_scheduler = libs::job::job_scheduler;
 using link = rsp::libs::link::link;
 using handler2 = rsp::libs::message::handler2;
 
+#define REG_HANDLER(dispatcher, type, handler) \
+  dispatcher.register_handler2(                \
+      type, std::bind(&message_dispatcher::handler, this, ph::_1, ph::_2))
+
 class message_dispatcher : public dispatcher_interface {
  public:
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
-    // TODO(@nolleh) looks like it is better change this logic to macro
-    dispatcher_.register_handler2(
-        MessageType::kReqLogin,
-        std::bind(&message_dispatcher::handle_buffer_req_login, this, ph::_1,
-                  ph::_2));
+    REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer_req_login);
+    REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer_req_logout);
   }
 
   void dispatch(MessageType type, const raw_buffer& buffer,
@@ -49,14 +50,25 @@ class message_dispatcher : public dispatcher_interface {
   // let's consider after development was got some where.
   void handle_buffer_req_login(buffer_ptr buffer, link* l) {
     ReqLogin req_login;
-    auto success = message::serializer::deserialize(*buffer, &req_login);
+    pass_to_session(buffer, &req_login, l);
+  }
+
+  void handle_buffer_req_logout(buffer_ptr buffer, link* l) {
+    ReqLogout req_logout;
+    pass_to_session(buffer, &req_logout, l);
+  }
+
+  template <typename Message>
+  void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
+    auto success = message::serializer::deserialize(*buffer, message);
     if (!success) {
       std::cout << "something wrong. failed to parse login message"
                 << std::endl;
       return;
     }
+
     auto session = dynamic_cast<session::session*>(l);
-    session->on_recv(req_login);
+    session->on_recv(*message);
   }
 
  private:

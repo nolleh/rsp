@@ -7,6 +7,7 @@
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
 #include "rsplib/link/link.hpp"
+#include "rsplib/logger/logger.hpp"
 #include "rsplib/server/tcp_connection.hpp"
 
 namespace rsp {
@@ -27,6 +28,7 @@ enum class UserState {
   kInRoom,
 };
 
+namespace lg = rsp::libs::logger;
 class session : public link, public std::enable_shared_from_this<session> {
  public:
   explicit session(server::connection_ptr conn)
@@ -53,8 +55,12 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   template <typename Message>
   void on_recv(Message&& msg) {
-    std::cerr << "session - on_recv, unknown message" << std::endl;
+    lg::logger().error() << "session - on_recv, unknown message" << lg::L_endl;
     // throw std::exception();
+  }
+
+  uint16_t room_id() {
+    return room_id_;
   }
 
  private:

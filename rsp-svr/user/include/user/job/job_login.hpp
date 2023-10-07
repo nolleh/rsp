@@ -34,13 +34,15 @@ class job_login : public job {
     // TODO(@nolleh) signup / login process.
     // session_ = std::dynamic_pointer_cast<session>(link);
     session_ = dynamic_cast<session*>(link);
-    send_reslogin(request_.uid());
+    send_res_login(request_.uid(), session_);
   }
 
-  void send_reslogin(std::string uid) const {
+  void send_res_login(std::string uid, session* session) const {
     ResLogin login;
     login.set_uid(uid);
     login.set_success(true);
+    login.set_is_attached(session->room_id() ? true : false);
+    login.set_room_id(session->room_id());
 
     const auto buffer =
         message::serializer::serialize(MessageType::kResLogin, login);
