@@ -32,6 +32,7 @@ class state_login : public base_state {
 
     if (command == "1") {
       send_logout();
+      close();
     }
   }
 
@@ -48,7 +49,9 @@ class state_login : public base_state {
       return;
     }
 
-    logger_.info() << "success to logout:" << logout.uid() << lg::L_endl;
+    logger_.info() << "success to logout, bye bye:" << logout.uid()
+                   << lg::L_endl;
+    close();
     next_ = State::kInit;
   }
 
@@ -58,7 +61,6 @@ class state_login : public base_state {
         MessageType::kReqLogout, logout);
     socket_->send(boost::asio::buffer(message));
   }
-  // prompt<state_login> prompt_;
 };
 }  // namespace state
 }  // namespace cli

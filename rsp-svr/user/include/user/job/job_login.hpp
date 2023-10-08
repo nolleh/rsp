@@ -35,6 +35,7 @@ class job_login : public job {
     // session_ = std::dynamic_pointer_cast<session>(link);
     session_ = dynamic_cast<session*>(link);
     send_res_login(request_.uid(), session_);
+    session_->set_user(request_.uid());
   }
 
   void send_res_login(std::string uid, session* session) const {

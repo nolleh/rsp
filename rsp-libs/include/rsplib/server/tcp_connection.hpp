@@ -2,16 +2,19 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
 
 #include "rsplib/buffer/shared_const_buffer.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
+#include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
 
 namespace rsp {
@@ -28,14 +31,18 @@ namespace ph = std::placeholders;
 using conn_interpreter = message::conn_interpreter;
 namespace lg = logger;
 using link = link::link;
+using raw_buffer = message::raw_buffer;
 
 class tcp_connection;
 using connection_ptr = std::shared_ptr<tcp_connection>;
 using dispatcher = message::message_dispatcher_interface;
 
+// https://www.boost.org/doc/libs/1_83_0/doc/html/boost_asio/net_ts.html
+// looks like many things changed in modern (including coruitine)
+// after development got some where, let's change as modern form
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
-  static constexpr int LEN_BYTE = 128;
+  static constexpr int kBufBytes = 128;
   static connection_ptr create(boost::asio::io_context* io_context,
                                dispatcher* dispatcher) {
     return std::shared_ptr<tcp_connection>(
@@ -45,30 +52,28 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   tcp::socket& socket() { return socket_; }
 
   void start(size_t len) {
-    // TODO(@nolleh) std::wrap?
     // std::vector<char> bufvec(len);
     // buffer::shared_mutable_buffer buffer{bufvec};
     // std::array<char, LEN_BYTE> bufarr;
-    lg::logger().info() << "start async read, len:" << len << lg::L_endl;
-    auto ptr = std::shared_ptr<std::array<char, LEN_BYTE>>(
-        new std::array<char, LEN_BYTE>);
-    socket_.async_read_some(boost::asio::buffer(*ptr),
-                            std::bind(&tcp_connection::handle_read,
-                                      shared_from_this(), ptr, ph::_1, ph::_2));
+    strand_.post(
+        std::bind(&tcp_connection::start_impl, shared_from_this(), len));
   }
 
-  void stop() { socket_.close(); }
+  void stop() {
+    strand_.dispatch(
+        boost::bind(&tcp_connection::stop_impl, shared_from_this()));
+  }
 
-  template <typename Message>
-  void send(Message msg) {
-    std::string bytes;
-    auto success = msg.SerializeToString(&bytes);
-    if (!success) {
-      lg::logger().error() << "failed to serialize message" << lg::L_endl;
-    }
-    // REMARK(@nolleh) looks like template speiclaization is hard to deduce &
-    // type. to avoid unneccessary copy, invoke impl function
-    send_impl(bytes);
+  void stop(const boost::system::error_code& ec) {
+    strand_.dispatch(
+        boost::bind(&tcp_connection::stop_impl, shared_from_this(), ec));
+  }
+
+  // no handle for message type, just send buffer
+  void send(const raw_buffer& msg) {
+    buffer::shared_const_buffer buffer{msg};
+    strand_.post(
+        std::bind(&tcp_connection::send_impl, shared_from_this(), buffer));
   }
 
   void attach_link(link* link) {
@@ -86,16 +91,62 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   // TODO(@nolleh) consider options for linger / nagle
   explicit tcp_connection(boost::asio::io_context* io_context,
                           dispatcher* dispatcher)
-      : socket_(*io_context), interpreter_(dispatcher) {}
+      : strand_(*io_context), socket_(*io_context), interpreter_(dispatcher) {}
 
-  void send_impl(const std::string& msg) {
-    // TODO(@nolleh) warp?
-    lg::logger().debug() << msg << lg::L_endl;
-    buffer::shared_const_buffer buffer{msg};
-    boost::asio::async_write(
-        socket_, buffer,
-        std::bind(&tcp_connection::handle_write, shared_from_this(), buffer,
-                  ph::_1, ph::_2));
+  void start_impl(size_t len) {
+    if (!socket_.is_open()) return;
+    lg::logger().info() << "start async read, len:" << len << lg::L_endl;
+    auto ptr = std::shared_ptr<std::array<char, kBufBytes>>(
+        new std::array<char, kBufBytes>);
+
+    namespace asio = boost::asio;
+    auto wrap = asio::bind_executor(
+        strand_, std::bind(&tcp_connection::handle_read, shared_from_this(),
+                           ptr, ph::_1, ph::_2));
+    socket_.async_read_some(asio::buffer(*ptr), wrap);
+  }
+
+  void stop_impl() {
+    // https://stackoverflow.com/questions/12794107/why-do-i-need-strand-per-connection-when-using-boostasio/12801042#12801042
+    namespace asio = boost::asio::ip;
+    // for now, allow serverside close without restriction.
+    if (!socket_.is_open()) {
+      return;
+    }
+
+    boost::system::error_code shutdown_ec;
+    socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
+    // if (shutdown_ec)
+    //   lg::logger().debug() << "shutdown error" << shutdown_ec
+    //                        << shutdown_ec.message() << lg::L_endl;
+    sent_shutdown_ = true;
+    lg::logger().debug() << "activate close" << lg::L_endl;
+  }
+
+  void stop_impl(const boost::system::error_code& ec) {
+    if (!socket_.is_open()) return;
+    auto& logger = lg::logger();
+    namespace asio = boost::asio::ip;
+    if (sent_shutdown_) {
+      logger.debug() << "client also shutdowned" << lg::L_endl;
+      socket_.close();
+      return;
+    }
+    logger.debug() << "ec" << ec.message() << ", shutdown" << lg::L_endl;
+    boost::system::error_code shutdown_ec;
+    socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
+    if (shutdown_ec)
+      logger.error() << "shutdown error" << shutdown_ec << lg::L_endl;
+    socket_.close();
+  }
+
+  void send_impl(buffer::shared_const_buffer buffer) {
+    if (!socket_.is_open()) return;
+    namespace asio = boost::asio;
+    auto handler = asio::bind_executor(
+        strand_, std::bind(&tcp_connection::handle_write, shared_from_this(),
+                           buffer, ph::_1, ph::_2));
+    asio::async_write(socket_, buffer, handler);
   }
 
   void handle_write(buffer::shared_const_buffer buffer,
@@ -112,11 +163,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void handle_read(
       // buffer::shared_mutable_buffer buffer,
-      const std::shared_ptr<std::array<char, LEN_BYTE>>& arr,
+      const std::shared_ptr<std::array<char, kBufBytes>>& arr,
       const boost::system::error_code& error, size_t bytes) {
     if (boost::asio::error::eof == error) {
-      lg::logger().debug() << "conn: closed" << lg::L_endl;
-      stop();
+      lg::logger().debug() << "conn: eof" << lg::L_endl;
+      stop(error);
       return;
     }
 
@@ -138,22 +189,16 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     lg::logger().trace() << "conn: read...message size(" << bytes << ")"
                          << lg::L_endl;
     interpreter_.handle_buffer(*arr, bytes);
-    start(LEN_BYTE);
+    start(kBufBytes);
   }
 
+  boost::asio::io_context::strand strand_;
   tcp::socket socket_;
   conn_interpreter interpreter_;
   std::mutex m_;
   link* link_;
+  std::atomic<bool> sent_shutdown_;
 };
-
-// TODO(@nolleh) refactor
-template <>
-void tcp_connection::send(const char* msg);
-template <>
-void tcp_connection::send(std::basic_string<char> msg);
-template <>
-void tcp_connection::send(std::vector<char> msg);
 
 }  // namespace server
 }  // namespace libs

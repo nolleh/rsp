@@ -19,6 +19,7 @@ class link {
   ~link() { connection_->stop(); }
 
   virtual void on_connected() = 0;
+  virtual void on_disconnected() = 0;
   virtual void on_closed() { connection_->detach_link(); }
 
   const server::connection_ptr& conn_ptr() const { return connection_; }

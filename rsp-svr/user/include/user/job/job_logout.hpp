@@ -25,11 +25,12 @@ class job_logout : public rsp::libs::job::job {
     lg::logger().debug() << "job_logout: " << request_.uid() << lg::L_endl;
     auto s = dynamic_cast<session*>(link);
     send_res_logout(s);
-    session_manager::instance().remove_session(*s);
+    s->enqueue_stop();
   }
 
   void send_res_logout(session* session) {
     ResLogout logout;
+    logout.set_uid(session->uid());
     auto buffer = rsp::libs::message::serializer::serialize(
         MessageType::kResLogout, logout);
     session->send(buffer);

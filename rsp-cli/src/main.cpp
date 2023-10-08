@@ -7,7 +7,6 @@
 
 #include "rspcli/state/factory.hpp"
 #include "rspcli/state/state.hpp"
-#include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 
 // #include <boost/array.hpp>
@@ -29,30 +28,28 @@ int main(int argc, char *argv[]) {
 
     ip::tcp::resolver resolver(io_context);
     ip::tcp::resolver::query query(argv[1], "8080");
-    // io::tcp::resolver::results_type endpoints =
-    //     resolver.resolve(argv[1], "daytime");
 
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
 
-    // auto state = std::make_unique<rsp_cli::state::base_state>(&socket);
     auto next = rsp_cli::state::State::kInit;
     for (;;) {
       auto client = rsp_cli::state::factory::create(next, &socket);
       client->init();
       std::array<char, 128> buf;
       boost::system::error_code error;
-      // std::vector<char> buf(22);
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
 
       if (error == boost::asio::error::eof) {
-        logger.debug() << "closed" << lg::L_endl;
+        logger.info() << "eof" << lg::L_endl;
+        client->close(error);
         break;
       } else if (error) {
         throw boost::system::system_error(error);
+      } else {
+        next = client->handle_buffer(buf, len);
       }
-      next = client->handle_buffer(buf, len);
     }
   } catch (std::exception &e) {
     logger.error() << e.what() << lg::L_endl;

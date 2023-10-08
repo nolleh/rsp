@@ -3,6 +3,7 @@
 #pragma once
 // logged in users
 #include <memory>
+#include <string>
 
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
@@ -48,9 +49,14 @@ class session : public link, public std::enable_shared_from_this<session> {
     // TODO(@nolleh) notify to other servers that user attached
   }
 
-  // connection was closed
-  void on_closed() override {
+  // unexpected discon
+  void on_disconnected() override {
     // TODO(@nolleh) notify to other servers that user detached
+  }
+
+  // by client/server, requested closed was done
+  void on_closed() override {
+    // nothing todo
   }
 
   template <typename Message>
@@ -59,13 +65,22 @@ class session : public link, public std::enable_shared_from_this<session> {
     // throw std::exception();
   }
 
-  uint16_t room_id() {
-    return room_id_;
-  }
+  void enqueue_stop();
+
+  void set_user(const std::string& uid) { uid_ = uid; }
+
+  std::string uid() { return uid_; }
+
+  uint16_t room_id() { return room_id_; }
 
  private:
+  void enqueue_job(libs::job::job_ptr job) {
+    scheduler_.push_and_run(job, this);
+  }
+
   job_scheduler scheduler_;
   UserState state_;
+  std::string uid_;
   uint16_t room_id_;
 };
 

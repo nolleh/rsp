@@ -95,15 +95,38 @@ class base_state {
 
   friend std::ostream& operator<<(std::ostream&, const base_state&);
 
+  void close() {
+    namespace asio = boost::asio::ip;
+    boost::system::error_code shutdown_ec;
+    socket_->shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
+    if (shutdown_ec)
+      logger_.error() << "shutdown error" << shutdown_ec << lg::L_endl;
+    sent_shutdown_ = true;
+    logger_.debug() << "activate close" << lg::L_endl;
+  }
+
+  void close(boost::system::error_code ec) {
+    namespace asio = boost::asio::ip;
+    if (sent_shutdown_) {
+      socket_->close();
+      return;
+    }
+    logger_.debug() << "ec" << ec.message() << ", shutdown" << lg::L_endl;
+    boost::system::error_code shutdown_ec;
+    socket_->shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
+    if (shutdown_ec)
+      logger_.error() << "shutdown error" << shutdown_ec << ":"
+                      << shutdown_ec.message() << lg::L_endl;
+    socket_->close();
+  }
+
  protected:
   explicit base_state(socket* socket)
       : socket_(socket),
         dispatcher_(message_dispatcher::instance()),
         interpreter_(&dispatcher_),
         logger_(lg::logger()),
-        prompt_(this) {
-    // init();
-  }
+        prompt_(this) {}
 
   State state_ = State::kInit;
   socket* socket_;
@@ -111,6 +134,7 @@ class base_state {
   State next_;
   lg::s_logger& logger_;
   prompt<base_state> prompt_;
+  bool sent_shutdown_;
 
  private:
   conn_interpreter interpreter_;
