@@ -1,6 +1,7 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
+
 #include <memory>
 #include <mutex>
 #include <string>

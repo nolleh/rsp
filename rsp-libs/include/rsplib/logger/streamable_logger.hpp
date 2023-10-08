@@ -64,6 +64,8 @@ class s_logger {
   }
 
   s_logger &operator<<(const std::source_location &s) {
+    if (!has_meet_level()) return *this;
+
     const auto name = [](const std::source_location &s) {
       const std::string filename = s.file_name();
       return filename.substr(filename.find_last_of('/') + 1);
