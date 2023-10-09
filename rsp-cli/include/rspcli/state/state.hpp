@@ -29,6 +29,7 @@ enum class State {
   kInit,
   kLoggedIn,
   kInRoom,
+  kExit,
 };
 
 using socket = boost::asio::ip::tcp::socket;
@@ -100,7 +101,8 @@ class base_state {
     boost::system::error_code shutdown_ec;
     socket_->shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
     if (shutdown_ec)
-      logger_.error() << "shutdown error" << shutdown_ec << lg::L_endl;
+      logger_.error() << "shutdown error" << shutdown_ec << ":"
+                      << shutdown_ec.message() << lg::L_endl;
     sent_shutdown_ = true;
     logger_.debug() << "activate close" << lg::L_endl;
   }

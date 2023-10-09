@@ -22,8 +22,8 @@ class job_logout : public rsp::libs::job::job {
 
   void run(rsp::libs::link::link* link) {
     namespace lg = rsp::libs::logger;
-    lg::logger().debug() << "job_logout: " << request_.uid() << lg::L_endl;
     auto s = dynamic_cast<session*>(link);
+    lg::logger().debug() << "job_logout: " << s->uid() << lg::L_endl;
     send_res_logout(s);
     s->enqueue_stop();
   }

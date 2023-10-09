@@ -32,7 +32,6 @@ class state_login : public base_state {
 
     if (command == "1") {
       send_logout();
-      close();
     }
   }
 
@@ -52,7 +51,7 @@ class state_login : public base_state {
     logger_.info() << "success to logout, bye bye:" << logout.uid()
                    << lg::L_endl;
     close();
-    next_ = State::kInit;
+    next_ = State::kExit;
   }
 
   void send_logout() {

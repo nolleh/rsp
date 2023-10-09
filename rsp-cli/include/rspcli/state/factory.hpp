@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "rspcli/state/state.hpp"
-#include "rspcli/state/state_login.hpp"
 
 namespace rsp {
 namespace cli {
