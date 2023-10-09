@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
 #include <memory>
 #include <set>
+
+#include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
 
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
@@ -25,14 +26,15 @@ class tcp_server {
   // using logger = logger::logger;
 
  public:
-  static const int LEN_BYTE = 128;
+  static const int kBufBytes = 128;
   explicit tcp_server(dispatcher* dispatcher)
       : acceptor_threads_(2),
-        io_threads_(10),
+        // REMARK(@nolleh) not productional #. this is for conv dev
+        // TODO(@nolleh) configuration feature
+        io_threads_(5),
         acceptor_(*acceptor_threads_.io_context(),
                   tcp::endpoint(tcp::v4(), 8080)),
-        dispatcher_(dispatcher) {
-  }
+        dispatcher_(dispatcher) {}
 
   ~tcp_server() { stop(); }
 
@@ -72,7 +74,7 @@ class tcp_server {
   void handle_accept(std::shared_ptr<tcp_connection> new_connection,
                      const boost::system::error_code& error) {
     if (!error) {
-      new_connection->start(LEN_BYTE);
+      new_connection->start(kBufBytes);
     }
 
     notify_on_created(new_connection);

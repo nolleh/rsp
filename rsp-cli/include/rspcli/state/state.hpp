@@ -119,6 +119,7 @@ class base_state {
     if (shutdown_ec)
       logger_.error() << "shutdown error" << shutdown_ec << ":"
                       << shutdown_ec.message() << lg::L_endl;
+    sent_shutdown_ = true;
     socket_->close();
   }
 

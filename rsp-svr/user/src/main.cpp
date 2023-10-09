@@ -8,7 +8,7 @@
 #include "rsplib/server/tcp_server.hpp"
 #include "user/config.h"
 #include "user/message/message_dispatcher.hpp"
-#include "user/server/connection.hpp"
+#include "user/server/acceptor.hpp"
 
 int main() {
   namespace server = rsp::libs::server;

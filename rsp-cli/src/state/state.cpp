@@ -20,6 +20,10 @@ std::ostream& operator<<(std::ostream& os, const base_state& state) {
     case State::kInRoom:
       str = "InRoom";
       break;
+
+    case State::kExit:
+      str = "Exit";
+      break;
   }
   os << "[Client:" << &state << "] current state: " << str;
   return os;

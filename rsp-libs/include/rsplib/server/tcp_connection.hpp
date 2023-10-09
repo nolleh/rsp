@@ -110,10 +110,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // https://stackoverflow.com/questions/12794107/why-do-i-need-strand-per-connection-when-using-boostasio/12801042#12801042
     namespace asio = boost::asio::ip;
     // for now, allow serverside close without restriction.
-    if (!sent_shutdown_ || !socket_.is_open()) {
+    if (sent_shutdown_ || !socket_.is_open()) {
       return;
     }
 
+    lg::logger().trace() << "run" << lg::L_endl;
     boost::system::error_code shutdown_ec;
     socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
     // if (shutdown_ec)
@@ -125,6 +126,8 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void stop_impl(const boost::system::error_code& ec) {
     if (!socket_.is_open()) return;
+
+    lg::logger().trace() << "run:" << ec.message() << lg::L_endl;
     auto& logger = lg::logger();
     namespace asio = boost::asio::ip;
     if (sent_shutdown_) {
@@ -137,6 +140,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
     if (shutdown_ec)
       logger.error() << "shutdown error" << shutdown_ec << lg::L_endl;
+    sent_shutdown_ = true;
     socket_.close();
   }
 

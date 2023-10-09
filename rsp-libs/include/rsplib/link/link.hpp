@@ -16,7 +16,9 @@ using connection_ptr = rsp::libs::server::connection_ptr;
 class link {
  public:
   explicit link(connection_ptr conn) : connection_(conn) {}
-  ~link() { connection_->stop(); }
+  ~link() {
+    // stop();
+  }
 
   virtual void on_connected() = 0;
   virtual void on_disconnected() = 0;

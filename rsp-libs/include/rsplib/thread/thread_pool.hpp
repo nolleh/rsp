@@ -2,11 +2,12 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
+
 #include <boost/asio.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/bind.hpp>
-#include <functional>
-#include <memory>
 
 #include "rsplib/logger/logger.hpp"
 
@@ -52,13 +53,28 @@ class thread_pool {
     log::logger().debug() << "stop # of thread(" + std::to_string(size_) + ")"
                           << log::L_endl;
     io_context_.stop();
-    thread_pool_->join();
+    join();
     thread_pool_.reset();
+    log::logger().info() << "stopped # of thread (" + std::to_string(size_) +
+                                ")"
+                         << log::L_endl;
   }
 
   template <typename Func>
   void post(Func func) {
     io_context_.post(func);
+  }
+
+  template <typename Func>
+  void dispatch(Func func) {
+    io_context_.dispatch(func);
+  }
+
+  template <typename Func>
+  boost::asio::executor_binder<
+      Func, decltype(std::declval<boost::asio::io_context>().get_executor())>
+  wrap(Func func) {
+    return boost::asio::bind_executor(io_context_, func);
   }
 
  private:

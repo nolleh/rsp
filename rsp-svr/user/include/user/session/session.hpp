@@ -10,17 +10,11 @@
 #include "rsplib/link/link.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/server/tcp_connection.hpp"
+#include "user/server/worker.hpp"
 
 namespace rsp {
 namespace user {
 namespace session {
-
-namespace server = libs::server;
-using link = libs::link::link;
-using job_scheduler = libs::job::job_scheduler;
-
-class session;
-using session_ptr = std::shared_ptr<session>;
 
 enum class UserState {
   kLogouted,
@@ -29,14 +23,19 @@ enum class UserState {
   kInRoom,
 };
 
+using link = libs::link::link;
+namespace server = libs::server;
 namespace lg = rsp::libs::logger;
+using job_scheduler = libs::job::job_scheduler;
+using worker = rsp::user::server::worker;
+
+class session;
+using session_ptr = std::shared_ptr<session>;
+
 class session : public link, public std::enable_shared_from_this<session> {
  public:
   explicit session(server::connection_ptr conn)
-      : link(conn),
-        // scheduler_(shared_from_this()),
-        // scheduler_(std::dynamic_pointer_cast<link_ptr>(shared_from_this())),
-        state_(UserState::kLogouted) {
+      : worker_(worker::instance()), link(conn), state_(UserState::kLogouted) {
     session* self = this;
     conn->attach_link(self);
   }
@@ -75,10 +74,12 @@ class session : public link, public std::enable_shared_from_this<session> {
 
  private:
   void enqueue_job(libs::job::job_ptr job) {
-    scheduler_.push_and_run(job, this);
+    auto runner = worker_.wrap(std::bind(&libs::job::job::run, job, this));
+    scheduler_.push_and_run(runner);
   }
 
   job_scheduler scheduler_;
+  worker& worker_;
   UserState state_;
   std::string uid_;
   uint16_t room_id_;

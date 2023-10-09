@@ -16,7 +16,7 @@ class state_exit : public base_state {
     return std::shared_ptr<state_exit>(new state_exit(socket));
   }
 
-  virtual void init() {
+  void init() override {
     prompt_ << "closing...";
     return;
   }
