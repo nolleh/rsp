@@ -32,11 +32,9 @@ class thread_pool {
                          << log::L_endl;
     // start processing loop. make post() start executing
     asio::io_context::work work(io_context_);
-    for (std::size_t i = 0; i < size_; ++i) {
-      // https://stackoverflow.com/questions/10555566/difference-between-c11-stdbind-and-boostbin
-      thread_pool_->create_thread(
-          boost::bind(&asio::io_context::run, &io_context_));
-    }
+    // https://stackoverflow.com/questions/10555566/difference-between-c11-stdbind-and-boostbin
+    thread_pool_->create_threads(
+        boost::bind(&asio::io_context::run, &io_context_), size_);
   }
 
   void join() {

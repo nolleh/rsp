@@ -17,7 +17,7 @@ class link {
  public:
   explicit link(connection_ptr conn) : connection_(conn) {}
   ~link() {
-    // stop();
+    stop();
   }
 
   virtual void on_connected() = 0;

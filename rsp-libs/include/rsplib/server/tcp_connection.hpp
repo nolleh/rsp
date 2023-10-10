@@ -55,22 +55,26 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // std::vector<char> bufvec(len);
     // buffer::shared_mutable_buffer buffer{bufvec};
     // std::array<char, LEN_BYTE> bufarr;
+    lg::logger().debug() << "post impl" << lg::L_endl;
     strand_.post(
         std::bind(&tcp_connection::start_impl, shared_from_this(), len));
   }
 
   void stop() {
+    lg::logger().debug() << "post impl" << lg::L_endl;
     strand_.dispatch(
         boost::bind(&tcp_connection::stop_impl, shared_from_this()));
   }
 
   void stop(const boost::system::error_code& ec) {
+    lg::logger().debug() << "post impl" << lg::L_endl;
     strand_.dispatch(
         boost::bind(&tcp_connection::stop_impl, shared_from_this(), ec));
   }
 
   // no handle for message type, just send buffer
   void send(const raw_buffer& msg) {
+    lg::logger().debug() << "post impl" << lg::L_endl;
     buffer::shared_const_buffer buffer{msg};
     strand_.post(
         std::bind(&tcp_connection::send_impl, shared_from_this(), buffer));
@@ -120,8 +124,10 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // if (shutdown_ec)
     //   lg::logger().debug() << "shutdown error" << shutdown_ec
     //                        << shutdown_ec.message() << lg::L_endl;
+    lg::logger().debug() << "activate close, sent(" << sent_shutdown_.load()
+                         << "), shutdown_ec:" << shutdown_ec.message()
+                         << ", open:" << socket_.is_open() << lg::L_endl;
     sent_shutdown_ = true;
-    lg::logger().debug() << "activate close" << lg::L_endl;
   }
 
   void stop_impl(const boost::system::error_code& ec) {

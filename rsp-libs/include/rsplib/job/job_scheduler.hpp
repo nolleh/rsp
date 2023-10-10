@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <utility>
 
 #include <boost/asio.hpp>
 
@@ -23,6 +24,19 @@ namespace job {
 class job_scheduler {
  public:
   using link = link::link;
+
+  ~job_scheduler() {
+    auto& logger = logger::logger();
+    logger.trace() << "detroy job scheduler" << logger::L_endl;
+    clear();
+    logger.debug() << "fin destroy job scheduler" << logger::L_endl;
+  }
+
+  void clear() {
+    std::lock_guard<std::mutex> lock(m_);
+    std::queue<std::function<void()>> empty;
+    std::swap(q_, empty);
+  }
 
   void run() {
     auto& logger = logger::logger();
@@ -65,7 +79,7 @@ class job_scheduler {
   }
 
   template <typename Func>
-  void push_and_run(Func func) {
+  void push_and_run_with_func(Func func) {
     {
       std::lock_guard<std::mutex> lock(m_);
       q_.push(func);

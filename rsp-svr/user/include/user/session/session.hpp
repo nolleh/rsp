@@ -35,15 +35,18 @@ using session_ptr = std::shared_ptr<session>;
 class session : public link, public std::enable_shared_from_this<session> {
  public:
   explicit session(server::connection_ptr conn)
-      : worker_(worker::instance()), link(conn), state_(UserState::kLogouted) {
+      : worker_(worker::instance()),
+        scheduler_(std::make_shared<job_scheduler>()),
+        link(conn),
+        state_(UserState::kLogouted) {
     session* self = this;
     conn->attach_link(self);
   }
 
   ~session() {
     // session destroy meaning logout
+    lg::logger().trace() << "destroy session" << lg::L_endl;
   }
-
   void on_connected() override {
     // TODO(@nolleh) notify to other servers that user attached
   }
@@ -74,11 +77,12 @@ class session : public link, public std::enable_shared_from_this<session> {
 
  private:
   void enqueue_job(libs::job::job_ptr job) {
-    auto runner = worker_.wrap(std::bind(&libs::job::job::run, job, this));
-    scheduler_.push_and_run(runner);
+    worker_.post(
+        std::bind(&job_scheduler::push_and_run, scheduler_, job, this));
+    lg::logger().trace() << "enqueue finished" << std::endl;
   }
 
-  job_scheduler scheduler_;
+  std::shared_ptr<job_scheduler> scheduler_;
   worker& worker_;
   UserState state_;
   std::string uid_;
