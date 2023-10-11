@@ -56,6 +56,10 @@ add_executable(LibsTest
   ${TEST}
 )
 
+target_include_directories(LibsTest PRIVATE
+  ${PROJECT_BINARY_DIR}
+)
+
 target_link_libraries(LibsTest
   GTest::gtest_main
   Libs
