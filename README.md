@@ -11,7 +11,7 @@ developement by [@nolleh](mailto:nolleh7707@gmail.com)
 it aims to make room based socket server platform in production level for core parts.
 (long term project, and this will be progressed in my leisure time, so getting longer.)
 
-- IF YOU IMPLEMENT CONTENTS LOGIC WITH SHARED_LIBRARY TO ROOM SERVER, MULTITHREADING / NETWORK / SESSION MANAGEMENT WILL BE NO NEED TO CARE, JUST CONCENTRATE ON YOUR BUSINESS LOGIC IN ROOM 
+- 😎 if you implement contents logic with shared_library to room server, multithreading / network / session management will be no need to care, just concentrate on your business logic in room 
 
 terms `room based` meaning
 > user can explore rooms that open to match, and enter a room that selected by user or 
