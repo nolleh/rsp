@@ -11,6 +11,8 @@ developement by [@nolleh](mailto:nolleh7707@gmail.com)
 it aims to make room based socket server platform in production level for core parts.
 (long term project, and this will be progressed in my leisure time, so getting longer.)
 
+- IF YOU IMPLEMENT CONTENTS LOGIC WITH SHARED_LIBRARY TO ROOM SERVER, MULTITHREADING / NETWORK / SESSION MANAGEMENT WILL BE NO NEED TO CARE, JUST CONCENTRATE ON YOUR BUSINESS LOGIC IN ROOM 
+
 terms `room based` meaning
 > user can explore rooms that open to match, and enter a room that selected by user or 
 > randomly, that open to that user by conditions (like ranking point or money)
@@ -22,8 +24,10 @@ terms `socket server` meaning
 > using binary protocol and protobuf (far-much-lighter ~but hard to debug~ than that of json or...)
 
 terms `platform` meaning
-> can be used other business logic.  
-> meaning: after enter the room, the rooms' logic is changable by shared library
+> can be used other business logic by using shared_library
+> meaning:   
+> 1. after enter the room, communication between client <-> server is bypassed to library (contents logic), so with this platform, you can implement `ANY` (Game/Chatting) logic that need to communicate with `same room users` that CANNOT BE (effectively) accomplished with `http`
+> 2. after enter the room, the rooms' logic is `ALSO` changeable by shared library `WHILE RUNNING SERVER` (with-no-shutdown-time)
 
 it is open to use,  
 but plz represent where it [from](https://github.com/nolleh/rsp) and  

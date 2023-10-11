@@ -13,7 +13,7 @@ if [ $DEBUG == "true" ]; then
 	# $OPTION='-E env CXXFLAGS="-Wall"'
 	OPTION="-DCMAKE_BUILD_TYPE=Debug"
 else
-	OPTION="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+	OPTION="-DCMAKE_BUILD_TYPE=Release"
 fi
 
 mkdir -p build

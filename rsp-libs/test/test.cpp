@@ -3,7 +3,7 @@
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h>
 
-TEST(MessageTest, Test) {
+TEST(gTest, SimpleTest) {
   int a = 0;
   int b = 0;
 
