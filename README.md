@@ -12,7 +12,7 @@ it aims to make room based socket server platform in production level for core p
 (long term project, and this will be progressed in my leisure time, so getting longer.)
 
 - 😎 if you implement contents logic with shared_library to room server,    
-multithreading / network / session management will be no need to care,  
+multithreading / network / session management no need to be cared,  
 just concentrate on your business logic in room 
 
 terms `room based` meaning
