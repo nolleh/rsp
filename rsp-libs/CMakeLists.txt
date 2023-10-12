@@ -36,16 +36,15 @@ add_library(Libs
   ${SRC}
 )
 
-target_include_directories(Libs PRIVATE
+target_include_directories(Libs PUBLIC
   ${Boost_DIR}/include
   ${PROJECT_SOURCE_DIR}/include
   ${Proto_DIR}
 )
 
-target_link_directories(Libs PRIVATE
+target_link_directories(Libs PUBLIC
   ${Boost_DIR}/lib
-  ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
-  protobuf
+  ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
 )
 
 enable_testing()
@@ -60,9 +59,12 @@ target_include_directories(LibsTest PRIVATE
   ${PROJECT_BINARY_DIR}
 )
 
-target_link_libraries(LibsTest
+target_link_libraries(LibsTest PRIVATE
   GTest::gtest_main
   Libs
+  ## added because link fail
+  protobuf
+  ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
 )
 
 include(GoogleTest)

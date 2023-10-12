@@ -8,7 +8,7 @@
 started @since 23.09.10  
 developement by [@nolleh](mailto:nolleh7707@gmail.com)
 
-it aims to make room based socket server platform in production level for core parts.
+it aims to make room based socket server platform(framework) in production level for core parts.
 (long term project, and this will be progressed in my leisure time, so getting longer.)
 
 - 😎 if you implement contents logic with shared_library to room server,    
