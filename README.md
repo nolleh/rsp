@@ -28,7 +28,8 @@ terms `socket server` meaning
 terms `platform` meaning
 > can be used other business logic by using shared_library
 > meaning:   
-> 1. after enter the room, communication between client <-> server is bypassed to library (contents logic), so with this platform, you can implement `ANY` (Game/Chatting) logic that need to communicate with `same room users` that CANNOT BE (effectively) accomplished with `http`
+> 1. after enter the room, communication between client <-> server is bypassed to library (contents logic),  
+so with this platform, you can implement `ANY` (Game/Chatting) logic that need to communicate between `same room users`
 > 2. after enter the room, the rooms' logic is `ALSO` changeable by shared library `WHILE RUNNING SERVER` (with-no-shutdown-time)
 
 it is open to use,  
