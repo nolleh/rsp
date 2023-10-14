@@ -39,7 +39,9 @@ int main(int argc, char *argv[]) {
       std::array<char, 128> buf;
       boost::system::error_code error;
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
+      logger.debug() << "start read" << lg::L_endl;
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
+      logger.debug() << "finish read" << lg::L_endl;
 
       if (error == boost::asio::error::eof) {
         logger.info() << "eof" << lg::L_endl;
@@ -49,6 +51,7 @@ int main(int argc, char *argv[]) {
         throw boost::system::system_error(error);
       } else {
         next = client->handle_buffer(buf, len);
+        logger.debug() << "finish handle buffer" << lg::L_endl;
       }
     }
   } catch (std::exception &e) {

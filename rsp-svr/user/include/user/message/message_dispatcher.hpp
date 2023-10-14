@@ -20,6 +20,7 @@ namespace rsp {
 namespace user {
 namespace message {
 
+namespace lg = rsp::libs::logger;
 namespace ph = std::placeholders;
 namespace message = libs::message;
 using dispatcher_interface = libs::message::message_dispatcher_interface;
@@ -37,11 +38,21 @@ class message_dispatcher : public dispatcher_interface {
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
     REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer_req_login);
     REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer_req_logout);
+
+    dispatcher_.register_unknown_message_handler(
+        std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }
 
   void dispatch(MessageType type, const raw_buffer& buffer,
                 link* link) override {
     dispatcher_.dispatch(type, buffer, link);
+  }
+
+  void handle_unknown(link* l) {
+    auto& logger = lg::logger();
+    logger.warn() << "received unknown message." << lg::L_endl;
+    auto session = dynamic_cast<session::session*>(l);
+    session->on_recv_unknown();
   }
 
   // TOOD(@nolleh) hum. actually now, no need to manage the buffer as s_ptr.
@@ -61,7 +72,6 @@ class message_dispatcher : public dispatcher_interface {
   void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
     auto success = message::serializer::deserialize(*buffer, message);
     if (!success) {
-      namespace lg = rsp::libs::logger;
       auto& logger = lg::logger();
       logger.error() << "something wrong. failed to parse login message"
                      << lg::L_endl;

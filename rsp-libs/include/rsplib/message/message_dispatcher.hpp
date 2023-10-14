@@ -41,6 +41,10 @@ class message_dispatcher: public message_dispatcher_interface {
     handlers2_[type] = f;
   }
 
+  void register_unknown_message_handler(std::function<void(link*)> f) override {
+    fail_handler_ = f;
+  }
+
   void unregister_handler(MessageType type) override {
     auto find = handlers_.find(type);
     if (handlers_.end() != find) {
@@ -56,9 +60,13 @@ class message_dispatcher: public message_dispatcher_interface {
   void dispatch(MessageType type, const raw_buffer& buffer) override {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler
-    logger_.trace() << "dispatch..." << lg::L_endl;
+    logger_.trace() << "dispatch..." << static_cast<int>(type) << lg::L_endl;
     auto iter = handlers_.find(type);
-    if (handlers_.end() == iter) return;
+    if (handlers_.end() == iter) {
+      logger_.trace() << "fail_handler..." << lg::L_endl;
+      fail_handler_(nullptr);
+      return;
+    }
 
     handler handler = iter->second;
     logger_.trace() << "handler..." << &handler << lg::L_endl;
@@ -73,7 +81,10 @@ class message_dispatcher: public message_dispatcher_interface {
 
     logger_.trace() << "dispatch..." << lg::L_endl;
     auto iter = handlers2_.find(type);
-    if (handlers2_.end() == iter) return;
+    if (handlers2_.end() == iter) {
+      fail_handler_(link);
+      return;
+    }
 
     handler2 handler = iter->second;
     logger_.trace() << "handler..." << &handler << lg::L_endl;
@@ -91,6 +102,8 @@ class message_dispatcher: public message_dispatcher_interface {
   std::map<MessageType, handler> handlers_;
   // TODO(@nolleh) refactor
   std::map<MessageType, handler2> handlers2_;
+
+  std::function<void(link*)> fail_handler_;
 
   lg::s_logger& logger_;
 };

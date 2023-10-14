@@ -13,6 +13,10 @@ if(NOT DEFINED PROTO)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen-proto)
 endif()
 
+if(NOT DEFINED Libs_DIR)
+  set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
+endif()
+
 add_executable(Client
   ${SRC}
 )
