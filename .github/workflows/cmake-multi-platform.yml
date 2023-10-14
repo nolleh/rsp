@@ -83,8 +83,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DBoost_INCLUDE_DIR=${{ steps.install-boost.outputs.BOOST_ROOT }}/include
-        -DBoost_LIBRARY_DIRS=${{ steps.install-boost.outputs.BOOST_ROOT }}/lib
+        -DBoost_DIR=${{ steps.install-boost.outputs.BOOST_ROOT }}
         -S ${{ github.workspace }}
       env:
         BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
