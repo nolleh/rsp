@@ -25,7 +25,7 @@ class job_logout : public rsp::libs::job::job {
     namespace lg = rsp::libs::logger;
     lg::logger().debug() << "job_logout: " << session_->uid() << lg::L_endl;
     send_res_logout(session_);
-    session_->enqueue_stop();
+    session_->enqueue_stop(false);
   }
 
   void send_res_logout(const session_ptr& session) {

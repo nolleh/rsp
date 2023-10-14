@@ -55,9 +55,9 @@ class session : public link, public std::enable_shared_from_this<session> {
         ba::detached);
   }
 
-  void stop() {
+  void stop(bool force_close) {
     stop_ = true;
-    link::stop();
+    link::stop(force_close);
   }
 
   void on_connected() override {
@@ -80,7 +80,7 @@ class session : public link, public std::enable_shared_from_this<session> {
     last_received_ = std::time(nullptr);
   }
 
-  void enqueue_stop();
+  void enqueue_stop(bool force);
 
   void set_user(const std::string& uid) { uid_ = uid; }
 
@@ -99,16 +99,22 @@ class session : public link, public std::enable_shared_from_this<session> {
   ba::awaitable<void> send_heartbeats() {
     ba::steady_timer timer{worker_.get_executor()};
 
-    const int kPingPeriod = 5 * 1000;
+    const int kPingPeriod = 5;
+    const int kMaxFailedCount = 3;
     try {
+      int failed_count = 0;
       while (!stop_.load()) {
         // TODO(@nolleh) there is precondition, thread isn't locked check;
-        timer.expires_after(std::chrono::seconds(5));
+        timer.expires_after(std::chrono::seconds(kPingPeriod));
         co_await timer.async_wait(ba::deferred);
 
         std::time_t now = std::time(nullptr);
         if (last_received_.load() + kPingPeriod > now) {
           continue;
+        }
+        if (++failed_count >= kMaxFailedCount) {
+          enqueue_stop(true);
+          break;
         }
         Ping ping;
         const auto buffer =
