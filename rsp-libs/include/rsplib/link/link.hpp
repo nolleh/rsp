@@ -17,12 +17,11 @@ class link {
  public:
   explicit link(connection_ptr conn) : connection_(conn) {}
   ~link() {
-    stop();
   }
 
   virtual void on_connected() = 0;
   virtual void on_disconnected() = 0;
-  virtual void on_closed() { connection_->detach_link(); }
+  virtual void on_closed() = 0;
 
   const server::connection_ptr& conn_ptr() const { return connection_; }
 
@@ -34,7 +33,13 @@ class link {
     connection_->send(msg);
   }
 
-  void stop() { connection_->stop(); }
+  void start(size_t bytes) {
+    connection_->start(bytes);
+  }
+
+  void stop() {
+    connection_->stop();
+  }
 
  private:
   // TODO(@nolleh) change to conn

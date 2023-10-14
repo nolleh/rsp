@@ -44,6 +44,11 @@ class worker {
     return threads_.wrap(func);
   }
 
+  decltype(std::declval<boost::asio::io_context>().get_executor())
+  get_executor() {
+    return threads_.io_context()->get_executor();
+  }
+
  private:
   // REMARK(@nolleh) not productional #. this is for conv dev
   // TODO(@nolleh) configuration feature

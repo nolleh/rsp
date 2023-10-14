@@ -13,22 +13,22 @@ namespace rsp {
 namespace user {
 namespace job {
 
-using session = rsp::user::session::session;
+using session_ptr = rsp::user::session::session_ptr;
 using session_manager = rsp::user::session::session_manager;
 
 class job_logout : public rsp::libs::job::job {
  public:
-  explicit job_logout(const ReqLogout& logout) : request_(logout) {}
+  explicit job_logout(const session_ptr session, const ReqLogout& logout)
+      : session_(session), request_(logout) {}
 
-  void run(rsp::libs::link::link* link) {
+  void run() {
     namespace lg = rsp::libs::logger;
-    auto s = dynamic_cast<session*>(link);
-    lg::logger().debug() << "job_logout: " << s->uid() << lg::L_endl;
-    send_res_logout(s);
-    s->enqueue_stop();
+    lg::logger().debug() << "job_logout: " << session_->uid() << lg::L_endl;
+    send_res_logout(session_);
+    session_->enqueue_stop();
   }
 
-  void send_res_logout(session* session) {
+  void send_res_logout(const session_ptr& session) {
     ResLogout logout;
     logout.set_uid(session->uid());
     auto buffer = rsp::libs::message::serializer::serialize(
@@ -37,7 +37,8 @@ class job_logout : public rsp::libs::job::job {
   }
 
  private:
-  ReqLogout request_;
+  const ReqLogout request_;
+  const session_ptr session_;
 };
 }  // namespace job
 }  // namespace user

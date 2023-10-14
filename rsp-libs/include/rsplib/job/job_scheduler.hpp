@@ -23,8 +23,6 @@ namespace job {
  * */
 class job_scheduler {
  public:
-  using link = link::link;
-
   ~job_scheduler() {
     auto& logger = logger::logger();
     logger.trace() << "detroy job scheduler" << logger::L_endl;
@@ -34,14 +32,14 @@ class job_scheduler {
 
   void clear() {
     std::lock_guard<std::mutex> lock(m_);
-    std::queue<std::function<void()>> empty;
+    std::queue<job_ptr> empty;
     std::swap(q_, empty);
   }
 
   void run() {
     auto& logger = logger::logger();
 
-    std::function<void()> job = nullptr;
+    job_ptr job = nullptr;
     {
       std::lock_guard<std::mutex> lock(m_);
       if (q_.empty()) {
@@ -52,7 +50,7 @@ class job_scheduler {
     }
 
     logger.trace() << "start run job" << logger::L_endl;
-    job();
+    job->run();
     {
       std::lock_guard<std::mutex> lock(m_);
       q_.pop();
@@ -61,29 +59,16 @@ class job_scheduler {
     run();
   }
 
-  void push(job_ptr j, link* l) {
+  void push(job_ptr j) {
     std::lock_guard<std::mutex> lock(m_);
-    q_.push(std::bind(&job::run, j, l));
+    q_.push(j);
   }
 
-  void push_and_run(job_ptr j, link* l) {
-    push(j, l);
+  void push_and_run(job_ptr j) {
+    push(j);
 
     {
       std::lock_guard<std::mutex> lock(m_);
-      if (1 != q_.size()) {
-        return;
-      }
-    }
-    run();
-  }
-
-  template <typename Func>
-  void push_and_run_with_func(Func func) {
-    {
-      std::lock_guard<std::mutex> lock(m_);
-      q_.push(func);
-
       if (1 != q_.size()) {
         return;
       }
@@ -92,7 +77,7 @@ class job_scheduler {
   }
 
  private:
-  std::queue<std::function<void()>> q_;
+  std::queue<job_ptr> q_;
   std::mutex m_;
 };
 

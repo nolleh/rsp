@@ -10,8 +10,8 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
-#include "rsplib/message/types.hpp"
 #include "rsplib/message/helper.hpp"
+#include "rsplib/message/types.hpp"
 #include "rsplib/server/server_event.hpp"
 #include "user/session/session.hpp"
 
@@ -33,7 +33,9 @@ class session_manager {
   void add_session(const session& session) { add_session(session.conn_ptr()); }
 
   void add_session(const server::connection_ptr& conn) {
-    sessions_[conn].reset(new session(conn));
+    const auto s = std::make_shared<session>(conn);
+    s->start();
+    sessions_[conn] = s;
   }
 
   void remove_session(const session& session) {
@@ -48,7 +50,8 @@ class session_manager {
   session_manager() {}
   static std::once_flag s_flag;
   static std::unique_ptr<session_manager> s_instance;
-  std::map<server::connection_ptr, std::unique_ptr<session>> sessions_;
+
+  std::map<server::connection_ptr, std::shared_ptr<session>> sessions_;
 };
 
 }  // namespace session

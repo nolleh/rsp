@@ -1,8 +1,10 @@
 syntax = "proto3";
 
 enum MessageType {
-  kReqLogin = 0;
-  kResLogin = 1;
-  kReqLogout = 2;
-  kResLogout = 3;
+  kPing = 0;
+  kPong = 1;
+  kReqLogin = 2;
+  kResLogin = 3;
+  kReqLogout = 4;
+  kResLogout = 5;
 }
