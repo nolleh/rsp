@@ -17,7 +17,9 @@ using session_ptr = rsp::user::session::session_ptr;
  */
 class job_stop : public rsp::libs::job::job {
  public:
-  explicit job_stop(const session_ptr& session):session_(session) {}
+  explicit job_stop(const session_ptr& session, const bool force_close)
+      : session_(session), force_close_(force_close) {}
+
   void run() {
     namespace lg = rsp::libs::logger;
     lg::logger().debug() << "job_stop" << lg::L_endl;
@@ -25,11 +27,12 @@ class job_stop : public rsp::libs::job::job {
   }
 
   void stop(const session_ptr& session) {
-    session->stop();
+    session->stop(force_close_);
     session_manager::instance().remove_session(*session);
   }
 
-  session_ptr const session_;
+  const session_ptr session_;
+  const bool force_close_;
 };
 
 }  // namespace job

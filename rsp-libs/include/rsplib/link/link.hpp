@@ -37,8 +37,8 @@ class link {
     connection_->start(bytes);
   }
 
-  void stop() {
-    connection_->stop();
+  void stop(bool force_close) {
+    connection_->stop(force_close);
   }
 
  private:

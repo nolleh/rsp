@@ -11,8 +11,8 @@ namespace rsp {
 namespace user {
 namespace session {
 
-void session::enqueue_stop() {
-  auto stop = std::make_shared<job::job_stop>(shared_from_this());
+void session::enqueue_stop(bool force) {
+  auto stop = std::make_shared<job::job_stop>(shared_from_this(), force);
   enqueue_job(stop);
 }
 
