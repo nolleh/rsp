@@ -58,7 +58,14 @@ class state_login : public base_state {
     ReqLogout logout;
     auto message = rsp::libs::message::serializer::serialize(
         MessageType::kReqLogout, logout);
-    socket_->send(boost::asio::buffer(message));
+    try {
+      socket_->send(boost::asio::buffer(message));
+    } catch (const std::exception& e) {
+      logger_.warn() << "send exception, possible: peer closed:" << e.what()
+                     << lg::L_endl;
+      close();
+      next_ = State::kExit;
+    }
   }
 };
 }  // namespace state

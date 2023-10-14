@@ -44,7 +44,7 @@ class session : public link, public std::enable_shared_from_this<session> {
   ~session() {
     // session destroy meaning logout
     lg::logger().trace() << "destroy session" << lg::L_endl;
-    stop_ = true;
+    stop(true);
   }
 
   void start() {
@@ -76,8 +76,15 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   template <typename Message>
   void on_recv(Message&& msg) {
+    lg::logger().debug() << "session - base on_recv" << lg::L_endl;
+    last_received_ = std::time(nullptr);
+  }
+
+  void on_recv_unknown() {
     lg::logger().error() << "session - on_recv, unknown message" << lg::L_endl;
     last_received_ = std::time(nullptr);
+    // unknown message = uncommunicatable with message. stop
+    enqueue_stop(false);
   }
 
   void enqueue_stop(bool force);
@@ -107,6 +114,10 @@ class session : public link, public std::enable_shared_from_this<session> {
         // TODO(@nolleh) there is precondition, thread isn't locked check;
         timer.expires_after(std::chrono::seconds(kPingPeriod));
         co_await timer.async_wait(ba::deferred);
+
+        if (stop_.load()) {
+          break;
+        }
 
         std::time_t now = std::time(nullptr);
         if (last_received_.load() + kPingPeriod > now) {

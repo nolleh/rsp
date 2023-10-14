@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "rsplib/logger/color.hpp"
-
 namespace rsp {
 namespace cli {
 

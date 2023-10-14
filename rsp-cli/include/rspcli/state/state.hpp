@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 
 #include "proto/common/message_type.pb.h"
+#include "proto/common/ping.pb.h"
 #include "proto/user/login.pb.h"
 #include "rspcli/prompt/prompt.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
@@ -58,12 +59,33 @@ class base_state {
     dispatcher_.unregister_handler(MessageType::kResLogin);
   }
 
+  void send_pong() {
+    Pong pong;
+    auto message =
+        rsp::libs::message::serializer::serialize(MessageType::kPong, pong);
+    try {
+      socket_->send(boost::asio::buffer(message));
+    } catch (const std::exception& e) {
+      logger_.warn() << "send exception, possible: peer closed:" << e.what()
+                     << lg::L_endl;
+      close();
+      next_ = State::kExit;
+    }
+  }
+
   void send_login(const std::string& uid) {
     ReqLogin login;
     login.set_uid(uid);
     auto message = rsp::libs::message::serializer::serialize(
         MessageType::kReqLogin, login);
-    socket_->send(boost::asio::buffer(message));
+    try {
+      socket_->send(boost::asio::buffer(message));
+    } catch (const std::exception& e) {
+      logger_.warn() << "send exception, possible: peer closed:" << e.what()
+                     << lg::L_endl;
+      close();
+      next_ = State::kExit;
+    }
   }
 
   State handle_buffer(std::array<char, 128> buf, size_t len) {
@@ -80,6 +102,14 @@ class base_state {
 
     logger_.info() << "success to login:" << login.uid() << lg::L_endl;
     next_ = State::kLoggedIn;
+  }
+
+  void handle_ping(buffer_ptr buffer) { send_pong(); }
+
+  void handle_unknown(rsp::libs::link::link*) {
+    logger_.warn() << "unknown message" << lg::L_endl;
+    close();
+    next_ = State::kExit;
   }
 
   virtual void init() {
@@ -100,9 +130,10 @@ class base_state {
     namespace asio = boost::asio::ip;
     boost::system::error_code shutdown_ec;
     socket_->shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
-    if (shutdown_ec)
-      logger_.error() << "shutdown error" << shutdown_ec << ":"
+    if (shutdown_ec) {
+      logger_.info() << "shutdown error" << shutdown_ec << ":"
                       << shutdown_ec.message() << lg::L_endl;
+    }
     sent_shutdown_ = true;
     logger_.debug() << "activate close" << lg::L_endl;
   }
@@ -129,7 +160,13 @@ class base_state {
         dispatcher_(message_dispatcher::instance()),
         interpreter_(&dispatcher_),
         logger_(lg::logger()),
-        prompt_(this) {}
+        prompt_(this) {
+    dispatcher_.register_unknown_message_handler(
+        std::bind(&base_state::handle_unknown, this, nullptr));
+    dispatcher_.register_handler(
+        MessageType::kPing,
+        std::bind(&base_state::handle_ping, this, std::placeholders::_1));
+  }
 
   State state_ = State::kInit;
   socket* socket_;
