@@ -21,9 +21,10 @@ class state_login : public base_state {
   ~state_login() { dispatcher_.unregister_handler(MessageType::kResLogout); }
 
   void init() override {
-    dispatcher_.register_handler(MessageType::kResLogout,
-                                 std::bind(&state_login::handle_res_logout,
-                                           this, std::placeholders::_1));
+    dispatcher_.register_handler(
+        MessageType::kResLogout,
+        std::bind(&state_login::handle_res_logout, this, std::placeholders::_1,
+                  std::placeholders::_2));
 
     std::string command;
     prompt_ << "possible command \n1) logout";
@@ -41,7 +42,7 @@ class state_login : public base_state {
   }
 
  private:
-  void handle_res_logout(buffer_ptr buffer) {
+  void handle_res_logout(buffer_ptr buffer, link*) {
     ResLogout logout;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &logout)) {
       logger_.error() << "failed to parse logout" << lg::L_endl;

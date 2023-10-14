@@ -30,7 +30,7 @@ using buffer_ptr = libs::message::buffer_ptr;
 using link = rsp::libs::link::link;
 
 #define REG_HANDLER(dispatcher, type, handler) \
-  dispatcher.register_handler2(                \
+  dispatcher.register_handler(                 \
       type, std::bind(&message_dispatcher::handler, this, ph::_1, ph::_2))
 
 class message_dispatcher : public dispatcher_interface {

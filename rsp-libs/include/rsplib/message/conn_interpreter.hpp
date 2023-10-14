@@ -53,16 +53,9 @@ class conn_interpreter {
       return;
     }
 
-    lg::logger().trace() << "destructed" << lg::L_endl;
-
     buffer_ = retrieve_v(buffer_, meta.size, buffer_.size());
-    if (!link_) {
-      lg::logger().trace() << "about to dispatch" << lg::L_endl;
-      dispatcher_->dispatch(meta.type, meta.payload);
-    } else {
-      lg::logger().trace() << "about to dispatch" << lg::L_endl;
-      dispatcher_->dispatch(meta.type, meta.payload, link_);
-    }
+    lg::logger().trace() << "about to dispatch" << lg::L_endl;
+    dispatcher_->dispatch(meta.type, meta.payload, link_);
   }
 
   void attach_link(link* link) {

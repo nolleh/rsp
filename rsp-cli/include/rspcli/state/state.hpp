@@ -37,6 +37,7 @@ using socket = boost::asio::ip::tcp::socket;
 using conn_interpreter = libs::message::conn_interpreter;
 using message_dispatcher = libs::message::message_dispatcher;
 using raw_buffer = libs::message::raw_buffer;
+using link = libs::message::link;
 using buffer_ptr = libs::message::buffer_ptr;
 namespace lg = libs::logger;
 
@@ -93,7 +94,7 @@ class base_state {
     return next_;
   }
 
-  void handle_res_login(buffer_ptr buffer) {
+  void handle_res_login(buffer_ptr buffer, link*) {
     ResLogin login;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &login)) {
       logger_.error() << "failed to parse reslogin" << lg::L_endl;
@@ -104,9 +105,9 @@ class base_state {
     next_ = State::kLoggedIn;
   }
 
-  void handle_ping(buffer_ptr buffer) { send_pong(); }
+  void handle_ping(buffer_ptr buffer, link*) { send_pong(); }
 
-  void handle_unknown(rsp::libs::link::link*) {
+  void handle_unknown(link*) {
     logger_.warn() << "unknown message" << lg::L_endl;
     close();
     next_ = State::kExit;
@@ -115,7 +116,8 @@ class base_state {
   virtual void init() {
     dispatcher_.register_handler(
         MessageType::kResLogin,
-        std::bind(&base_state::handle_res_login, this, std::placeholders::_1));
+        std::bind(&base_state::handle_res_login, this, std::placeholders::_1,
+                  std::placeholders::_2));
 
     std::string uid;
     prompt_ << "type user name to login";
@@ -132,7 +134,7 @@ class base_state {
     socket_->shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
     if (shutdown_ec) {
       logger_.info() << "shutdown error" << shutdown_ec << ":"
-                      << shutdown_ec.message() << lg::L_endl;
+                     << shutdown_ec.message() << lg::L_endl;
     }
     sent_shutdown_ = true;
     logger_.debug() << "activate close" << lg::L_endl;
@@ -165,7 +167,8 @@ class base_state {
         std::bind(&base_state::handle_unknown, this, nullptr));
     dispatcher_.register_handler(
         MessageType::kPing,
-        std::bind(&base_state::handle_ping, this, std::placeholders::_1));
+        std::bind(&base_state::handle_ping, this, std::placeholders::_1,
+                  std::placeholders::_2));
   }
 
   State state_ = State::kInit;
