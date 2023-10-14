@@ -22,7 +22,7 @@ add_executable(Client
 )
 
 target_include_directories(Client PRIVATE
-  ${Boost_LIBRARY_DIRS}
+  ${Boost_INCLUDE_DIR}
   ${Proto_DIR}
   ${Libs_DIR}/include
   ${PROJECT_SOURCE_DIR}/include
