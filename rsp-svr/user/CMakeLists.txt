@@ -31,14 +31,16 @@ add_executable(User
 )
 
 target_include_directories(User PRIVATE
-  ${Boost_DIR}/include
+  # ${Boost_DIR}/include
+  ${Boost_INCLUDE_DIR}
   ${Libs_DIR}/include
   ${Proto_DIR}
   ${PROJECT_SOURCE_DIR}/include
 )
 
 target_link_directories(User PRIVATE
-  ${Boost_DIR}/lib
+  # ${Boost_DIR}/lib
+  ${Boost_LIBRARY_DIRS}
 )
 
 target_link_libraries(User
