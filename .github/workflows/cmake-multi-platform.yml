@@ -66,10 +66,8 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        # sudo apt-get update
+        sudo apt-get update
 
-        # apt search libboost1.
-        # hum.. this is latest.. in window..? let's think about later.. :(
         # sudo apt-get install libboost1.81-dev
         sudo apt-get install protobuf-compiler
       if: runner.os == 'Linux'
@@ -86,6 +84,8 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+      env:
+        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
