@@ -22,12 +22,14 @@ add_executable(Client
 )
 
 target_include_directories(Client PRIVATE
+  ${Boost_LIBRARY_DIRS}
   ${Proto_DIR}
   ${Libs_DIR}/include
   ${PROJECT_SOURCE_DIR}/include
 )
 
 target_link_libraries(Client PRIVATE
+  ${Boost_LIBRARY_DIRS}
   ${PROJECT_BINARY_DIR}/../rsp-libs/libLibs.a
   ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
   protobuf
