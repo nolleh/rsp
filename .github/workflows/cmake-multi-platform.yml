@@ -61,6 +61,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
+        sudo apt-get dist-upgrade
 
         apt-cache search libboost1.
         # hum.. this is latest.. in window..? let's think about later.. :(
