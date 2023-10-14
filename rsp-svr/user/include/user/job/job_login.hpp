@@ -21,24 +21,22 @@ namespace lg = rsp::libs::logger;
 
 using job = rsp::libs::job::job;
 using link = rsp::libs::link::link;
-// using link_ptr = rsp::libs::link::link_ptr;
-using session = session::session;
-// using session_ptr = rsp::user::session::session_ptr;
+using session_ptr = rsp::user::session::session_ptr;
 
 class job_login : public job {
  public:
-  explicit job_login(const ReqLogin& login) : request_(login) {}
+  explicit job_login(const session_ptr& session, const ReqLogin& login)
+      : session_(session), request_(login) {}
 
-  void run(link* link) {
+  void run() {
     lg::logger().debug() << "job_login: " << request_.uid() << lg::L_endl;
     // TODO(@nolleh) signup / login process.
     // session_ = std::dynamic_pointer_cast<session>(link);
-    session_ = dynamic_cast<session*>(link);
     send_res_login(request_.uid(), session_);
     session_->set_user(request_.uid());
   }
 
-  void send_res_login(std::string uid, session* session) const {
+  void send_res_login(std::string uid, const session_ptr& session) const {
     ResLogin login;
     login.set_uid(uid);
     login.set_success(true);
@@ -54,7 +52,7 @@ class job_login : public job {
 
  private:
   const ReqLogin request_;
-  mutable session* session_;
+  const session_ptr session_;
 };
 
 }  // namespace job

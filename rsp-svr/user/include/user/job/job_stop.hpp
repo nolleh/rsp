@@ -11,22 +11,25 @@ namespace job {
 using session = rsp::user::session::session;
 using session_manager = rsp::user::session::session_manager;
 
+using session_ptr = rsp::user::session::session_ptr;
 /**
  * has role to final clean up session.
  */
 class job_stop : public rsp::libs::job::job {
  public:
-  void run(rsp::libs::link::link* link) {
+  explicit job_stop(const session_ptr& session):session_(session) {}
+  void run() {
     namespace lg = rsp::libs::logger;
     lg::logger().debug() << "job_stop" << lg::L_endl;
-    auto s = dynamic_cast<session*>(link);
-    stop(s);
+    stop(session_);
   }
 
-  void stop(session* session) {
+  void stop(const session_ptr& session) {
     session->stop();
     session_manager::instance().remove_session(*session);
   }
+
+  session_ptr const session_;
 };
 
 }  // namespace job

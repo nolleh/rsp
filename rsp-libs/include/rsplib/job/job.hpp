@@ -15,7 +15,7 @@ using job_ptr = std::shared_ptr<job>;
 class job {
  public:
   // virtual void operator()(link::link_ptr link) = 0;
-  virtual void run(link::link* link) = 0;
+  virtual void run() = 0;
 };
 
 }  // namespace job
