@@ -58,14 +58,21 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Install Boost
+      uses: MarkusJx/install-boost@v2.0.0
+      id: install-boost
+      with:
+        boost_version: 1.83.0
+
     - name: Install Dependencies
       run: |
-        sudo apt-get update
+        # sudo apt-get update
 
-        apt search libboost1.
+        # apt search libboost1.
         # hum.. this is latest.. in window..? let's think about later.. :(
-        sudo apt-get install libboost1.81-dev
+        # sudo apt-get install libboost1.81-dev
         sudo apt-get install protobuf-compiler
+      if: runner.os == 'Linux'
 
     - name: Prepare Proto
       run: ./protoc.sh
