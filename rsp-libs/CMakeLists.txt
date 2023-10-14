@@ -37,13 +37,15 @@ add_library(Libs
 )
 
 target_include_directories(Libs PUBLIC
-  ${Boost_DIR}/include
+  # ${Boost_DIR}/include
+  ${Boost_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/include
   ${Proto_DIR}
 )
 
 target_link_directories(Libs PUBLIC
-  ${Boost_DIR}/lib
+  # ${Boost_DIR}/lib
+  ${Boost_LIBRARY_DIRS}
   ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
 )
 
