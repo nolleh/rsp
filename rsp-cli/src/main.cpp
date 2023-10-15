@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
   namespace ip = boost::asio::ip;
   namespace rsp_cli = rsp::cli;
-  auto &logger = lg::logger(lg::log_level::kTrace);
+  auto &logger = lg::logger(lg::log_level::kInfo);
 
   rsp::libs::tracer::install();
   try {
