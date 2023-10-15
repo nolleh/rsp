@@ -52,13 +52,35 @@ the dependencies will be descripted below.
     - gcc-12.3.0
     - protoc-3.21.12
 
-## build
-
-prepare the dependencies, and run ./rebuild.sh
-
 ## run
 
-for now, not supply binaries. so after build by your self, then ./run-svr.sh and ./run-cli.sh (with indivisual terminal)
+### 1. manual build
+
+1. prepare the dependencies, and run ./rebuild.sh
+2. then ./run-svr.sh and ./run-cli.sh (with indivisual terminal)
+
+### 2. from prebuilt
+
+- until now, tested on ubuntu (with aarch64)
+
+from here,
+https://github.com/nolleh/rsp/releases
+
+download tar  
+then untar, then run
+
+```
+tar -xvf {filename}
+./User
+./Client 127.0.0.1
+```
+
+currently used port : 8080
+
+filename is file that you downloaded. differ from distribution. for now ubuntu, 
+- rsp-v0.0.1-ubuntu-aarch64.tar
+
+for more explanation, there may exist in release page.
 
 ## style
 
