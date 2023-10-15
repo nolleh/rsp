@@ -39,6 +39,7 @@ class state_login : public base_state {
  protected:
   explicit state_login(socket* socket) : base_state(socket) {
     state_ = State::kLoggedIn;
+    next_ = state_;
   }
 
  private:

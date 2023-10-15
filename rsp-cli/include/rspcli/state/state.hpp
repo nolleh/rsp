@@ -58,6 +58,7 @@ class base_state {
     // server pattern.
     // and, for convient dev, remove by type for now
     dispatcher_.unregister_handler(MessageType::kResLogin);
+    dispatcher_.unregister_handler(MessageType::kPing);
   }
 
   void send_pong() {
@@ -172,9 +173,9 @@ class base_state {
   }
 
   State state_ = State::kInit;
+  State next_ = State::kInit;
   socket* socket_;
   message_dispatcher& dispatcher_;
-  State next_;
   lg::s_logger& logger_;
   prompt<base_state> prompt_;
   bool sent_shutdown_;

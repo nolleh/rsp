@@ -42,7 +42,7 @@ inline void mset(raw_buffer* dest, T&& t) {
 
 template <typename T>
 inline bool mget(const raw_buffer& src, T* dest, uint8_t offset) {
-  if (src.size() < offset) {
+  if (src.size() <= offset) {
     return false;
   }
   // memcpy(reinterpret_cast<T*>(&src[0] + offset), dest, sizeof(dest));

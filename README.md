@@ -90,3 +90,8 @@ determines that a user which room should be assigned to enter.
 ## Troubleshoot
 - objdump -S -f $file
 
+```bash
+./cmake.sh -D
+./build.sh
+gdb
+```

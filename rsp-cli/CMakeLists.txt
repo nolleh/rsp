@@ -7,6 +7,7 @@ find_package(Protobuf)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS -rdynamic)
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)

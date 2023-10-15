@@ -7,6 +7,7 @@
 
 #include "rspcli/state/factory.hpp"
 #include "rspcli/state/state.hpp"
+#include "rsplib/debug/tracer.hpp"
 #include "rsplib/logger/logger.hpp"
 
 // #include <boost/array.hpp>
@@ -15,8 +16,9 @@ int main(int argc, char *argv[]) {
 
   namespace ip = boost::asio::ip;
   namespace rsp_cli = rsp::cli;
-  auto &logger = lg::logger(lg::log_level::kInfo);
+  auto &logger = lg::logger(lg::log_level::kTrace);
 
+  rsp::libs::tracer::install();
   try {
     if (argc != 2) {
       std::cerr << "Usage: client <host>" << std::endl;
@@ -32,10 +34,14 @@ int main(int argc, char *argv[]) {
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
 
-    auto next = rsp_cli::state::State::kInit;
+    auto curr = rsp_cli::state::State::kInit;
+    bool create = true;
+    std::shared_ptr<rsp_cli::state::base_state> client = nullptr;
     for (;;) {
-      auto client = rsp_cli::state::factory::create(next, &socket);
-      client->init();
+      if (create) {
+        client = rsp_cli::state::factory::create(curr, &socket);
+        client->init();
+      }
       std::array<char, 128> buf;
       boost::system::error_code error;
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
@@ -50,8 +56,11 @@ int main(int argc, char *argv[]) {
       } else if (error) {
         throw boost::system::system_error(error);
       } else {
-        next = client->handle_buffer(buf, len);
-        logger.debug() << "finish handle buffer" << lg::L_endl;
+        auto next = client->handle_buffer(buf, len);
+        create = curr != next;
+        curr = next;
+        logger.debug() << "finish handle buffer" << static_cast<int>(next)
+                       << "need create for next state?" << create << lg::L_endl;
       }
     }
   } catch (std::exception &e) {

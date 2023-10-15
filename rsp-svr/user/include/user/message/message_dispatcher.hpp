@@ -36,8 +36,10 @@ using link = rsp::libs::link::link;
 class message_dispatcher : public dispatcher_interface {
  public:
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
-    REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer_req_login);
-    REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer_req_logout);
+    REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer<ReqLogin>);
+    REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer<ReqLogout>);
+    REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
+    REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
 
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
@@ -58,14 +60,10 @@ class message_dispatcher : public dispatcher_interface {
   // TOOD(@nolleh) hum. actually now, no need to manage the buffer as s_ptr.
   // client also need to be chagned to add some layer.
   // let's consider after development was got some where.
-  void handle_buffer_req_login(buffer_ptr buffer, link* l) {
-    ReqLogin req_login;
-    pass_to_session(buffer, &req_login, l);
-  }
-
-  void handle_buffer_req_logout(buffer_ptr buffer, link* l) {
-    ReqLogout req_logout;
-    pass_to_session(buffer, &req_logout, l);
+  template <typename T>
+  void handle_buffer(buffer_ptr buffer, link* l) {
+    T t;
+    pass_to_session(buffer, &t, l);
   }
 
   template <typename Message>

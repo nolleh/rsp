@@ -24,6 +24,7 @@ class state_exit : public base_state {
  protected:
   explicit state_exit(socket* socket) : base_state(socket) {
     state_ = State::kExit;
+    next_ = state_;
   }
 };
 
