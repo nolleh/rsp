@@ -15,7 +15,6 @@ namespace message {
 
 template <typename Type>
 inline Type retrieve_parts(raw_buffer buf, int begin, int end) {
-  // TODO(@nolleh) do not construct. change more efficiently.
   if (begin >= end) {
     return {};
   }

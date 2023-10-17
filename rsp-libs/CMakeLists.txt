@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 cmake_policy(SET CMP0135 NEW)
 
 find_package(Boost)
+find_package(cppzmq)
 # find_package(Protobuf)
 
 # donwload gtest
@@ -41,12 +42,14 @@ target_include_directories(Libs PUBLIC
   ${Boost_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/include
   ${Proto_DIR}
+  cppzmq
 )
 
 target_link_directories(Libs PUBLIC
   # ${Boost_DIR}/lib
   ${Boost_LIBRARY_DIRS}
   ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
+  cppzmq
 )
 
 enable_testing()

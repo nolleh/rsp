@@ -15,6 +15,7 @@ repos:
     rev: 1.6.1
     hooks:
       - id: cpplint
+        exclude: cppzmq
 
   - repo: https://github.com/cmake-lint/cmake-lint
     rev: 1.4.2
