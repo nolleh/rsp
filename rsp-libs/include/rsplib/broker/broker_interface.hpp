@@ -23,6 +23,7 @@ namespace broker {
  *  not sure this is right choice. can be modified.
  * */
 class broker_interface {
+ public:
   static std::shared_ptr<broker_interface> s_create_publisher(
       CastType type, const std::string& service_name, const uint8_t context);
 
@@ -34,7 +35,7 @@ class broker_interface {
 
   virtual void sub_topic(const std::string& topic) = 0;
 
-  virtual void send(const std::string& topic, std::ostream os) = 0;
+  virtual void send(const std::string& topic, std::ostream& os) = 0;
 
   virtual std::future<std::istream> recv(const std::string& topic) = 0;
 

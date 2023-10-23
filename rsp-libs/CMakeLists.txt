@@ -10,7 +10,7 @@ find_package(Boost)
 find_package(cppzmq)
 # find_package(Protobuf)
 
-# donwload gtest
+# download gtest
 # https://google.github.io
 
 set(BASE_URL https://github.com/google/googletest/archive)
@@ -70,6 +70,7 @@ target_link_libraries(LibsTest PRIVATE
   ## added because link fail
   protobuf
   ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
+  cppzmq
 )
 
 include(GoogleTest)

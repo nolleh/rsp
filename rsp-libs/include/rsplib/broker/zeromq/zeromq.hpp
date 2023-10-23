@@ -3,6 +3,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <utility>
 #include <zmq.hpp>
 
 #include "rsplib/broker/broker_interface.hpp"
@@ -13,15 +14,15 @@ namespace libs {
 namespace broker {
 
 template <typename T>
-class zeromq : private broker_interface {
+class zeromq : public broker_interface {
+ public:
   static std::shared_ptr<zeromq> s_create_publisher(
       CastType type, const std::string& service_name, const uint8_t context) {
-    return std::shared_ptr<zeromq>(
-        new zeromq(publisher(type, service_name, context)));
+    return std::shared_ptr<zeromq>(new zeromq({type, service_name, context}));
   }
   static std::shared_ptr<zeromq> s_create_subscriber(
       CastType type, const std::string& service_name, const uint8_t context,
-      const std::string& topic = NULL /* passed to filter */) {
+      const std::string& topic /* passed to filter */) {
     throw std::runtime_error("not implemented");
   }
 
@@ -29,7 +30,7 @@ class zeromq : private broker_interface {
 
   void sub_topic(const std::string& topic) override { impl_.sub_topic(topic); }
 
-  void send(const std::string& topic, std::ostream os) override {
+  void send(const std::string& topic, std::ostream& os) override {
     impl_.send(topic, os);
   }
 
@@ -38,7 +39,7 @@ class zeromq : private broker_interface {
   }
 
  private:
-  explicit zeromq(T t) : impl_(t) {}
+  explicit zeromq(T&& t) : impl_(std::move(t)) {}
   T impl_;
 };
 
