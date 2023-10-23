@@ -57,7 +57,7 @@ class thread_safe {
       assert(!locked);
       if (locked) {
         throw std::runtime_error(
-            "the resourse is still locked! cannot be deleted!");
+            "the resource is still locked! cannot be deleted!");
       }
     }
 
