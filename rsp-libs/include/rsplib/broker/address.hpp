@@ -10,7 +10,7 @@ namespace libs {
 namespace broker {
 
 /** service_name@cast_letter-numbers. for example, user@U12345  */
-// TODO(@nolleh) how can we efficently but safely allocate the numbers?
+// TODO(@nolleh) how can we efficiently but safely allocate the numbers?
 // zookeeper? haha too-big.. redis? mysql? postgres?
 using address = std::string;
 

@@ -19,7 +19,7 @@ namespace broker {
  *
  *  to prevent things getting too redundant,
  *  interface combine publisher/subscriber.
- *  and there is possibility some broker does not seperate publisher, subscriber
+ *  and there is possibility some broker does not separate publisher, subscriber
  *  not sure this is right choice. can be modified.
  * */
 class broker_interface {

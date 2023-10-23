@@ -5,7 +5,7 @@
 
 enum class CastType {
   kBroadCast /** all listener notification */,
-  kUniCast /** secific listener req/res */,
+  kUniCast /** specific listener req/res */,
   kAnyCast /** any of listener req/res */,
 };
 
