@@ -6,6 +6,7 @@ cmake_policy(SET CMP0048 NEW)
 
 find_package(Boost)
 find_package(Protobuf)
+find_package(cppzmq)
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)
@@ -31,10 +32,12 @@ target_include_directories(Room PRIVATE
 target_link_directories(Room PRIVATE
   # ${Boost_DIR}/lib
   ${Boost_LIBRARY_DIRS}
+  cppzmq
 )
 
 target_link_libraries(Room
   ${PROJECT_BINARY_DIR}/../../rsp-libs/libLibs.a
   ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
   protobuf
+  cppzmq
 )

@@ -5,6 +5,7 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
+#include "rsplib/broker/broker.hpp"
 #include "rsplib/message/serializer.hpp"
 
 TEST(gTest, SimpleTest) {
@@ -34,3 +35,33 @@ TEST(Message, Serialize) {
   EXPECT_TRUE(result);
   EXPECT_EQ(login.uid(), login2.uid());
 }
+
+TEST(Broker, CreateAnyCastPublisher) {
+  namespace br = rsp::libs::broker;
+
+  auto pub = br::broker::s_create_publisher(CastType::kAnyCast, "test", 1);
+  EXPECT_TRUE(pub != nullptr);
+  // auto address = pub->get_addr();
+  // auto prefix = address.substr(0, 6);
+  // EXPECT_EQ(prefix, "A@test");
+}
+
+// TEST(Broker, CreateUniCastPublisher) {
+//   namespace br = rsp::libs::broker;
+//
+//   auto pub = br::broker::s_create_publisher(CastType::kUniCast, "test", 1);
+//   EXPECT_TRUE(pub != nullptr);
+//   auto address = pub->get_addr();
+//   auto prefix = address.substr(0, 6);
+//   EXPECT_EQ(prefix, "U@test");
+// }
+//
+// TEST(Broker, CreateBroadCastPublisher) {
+//   namespace br = rsp::libs::broker;
+//
+//   auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1);
+//   EXPECT_TRUE(pub != nullptr);
+//   auto address = pub->get_addr();
+//   auto prefix = address.substr(0, 6);
+//   EXPECT_EQ(prefix, "U@test");
+// }

@@ -4,6 +4,7 @@
 
 #include <boost/asio.hpp>
 
+#include "rsplib/broker/broker.hpp"
 #include "rsplib/debug/tracer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/server/tcp_server.hpp"
@@ -16,6 +17,7 @@ int main() {
   namespace server = rsp::libs::server;
   namespace user_server = rsp::user::server;
   namespace lg = rsp::libs::logger;
+  namespace br = rsp::libs::broker;
   using dispatcher = rsp::user::message::message_dispatcher;
 
   rsp::libs::tracer::install();
@@ -29,11 +31,11 @@ int main() {
     server::tcp_server server{&dispatcher};
     user_server::acceptor acceptor;
     server.subscribe(&acceptor);
-    user_server::worker::instance();  // initalize when start server, worker;
+    user_server::worker::instance();  // initialize when start server, worker;
     server.start();
     // TODO(@nolleh) more elegant wayk
     server.unsubscribe(&acceptor);
   } catch (std::exception& e) {
-    logger.error() << "exception ocurred" << e.what() << lg::L_endl;
+    logger.error() << "exception occurred" << e.what() << lg::L_endl;
   }
 }

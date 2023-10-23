@@ -5,6 +5,7 @@ cmake_policy(SET CMP0048 NEW)
 
 find_package(Boost)
 find_package(Protobuf)
+find_package(cppzmq)
 
 configure_file(
   config.h.in
@@ -41,10 +42,12 @@ target_include_directories(User PRIVATE
 target_link_directories(User PRIVATE
   # ${Boost_DIR}/lib
   ${Boost_LIBRARY_DIRS}
+  cppzmq
 )
 
 target_link_libraries(User
   ${PROJECT_BINARY_DIR}/../../rsp-libs/libLibs.a
   ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
   protobuf
+  cppzmq
 )

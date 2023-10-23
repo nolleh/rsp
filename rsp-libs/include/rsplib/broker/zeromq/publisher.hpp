@@ -3,8 +3,10 @@
 
 #pragma once
 
+#include <future>
 #include <memory>
 #include <string>
+#include <utility>
 #include <zmq.hpp>
 
 #include "rsplib/broker/address.hpp"
@@ -17,8 +19,9 @@ namespace broker {
 class publisher {
  public:
   publisher(CastType type, const std::string& service_name,
-            const uint8_t context) {
-    address_ = generate_address(type, service_name, context);
+            const uint8_t context)
+      : context_(context) {
+    // address_ = generate_address(type, service_name, context);
     switch (type) {
       case CastType::kBroadCast:
         create_broadcast(context);
@@ -29,24 +32,39 @@ class publisher {
     }
   }
 
+  ~publisher() {}
+
+  publisher(publisher&& r) : socket_(std::move(r.socket_)) {}
+
+  void add_topic(const std::string& topic) {}
+
+  void sub_topic(const std::string& topic) {}
+
+  void send(const std::string& topic, std::ostream& os) {}
+
+  std::future<std::istream> recv(const std::string& topic) {
+    std::runtime_error("not implemented");
+  }
+
  private:
   void create_broadcast(const uint8_t context) {
-    zmq::context_t ctx(context);
-    socket_.reset(new zmq::socket_t(ctx, zmq::socket_type::pub));
+    zmq::socket_t socket(context_, zmq::socket_type::pub);
+    // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_anycast(const uint8_t context) {
-    zmq::context_t ctx(context);
-    socket_.reset(new zmq::socket_t(ctx, zmq::socket_type::push));
+    zmq::socket_t socket(context_, zmq::socket_type::push);
+    // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_unicast(const uint8_t context) {
-    zmq::context_t ctx(context);
-    socket_.reset(new zmq::socket_t(ctx, zmq::socket_type::rep));
+    zmq::socket_t socket(context_, zmq::socket_type::rep);
+    // socket_.set(zmq::sockopt::linger, 1);
   }
 
   address address_;
-  std::unique_ptr<zmq::socket_t> socket_;
+  zmq::context_t context_;
+  zmq::socket_t socket_;
 };
 }  // namespace broker
 }  // namespace libs
