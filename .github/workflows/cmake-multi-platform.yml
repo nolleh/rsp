@@ -75,7 +75,7 @@ jobs:
         wget https://github.com/zeromq/libzmq/releases/download/v4.3.5/zeromq-4.3.5.tar.gz
         tar -xvf ./zeromq-4.3.5.tar.gz
         cd zeromq-4.3.5
-        mkdir -p build && build
+        mkdir -p build && cd build
         cmake ..
         sudo make -j4 install
         cd ../..
@@ -83,7 +83,7 @@ jobs:
         wget https://github.com/zeromq/cppzmq/archive/refs/tags/v4.10.0.tar.gz
         tar -xvf ./v4.10.0.tar.gz
         cd cppzmq-4.10.0
-        mkdir -p build && build
+        mkdir -p build && cd build
         cmake ..
         sudo make -j4 install
         cd ../..
