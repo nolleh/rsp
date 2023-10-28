@@ -40,8 +40,10 @@ class publisher : public broker_interface {
         socket_(std::move(r.socket_)) {}
 
   void start() override {
-    th_ = std::thread([this] { io_context_.run(); });
+    auto& logger = rsp::libs::logger::logger();
+    logger.info() << "start publisher" << rsp::libs::logger::L_endl;
     ba::io_context::work work(io_context_);
+    th_ = std::thread([this] { io_context_.run(); });
     io_context_.post([&] {
       context_ = zmq::context_t(context_id_);
       switch (type_) {
@@ -53,12 +55,27 @@ class publisher : public broker_interface {
           create_anycast();
       }
       socket_.connect("tcp://127.0.0.1:5558");
+      stop_ = false;
     });
   }
 
   void stop() override {
-    promise_.set_exception(std::make_exception_ptr(interrupted_exception()));
+    auto& logger = rsp::libs::logger::logger();
+    logger.info() << "stop publisher" << rsp::libs::logger::L_endl;
+    if (stop_.load()) {
+      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      return;
+    }
+
+    stop_ = true;
     io_context_.stop();
+    if (th_.joinable()) {
+      th_.join();
+    }
+    try {
+      promise_.set_exception(std::make_exception_ptr(interrupted_exception()));
+    } catch (const std::future_error& e) {
+    }
   }
 
   void add_topic(const std::string& topic) override {}
@@ -112,6 +129,7 @@ class publisher : public broker_interface {
   zmq::context_t context_;
   zmq::socket_t socket_;
   std::promise<int> promise_;
+  std::atomic<bool> stop_;
 };
 }  // namespace broker
 }  // namespace libs

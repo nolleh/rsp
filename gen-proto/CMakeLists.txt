@@ -11,7 +11,7 @@ add_library(Proto
   ${PROTO}
 )
 
-target_include_directories(Proto PRIVATE
+target_include_directories(Proto PUBLIC
   ${PROJECT_SOURCE_DIR}
 )
 
