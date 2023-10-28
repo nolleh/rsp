@@ -74,6 +74,7 @@ class publisher : public broker_interface {
       // auto rc = s_send(&socket_, buffer.data());
       zmq::message_t msg(buffer.size());
       memcpy(msg.data(), buffer.data(), buffer.size());
+      logger.trace() << "send:" << msg.size() << rsp::libs::logger::L_endl;
       auto rc = socket_.send(msg);
       promise_.set_value(rc);
     });
