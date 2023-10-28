@@ -29,16 +29,17 @@ class room_receiver {
     logger_.info() << "waiting message is ready" << lg::L_endl;
     sleep(3);
     auto buffer = room_receiver_->recv("topic").get();
-    logger_.info() << "read size" << buffer.size() << lg::L_endl;
 
     namespace msg = rsp::libs::message;
     auto destructed = msg::serializer::destruct_buffer(buffer);
     dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
   }
 
-  void on_recv(Ping ping) { logger_.debug() << "received ping" << lg::L_endl; }
-  void on_recv(ReqCreateRoom create_room) {}
-  void on_recv(ReqJoinRoom join_room) {}
+  void on_recv(const Ping& ping) {
+    logger_.debug() << "received ping" << lg::L_endl;
+  }
+  void on_recv(const ReqCreateRoom& create_room) {}
+  void on_recv(const ReqJoinRoom& join_room) {}
 
  private:
   lg::s_logger& logger_;
@@ -48,12 +49,9 @@ class room_receiver {
 
 class intranet {
  public:
-  intranet() : logger_(lg::logger()) {
-  }
+  intranet() : logger_(lg::logger()) {}
 
-  void start() {
-    room_receiver_.start();
-  }
+  void start() { room_receiver_.start(); }
 
  private:
   lg::s_logger& logger_;
