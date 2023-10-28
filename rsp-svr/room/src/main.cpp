@@ -7,6 +7,8 @@
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
 
+#include "rsplib/message/types.hpp"
+
 int main() {
   std::cout << "hello, world" << std::endl;
   namespace lg = rsp::libs::logger;
@@ -20,10 +22,12 @@ int main() {
   logger.info() << "waiting message is ready" << lg::L_endl;
   sleep(3);
   auto buffer = sub->recv("topic").get();
+  logger.info() << "read size" << buffer.size() << lg::L_endl;
   namespace msg = rsp::libs::message;
 
   auto ping = Ping();
-  auto success = msg::serializer::deserialize(buffer, &ping);
+  auto destructed = msg::serializer::destruct_buffer(buffer);
+  auto success = msg::serializer::deserialize(destructed.payload, &ping);
   if (!success) {
     logger.error() << "failed to deserialize ping" << lg::L_endl;
   } else {

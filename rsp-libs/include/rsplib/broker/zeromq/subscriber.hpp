@@ -16,6 +16,7 @@
 #include "rsplib/broker/exception.hpp"
 #include "rsplib/broker/zeromq/cppzmq/zhelpers.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/helper.hpp"
 
 namespace rsp {
 namespace libs {
@@ -99,6 +100,7 @@ class subscriber : public broker_interface {
       // auto cs = std::string{cp};
       auto cs = std::string{static_cast<char*>(msg.data()), msg.size()};
       auto buffer = raw_buffer{cs.begin(), cs.end()};
+      logger.trace() << "read:" << buffer.size() << rsp::libs::logger::L_endl;
       promise_->set_value(buffer);
       promise_.reset();
     });
