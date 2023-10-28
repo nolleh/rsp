@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <zmq.hpp>
 
 #include "rsplib/broker/broker_interface.hpp"
 #include "rsplib/broker/zeromq/publisher.hpp"
