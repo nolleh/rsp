@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 
+#include "rsplib/message/types.hpp"
 #include "rsplib/broker/address.hpp"
 #include "rsplib/broker/cast_type.hpp"
 
@@ -14,6 +15,7 @@ namespace rsp {
 namespace libs {
 namespace broker {
 
+using raw_buffer = rsp::libs::message::raw_buffer;
 /**
  * interface that broker implementation should follow.
  *
@@ -31,13 +33,17 @@ class broker_interface {
       CastType type, const std::string& service_name, const uint8_t context,
       const std::string& topic = NULL);
 
+  virtual void start() = 0;
+
+  virtual void stop() = 0;
+
   virtual void add_topic(const std::string& topic) = 0;
 
   virtual void sub_topic(const std::string& topic) = 0;
 
-  virtual void send(const std::string& topic, std::ostream& os) = 0;
+  virtual void send(const std::string& topic, const raw_buffer& os) = 0;
 
-  virtual std::future<std::istream> recv(const std::string& topic) = 0;
+  virtual std::future<raw_buffer> recv(const std::string& topic) = 0;
 
   virtual address get_addr() { return address_; }
 

@@ -18,7 +18,6 @@ namespace broker {
 
 std::shared_ptr<broker_interface> broker::s_create_publisher(
     CastType type, const std::string& service_name, const uint8_t context) {
-
   std::shared_ptr<broker_interface> pub = nullptr;
 
 #ifdef ZEROMQ
@@ -31,10 +30,10 @@ std::shared_ptr<broker_interface> broker::s_create_publisher(
 std::shared_ptr<broker_interface> broker::s_create_subscriber(
     CastType type, const std::string& service_name, const uint8_t context,
     const std::string& topic) {
-
   std::shared_ptr<broker_interface> sub = nullptr;
 #ifdef ZEROMQ
-  // sub = zeromq::s_create_subscriber(type,service_name, context, topic);
+  sub = zeromq<subscriber>::s_create_subscriber(type, service_name, context,
+                                                topic);
 
 #endif
   return sub;

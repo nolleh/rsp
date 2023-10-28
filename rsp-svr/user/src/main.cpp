@@ -4,9 +4,11 @@
 
 #include <boost/asio.hpp>
 
+#include "proto/common/ping.pb.h"
 #include "rsplib/broker/broker.hpp"
 #include "rsplib/debug/tracer.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/serializer.hpp"
 #include "rsplib/server/tcp_server.hpp"
 #include "user/config.h"
 #include "user/message/message_dispatcher.hpp"
@@ -28,6 +30,13 @@ int main() {
 
   try {
     dispatcher dispatcher;
+    auto pub = br::broker::s_create_publisher(CastType::kAnyCast, "user", 1);
+    pub->start();
+
+    auto buffer =
+        rsp::libs::message::serializer::serialize(MessageType::kPing, Ping());
+    pub->send("topic", buffer);
+
     server::tcp_server server{&dispatcher};
     user_server::acceptor acceptor;
     server.subscribe(&acceptor);

@@ -57,8 +57,8 @@ class message_dispatcher : public dispatcher_interface {
     session->on_recv_unknown();
   }
 
-  // TOOD(@nolleh) hum. actually now, no need to manage the buffer as s_ptr.
-  // client also need to be chagned to add some layer.
+  // TODO(@nolleh) hum. actually now, no need to manage the buffer as s_ptr.
+  // client also need to be changed to add some layer.
   // let's consider after development was got some where.
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
