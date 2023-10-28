@@ -42,8 +42,8 @@ using buffer_ptr = libs::message::buffer_ptr;
 namespace lg = libs::logger;
 
 // TODO(@nolleh) refactor
-// 1.seperate client <-> state
-// 2.seperate base <-> init
+// 1.separate client <-> state
+// 2.separate base <-> init
 class base_state {
  public:
   static std::shared_ptr<base_state> create(socket* socket) {
@@ -56,7 +56,7 @@ class base_state {
     // this is okay to use like this.
     // if this precondition is not effective, then change the implementation as
     // server pattern.
-    // and, for convient dev, remove by type for now
+    // and, for convenient dev, remove by type for now
     dispatcher_.unregister_handler(MessageType::kResLogin);
     dispatcher_.unregister_handler(MessageType::kPing);
   }

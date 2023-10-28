@@ -40,8 +40,10 @@ class subscriber : public broker_interface {
   ~subscriber() { stop(); }
 
   void start() override {
-    th_ = std::thread([this] { io_context_.run(); });
+    auto& logger = rsp::libs::logger::logger();
+    logger.info() << "start subscriber" << rsp::libs::logger::L_endl;
     ba::io_context::work work(io_context_);
+    th_ = std::thread([this] { io_context_.run(); });
     io_context_.post([&] {
       context_ = zmq::context_t(context_id_);
       switch (type_) {
@@ -56,32 +58,53 @@ class subscriber : public broker_interface {
       logger.info() << "created context(" << &io_context_ << ") socket ("
                     << &socket_ << ")" << rsp::libs::logger::L_endl;
       socket_.bind("tcp://*:5558");
+      stop_ = false;
     });
   }
 
   void stop() override {
     auto& logger = rsp::libs::logger::logger();
+    logger.info() << "stop subscriber" << rsp::libs::logger::L_endl;
+    if (stop_.load()) {
+      auto& logger = rsp::libs::logger::logger();
+      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      return;
+    }
+
+    stop_ = true;
     logger.info() << "stop context(" << &io_context_ << ") socket (" << &socket_
+                  << ") joinable(" << th_.joinable() << ")"
                   << rsp::libs::logger::L_endl;
-    io_context_.post([&] {
-      if (promise_) {
-        promise_->set_exception(
-            std::make_exception_ptr(interrupted_exception()));
-      }
-    });
+
     io_context_.stop();
+    if (th_.joinable()) th_.join();
+    try {
+      promise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
+    } catch (const std::future_error& e) {
+    }
   }
 
   void add_topic(const std::string& topic) override { topics_.insert(topic); }
 
   void sub_topic(const std::string& topic) override { topics_.erase(topic); }
 
-  void send(const std::string& topic, const raw_buffer& os) override {
-    throw std::runtime_error("not supported");
+  void send(const std::string& topic, const raw_buffer& buffer) override {
+    // throw std::runtime_error("not supported");
+    io_context_.post([&, buffer] {
+      auto& logger = rsp::libs::logger::logger();
+      logger.trace() << "send context(" << &io_context_ << ") socket ("
+                     << &socket_ << ")" << rsp::libs::logger::L_endl;
+      // auto rc = s_send(&socket_, buffer.data());
+      zmq::message_t msg(buffer.size());
+      memcpy(msg.data(), buffer.data(), buffer.size());
+      auto rc = socket_.send(msg);
+      logger.trace() << "send:" << rc << rsp::libs::logger::L_endl;
+    });
   }
 
   std::future<raw_buffer> recv(const std::string& topic) override {
-    promise_ = std::make_unique<std::promise<raw_buffer>>();
+    // promise_ = std::make_unique<std::promise<raw_buffer>>();
+    promise_ = std::promise<raw_buffer>();
 
     io_context_.post([&] {
       auto& logger = rsp::libs::logger::logger();
@@ -92,20 +115,18 @@ class subscriber : public broker_interface {
       socket_.recv(&msg);
       // if (!cp) {
       if (msg.size() < 0) {
-        promise_->set_exception(
+        promise_.set_exception(
             std::make_exception_ptr(interrupted_exception{}));
-        promise_.reset();
         return;
       }
       // auto cs = std::string{cp};
       auto cs = std::string{static_cast<char*>(msg.data()), msg.size()};
       auto buffer = raw_buffer{cs.begin(), cs.end()};
       logger.trace() << "read:" << buffer.size() << rsp::libs::logger::L_endl;
-      promise_->set_value(buffer);
-      promise_.reset();
+      promise_.set_value(buffer);
     });
 
-    return promise_->get_future();
+    return promise_.get_future();
   }
 
  private:
@@ -134,7 +155,9 @@ class subscriber : public broker_interface {
       io_context_.get_executor()};
   zmq::context_t context_;
   zmq::socket_t socket_;
-  std::unique_ptr<std::promise<raw_buffer>> promise_;
+  // std::unique_ptr<std::promise<raw_buffer>> promise_;
+  std::promise<raw_buffer> promise_;
+  std::atomic<bool> stop_;
 };
 }  // namespace broker
 }  // namespace libs

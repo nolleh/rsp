@@ -46,22 +46,73 @@ TEST(Broker, CreateAnyCastPublisher) {
   // EXPECT_EQ(prefix, "A@test");
 }
 
-// TEST(Broker, CreateUniCastPublisher) {
-//   namespace br = rsp::libs::broker;
-//
-//   auto pub = br::broker::s_create_publisher(CastType::kUniCast, "test", 1);
-//   EXPECT_TRUE(pub != nullptr);
-//   auto address = pub->get_addr();
-//   auto prefix = address.substr(0, 6);
-//   EXPECT_EQ(prefix, "U@test");
-// }
-//
-// TEST(Broker, CreateBroadCastPublisher) {
-//   namespace br = rsp::libs::broker;
-//
-//   auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1);
-//   EXPECT_TRUE(pub != nullptr);
-//   auto address = pub->get_addr();
-//   auto prefix = address.substr(0, 6);
-//   EXPECT_EQ(prefix, "U@test");
-// }
+TEST(Broker, CreateUniCastPublisher) {
+  namespace br = rsp::libs::broker;
+
+  auto pub = br::broker::s_create_publisher(CastType::kUniCast, "test", 1);
+  EXPECT_TRUE(pub != nullptr);
+  //   auto address = pub->get_addr();
+  //   auto prefix = address.substr(0, 6);
+  //   EXPECT_EQ(prefix, "U@test");
+}
+
+TEST(Broker, CreateBroadCastPublisher) {
+  namespace br = rsp::libs::broker;
+
+  auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1);
+  EXPECT_TRUE(pub != nullptr);
+  //   auto address = pub->get_addr();
+  //   auto prefix = address.substr(0, 6);
+  //   EXPECT_EQ(prefix, "U@test");
+}
+
+TEST(Broker, CreateAnyCastSubscriber) {
+  namespace br = rsp::libs::broker;
+
+  auto pub =
+      br::broker::s_create_subscriber(CastType::kAnyCast, "test", 1, "topic");
+  EXPECT_TRUE(pub != nullptr);
+  // auto address = pub->get_addr();
+  // auto prefix = address.substr(0, 6);
+  // EXPECT_EQ(prefix, "A@test");
+}
+
+TEST(Broker, CreateUniCastSubscriber) {
+  namespace br = rsp::libs::broker;
+
+  auto pub =
+      br::broker::s_create_subscriber(CastType::kUniCast, "test", 1, "topic");
+  EXPECT_TRUE(pub != nullptr);
+  //   auto address = pub->get_addr();
+  //   auto prefix = address.substr(0, 6);
+  //   EXPECT_EQ(prefix, "U@test");
+}
+
+TEST(Broker, CreateBroadCastSubscriber) {
+  namespace br = rsp::libs::broker;
+
+  auto pub =
+      br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1, "topic");
+  EXPECT_TRUE(pub != nullptr);
+}
+
+TEST(Broker, PubSub) {
+  namespace br = rsp::libs::broker;
+  auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1);
+  EXPECT_TRUE(pub != nullptr);
+
+  auto sub =
+      br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1, "topic");
+  EXPECT_TRUE(sub != nullptr);
+
+  pub->start();
+  sub->start();
+  std::string msg = "test";
+  rsp::libs::message::raw_buffer buffer{msg.begin(), msg.end()};
+  pub->send("topic", buffer);
+
+  auto recv_msg = sub->recv("topic").get();
+  EXPECT_EQ(msg.size(), recv_msg.size());
+  auto str_recv_msg = std::string{recv_msg.data(), recv_msg.size()};
+  EXPECT_EQ(msg, str_recv_msg);
+}

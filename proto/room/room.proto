@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+message ReqCreateRoom {
+  string uid = 1;
+}
+
+message ResCreateRoom {
+  bool success = 1;
+  int32 room_id = 2;
+}
+
+message ReqJoinRoom {
+  string uid = 1;
+  int32 room_id = 2;
+}
+
+message ResJoinRoom {
+  bool success = 1;
+  int32 room_id = 2;
+}

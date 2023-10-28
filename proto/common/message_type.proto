@@ -7,4 +7,8 @@ enum MessageType {
   kResLogin = 3;
   kReqLogout = 4;
   kResLogout = 5;
+  kReqCreateRoom = 6;
+  kResCreateRoom = 7;
+  kReqJoinRoom = 8;
+  kResJoinRoom = 9;
 }
