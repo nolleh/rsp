@@ -44,9 +44,9 @@ class worker {
     return threads_.wrap(func);
   }
 
-  decltype(std::declval<boost::asio::io_context>().get_executor())
+  decltype(std::declval<thread_pool>().get_executor())
   get_executor() {
-    return threads_.io_context()->get_executor();
+    return threads_.get_executor();
   }
 
  private:

@@ -75,6 +75,11 @@ class thread_pool {
     return boost::asio::bind_executor(io_context_, func);
   }
 
+  decltype(std::declval<boost::asio::io_context>().get_executor())
+  get_executor() {
+    return io_context()->get_executor();
+  }
+
  private:
   asio::io_context io_context_;
   boost::asio::executor_work_guard<decltype(io_context_.get_executor())>
