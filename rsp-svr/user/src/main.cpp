@@ -14,6 +14,7 @@
 #include "user/message/message_dispatcher.hpp"
 #include "user/server/acceptor.hpp"
 #include "user/server/worker.hpp"
+#include "user/intranet/intranet.hpp"
 
 int main() {
   namespace server = rsp::libs::server;
@@ -29,20 +30,16 @@ int main() {
                 << lg::L_endl;
 
   try {
+    auto& intranet = rsp::user::intranet::instance();
+    intranet.start();
+
     dispatcher dispatcher;
-    auto pub = br::broker::s_create_publisher(CastType::kAnyCast, "user", 1);
-    pub->start();
-
-    auto buffer =
-        rsp::libs::message::serializer::serialize(MessageType::kPing, Ping());
-    pub->send("topic", buffer);
-
     server::tcp_server server{&dispatcher};
     user_server::acceptor acceptor;
     server.subscribe(&acceptor);
     user_server::worker::instance();  // initialize when start server, worker;
     server.start();
-    // TODO(@nolleh) more elegant wayk
+    // TODO(@nolleh) more elegant way
     server.unsubscribe(&acceptor);
   } catch (std::exception& e) {
     logger.error() << "exception occurred" << e.what() << lg::L_endl;
