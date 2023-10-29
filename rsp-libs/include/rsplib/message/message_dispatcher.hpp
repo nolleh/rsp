@@ -24,7 +24,7 @@ using link = rsp::libs::link::link;
 namespace lg = rsp::libs::logger;
 
 // using ProtoMessage = ::PROTOBUF_NAMESPACE_ID::Message;
-/** this class used for regitering message handlers
+/** this class used for registering message handlers
  * */
 class message_dispatcher: public message_dispatcher_interface {
   /**
