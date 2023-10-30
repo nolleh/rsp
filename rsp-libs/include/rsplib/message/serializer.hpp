@@ -47,6 +47,7 @@ class serializer {
   static const size_t kType = 4;
 
  public:
+  // TODO(@nolleh) make MessageTypeTraits to attach MessageType to Message
   template <typename Message>
   static raw_buffer serialize(const MessageType type, const Message& message) {
     auto content_len = message.ByteSizeLong();
