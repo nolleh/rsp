@@ -38,6 +38,10 @@ class message_dispatcher : public dispatcher_interface {
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
     REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer<ReqLogin>);
     REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer<ReqLogout>);
+    REG_HANDLER(dispatcher_, MessageType::kReqCreateRoom,
+                handle_buffer<ReqCreateRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kReqJoinRoom,
+                handle_buffer<ReqJoinRoom>);
     REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
     REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
 
