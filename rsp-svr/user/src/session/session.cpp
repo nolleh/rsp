@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "user/job/job_create_room.hpp"
 #include "user/job/job_login.hpp"
 #include "user/job/job_logout.hpp"
 #include "user/job/job_stop.hpp"
@@ -24,6 +25,7 @@ void session::on_recv(Ping& ping) {
       rsp::libs::message::serializer::serialize(MessageType::kPong, pong);
   send(buffer);
 }
+
 template <>
 void session::on_recv(ReqLogin& req_login) {
   last_received_ = std::time(nullptr);
@@ -38,6 +40,15 @@ void session::on_recv(ReqLogout& request) {
   namespace job = rsp::user::job;
   auto logout = std::make_shared<job::job_logout>(shared_from_this(), request);
   enqueue_job(logout);
+}
+
+template <>
+void session::on_recv(ReqCreateRoom& request) {
+  last_received_ = std::time(nullptr);
+  namespace job = rsp::user::job;
+  auto runner =
+      std::make_shared<job::job_create_room>(shared_from_this(), request);
+  enqueue_job(runner);
 }
 
 }  // namespace session
