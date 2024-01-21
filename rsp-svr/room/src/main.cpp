@@ -10,13 +10,12 @@
 #include "rsplib/message/types.hpp"
 
 int main() {
-  std::cout << "hello, world" << std::endl;
   namespace lg = rsp::libs::logger;
   auto& logger = lg::logger(lg::log_level::kTrace);
 
+  logger.info() << "started room server" << lg::L_endl;
   rsp::room::intranet intranet;
   intranet.start();
 
-  logger.info() << "started room server" << lg::L_endl;
   return 0;
 }
