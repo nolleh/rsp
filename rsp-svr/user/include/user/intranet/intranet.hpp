@@ -48,18 +48,23 @@ class room_sender {
   }
 
   void stop() {
+    stop_ = true;
     threads_.join();
     room_sender_->stop();
   }
 
   ba::awaitable<void> recv() {
-    // TODO(@nolleh) awaitable.
-    // auto buffer = co_await room_sender_->recv("topic");
-    auto buffer = room_sender_->recv("topic").get();
+    while (!stop_.load()) {
+      // TODO(@nolleh) awaitable.
+      // auto buffer = co_await room_sender_->recv("topic");
+      auto buffer = room_sender_->recv("topic").get();
 
-    namespace msg = rsp::libs::message;
-    auto destructed = msg::serializer::destruct_buffer(buffer);
-    dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+      logger_.trace() << "recved from intranet" << lg::L_endl;
+
+      namespace msg = rsp::libs::message;
+      auto destructed = msg::serializer::destruct_buffer(buffer);
+      dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+    }
     co_return;
   }
 
@@ -89,6 +94,7 @@ class room_sender {
   }
   template <typename T>
   void on_recv(const T& msg) const {
+    logger_.trace() << "received message" << lg::L_endl;
     send_to_waiter(msg);
   }
 
@@ -113,6 +119,7 @@ class room_sender {
   // TODO(@nolleh) timeout
   mutable std::map<int32_t, std::function<void(const std::shared_ptr<Message>)>>
       requests_;
+  std::atomic<bool> stop_;
 };
 
 class intranet {

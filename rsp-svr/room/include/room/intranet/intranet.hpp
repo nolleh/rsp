@@ -19,10 +19,10 @@ using link = rsp::libs::link::link;
 
 class room_receiver {
  public:
-  room_receiver()
+  room_receiver(intranet* intranet)
       : logger_(lg::logger()),
         dispatcher_(this),
-        message_handler_(room_message_handler()) {
+        message_handler_(room_message_handler(intranet)) {
     room_receiver_ =
         br::broker::s_create_subscriber(CastType::kAnyCast, "room", 1, "topic");
   }
@@ -45,7 +45,16 @@ class room_receiver {
 
   template <typename T>
   void on_recv(const T& msg) {
-    message_handler_.handle(msg);
+    auto response = message_handler_.handle(msg);
+    send_response(MessageType::kResCreateRoom, response);
+  }
+
+  template <typename T>
+  void send_response(MessageType type, const T& res) {
+    namespace msg = rsp::libs::message;
+    auto buffer = msg::serializer::serialize(type, res);
+    logger_.trace() << "send_reponse" << lg::L_endl;
+    room_receiver_->send("topic", buffer);
   }
 
  private:
@@ -62,11 +71,21 @@ void room_receiver::on_recv(const Ping& ping) {
 
 class intranet {
  public:
-  intranet() : logger_(lg::logger()) {}
+  static intranet& instance();
+  intranet() : logger_(lg::logger()), room_receiver_(this) {}
+
+  // TODO(@nolleh) check
+  const room_receiver& responder() const { return room_receiver_; }
 
   void start() { room_receiver_.start(); }
 
  private:
+  static std::once_flag s_flag;
+  static std::unique_ptr<intranet> s_instance;
+
+  intranet(const intranet&) = delete;
+  intranet& operator=(const intranet&) = delete;
+
   lg::s_logger& logger_;
   room_receiver room_receiver_;
 };

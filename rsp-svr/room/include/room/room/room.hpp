@@ -27,6 +27,10 @@ class room {
   void create_room() {}
   void join_room() {}
 
+  RoomId room_id() {
+    return room_id_;
+  }
+
  private:
   RoomId room_id_;
   std::vector<user> users_;
