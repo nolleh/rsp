@@ -6,7 +6,7 @@
 **R**ealTime **S**erver **P**latform
 
 started @since 23.09.10  
-developement by [@nolleh](mailto:nolleh7707@gmail.com)
+development by [@nolleh](mailto:nolleh7707@gmail.com)
 
 it aims to make room based socket server platform(framework) in production level for core parts.
 (long term project, and this will be progressed in my leisure time, so getting longer.)
@@ -39,8 +39,8 @@ and also if you like this, or to give motivation for development, press star. :)
 
 ## restriction
 to make things simple, not very concern about multi platform (OS) 
-or compliler version.
-if need or it stimulate my curiosity (... 😅), it is possible choose component that not compitable with other platform.
+or compiler version.
+if need or it stimulate my curiosity (... 😅), it is possible choose component that not compatible with other platform.
 the dependencies will be descripted below.  
 
 ## dependencies
@@ -51,13 +51,14 @@ the dependencies will be descripted below.
     - cmake-3.25.1
     - gcc-12.3.0
     - protoc-3.21.12
+    - [cppzmq](https://zeromq.org/)
 
 ## run
 
 ### 1. manual build
 
 1. prepare the dependencies, and run ./rebuild.sh
-2. then ./run-svr.sh and ./run-cli.sh (with indivisual terminal)
+2. then ./run-svr.sh and ./run-cli.sh (with individual terminal)
 
 ### 2. from prebuilt
 

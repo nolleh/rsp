@@ -92,8 +92,8 @@ class publisher : public broker_interface {
       zmq::message_t msg(buffer.size());
       memcpy(msg.data(), buffer.data(), buffer.size());
       logger.trace() << "send:" << msg.size() << rsp::libs::logger::L_endl;
-      auto rc = socket_.send(msg);
-      promise_.set_value(rc);
+      auto rc = socket_.send(msg, zmq::send_flags::none);
+      promise_.set_value(rc.value());
     });
   }
 
@@ -109,12 +109,14 @@ class publisher : public broker_interface {
   }
 
   void create_anycast() {
+    // TODO (@nolleh) change 2 req type
     socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::push});
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_unicast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
+    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::req});
+    logger::logger().trace() << "create unique publisher type:req";
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
