@@ -5,6 +5,7 @@
 #include <source_location>
 
 #include <bitset>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -23,6 +24,27 @@ using streamable = std::ostream;
 
 class s_logger {
  public:
+  std::string executable_name() {
+#if defined(PLATFORM_POSIX) || \
+    defined(__linux__)  // check defines for your setup
+
+    std::string sp;
+    std::ifstream("/proc/self/comm") >> sp;
+    return sp;
+
+#elif defined(_WIN32)
+
+    char buf[MAX_PATH];
+    GetModuleFileNameA(nullptr, buf, MAX_PATH);
+    return buf;
+
+#else
+
+    static_assert(false, "unrecognized platform");
+
+#endif
+  }
+
   void activate(bool makeActive = true) {
     makeActive ? flags_ -= L_null : flags_ += L_null;
   }
@@ -77,27 +99,32 @@ class s_logger {
   virtual s_logger &print_level() = 0;
 
   s_logger &trace(std::source_location s = std::source_location::current()) {
-    *this << log_level::kTrace << L_time << L_space << s << L_space << L_level;
+    *this << log_level::kTrace << L_time << L_space << executable_name()
+          << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &debug(std::source_location s = std::source_location::current()) {
-    *this << log_level::kDebug << L_time << L_space << s << L_space << L_level;
+    *this << log_level::kDebug << L_time << L_space << executable_name()
+          << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &info(std::source_location s = std::source_location::current()) {
-    *this << log_level::kInfo << L_time << L_space << s << L_space << L_level;
+    *this << log_level::kInfo << L_time << L_space << executable_name()
+          << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &warn(std::source_location s = std::source_location::current()) {
-    *this << log_level::kWarn << L_time << L_space << s << L_space << L_level;
+    *this << log_level::kWarn << L_time << L_space << executable_name()
+          << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &error(std::source_location s = std::source_location::current()) {
-    *this << log_level::kError << L_time << L_space << s << L_space << L_level;
+    *this << log_level::kError << L_time << L_space << executable_name()
+          << "::" << s << L_space << L_level;
     return *this;
   }
 
