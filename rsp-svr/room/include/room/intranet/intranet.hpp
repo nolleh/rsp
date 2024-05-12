@@ -24,7 +24,7 @@ class room_receiver {
         dispatcher_(this),
         message_handler_(room_message_handler(intranet)) {
     room_receiver_ =
-        br::broker::s_create_subscriber(CastType::kAnyCast, "room", 1, "topic");
+        br::broker::s_create_subscriber(CastType::kUniCast, "room", 1, "topic");
   }
 
   void start() {
@@ -40,7 +40,7 @@ class room_receiver {
     namespace msg = rsp::libs::message;
     auto destructed = msg::serializer::destruct_buffer(buffer);
     dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    start_recv();
+    // start_recv();
   }
 
   template <typename T>
@@ -64,10 +64,10 @@ class room_receiver {
   room_message_handler message_handler_;
 };
 
-template <>
-void room_receiver::on_recv(const Ping& ping) {
-  logger_.debug() << "received ping" << lg::L_endl;
-}
+// template <>
+// void room_receiver::on_recv(const Ping& ping) {
+//   logger_.debug() << "received ping" << lg::L_endl;
+// }
 
 class intranet {
  public:

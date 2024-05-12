@@ -1,3 +1,7 @@
+/** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
+#pragma once
+
+#include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
 #include "room/room/room_manager.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -16,6 +20,12 @@ class room_message_handler {
       : intranet_(intranet),
         logger_(lg::logger()),
         room_manager_(room_manager::instance()) {}
+
+  Pong handle(const Ping& ping) {
+    logger_.trace() << "ping " << lg::L_endl;
+    Pong pong;
+    return pong;
+  }
 
   ResCreateRoom handle(const ReqCreateRoom& create_room) {
     logger_.trace() << "create_room: uid(" << create_room.uid() << ")"

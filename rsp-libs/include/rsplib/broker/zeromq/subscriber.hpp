@@ -141,7 +141,7 @@ class subscriber : public broker_interface {
   }
 
   void create_unicast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::req});
+    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
