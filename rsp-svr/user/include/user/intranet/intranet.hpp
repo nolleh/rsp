@@ -33,7 +33,7 @@ class room_sender {
  public:
   room_sender() : logger_(lg::logger()), threads_(1), dispatcher_(this) {
     room_sender_ =
-        br::broker::s_create_publisher(CastType::kAnyCast, "room", 1);
+        br::broker::s_create_publisher(CastType::kUniCast, "room", 1);
   }
 
   ~room_sender() { stop(); }

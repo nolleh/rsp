@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+#include <typeinfo>
 
 #include "proto/common/ping.pb.h"
 #include "room/intranet/message_dispatcher.hpp"
@@ -45,6 +46,7 @@ class room_receiver {
 
   template <typename T>
   void on_recv(const T& msg) {
+    logger_.trace() << "on_recv" << typeid(msg).name() << lg::L_endl;
     auto response = message_handler_.handle(msg);
     send_response(MessageType::kResCreateRoom, response);
   }

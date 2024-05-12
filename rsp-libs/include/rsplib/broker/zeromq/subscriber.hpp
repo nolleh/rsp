@@ -58,6 +58,7 @@ class subscriber : public broker_interface {
       logger.info() << "created context(" << &io_context_ << ") socket ("
                     << &socket_ << ")" << rsp::libs::logger::L_endl;
       socket_.bind("tcp://*:5558");
+      // socket_.connect("tcp://localhost:5558");
       stop_ = false;
     });
   }
@@ -89,16 +90,19 @@ class subscriber : public broker_interface {
   void sub_topic(const std::string& topic) override { topics_.erase(topic); }
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
+    auto& logger = rsp::libs::logger::logger();
+    logger.trace() << "io_context post send" << rsp::libs::logger::L_endl;
     // throw std::runtime_error("not supported");
     io_context_.post([&, buffer] {
-      auto& logger = rsp::libs::logger::logger();
       logger.trace() << "send context(" << &io_context_ << ") socket ("
                      << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto rc = s_send(&socket_, buffer.data());
       zmq::message_t msg(buffer.size());
       memcpy(msg.data(), buffer.data(), buffer.size());
-      auto rc = socket_.send(msg);
-      logger.trace() << "send:" << rc << rsp::libs::logger::L_endl;
+
+      auto rc = socket_.send(msg, zmq::send_flags::none);
+      // auto rc = s_send(&socket_, buffer.data());
+      logger.trace() << "send:" << rc.value() << rsp::libs::logger::L_endl;
     });
   }
 
@@ -113,12 +117,14 @@ class subscriber : public broker_interface {
       // auto cp = s_recv(&socket_);
       zmq::message_t msg;
       socket_.recv(&msg);
+
       // if (!cp) {
       if (msg.size() < 0) {
         promise_.set_exception(
             std::make_exception_ptr(interrupted_exception{}));
         return;
       }
+
       // auto cs = std::string{cp};
       auto cs = std::string{static_cast<char*>(msg.data()), msg.size()};
       auto buffer = raw_buffer{cs.begin(), cs.end()};
@@ -142,6 +148,7 @@ class subscriber : public broker_interface {
 
   void create_unicast() {
     socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
+    logger::logger().trace() << "create unique subscriber type:rep";
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
