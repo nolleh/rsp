@@ -99,11 +99,11 @@ TEST(Broker, CreateBroadCastSubscriber) {
 TEST(Broker, PubSub) {
   namespace br = rsp::libs::broker;
   auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1);
-  EXPECT_TRUE(pub != nullptr);
+  EXPECT_TRUE(nullptr != pub);
 
   auto sub =
       br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1, "topic");
-  EXPECT_TRUE(sub != nullptr);
+  EXPECT_TRUE(nullptr != sub);
 
   pub->start();
   sub->start();
@@ -115,4 +115,27 @@ TEST(Broker, PubSub) {
   EXPECT_EQ(msg.size(), recv_msg.size());
   auto str_recv_msg = std::string{recv_msg.data(), recv_msg.size()};
   EXPECT_EQ(msg, str_recv_msg);
+}
+
+TEST(Broker, ReqRep) {
+  namespace br = rsp::libs::broker;
+  auto req = br::broker::s_create_publisher(CastType::kUniCast, "test", 1);
+  EXPECT_TRUE(nullptr != req);
+  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1, "topic");
+  EXPECT_TRUE(nullptr != rep);
+
+  req->start();
+  rep->start();
+
+  std::string msg = "hello";
+  rsp::libs::message::raw_buffer buffer{msg.begin(), msg.end()};
+
+  req->send("service", buffer);
+  auto recv_msg = rep->recv("service").get();
+  EXPECT_EQ(msg.size(), recv_msg.size());
+  auto str_recv_msg = std::string{recv_msg.data(), recv_msg.size()};
+  EXPECT_EQ(msg, str_recv_msg);
+
+  rsp::libs::message::raw_buffer response{msg.begin(), msg.end()};
+  rep->send("topic", response);
 }

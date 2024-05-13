@@ -83,9 +83,17 @@ class publisher : public broker_interface {
   void sub_topic(const std::string& topic) override {}
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
+    auto& logger = rsp::libs::logger::logger();
+    if (stop_.load()) {
+      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      return;
+    }
     promise_ = std::promise<int>();
     io_context_.post([&, buffer] {
-      auto& logger = rsp::libs::logger::logger();
+      if (stop_.load()) {
+        logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        return;
+      }
       logger.trace() << "send context(" << &io_context_ << ") socket ("
                      << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto rc = s_send(&socket_, buffer.data());
