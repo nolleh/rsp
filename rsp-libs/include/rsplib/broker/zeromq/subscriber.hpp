@@ -91,9 +91,17 @@ class subscriber : public broker_interface {
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
     auto& logger = rsp::libs::logger::logger();
+    if (stop_.load()) {
+      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      return;
+    }
     logger.trace() << "io_context post send" << rsp::libs::logger::L_endl;
     // throw std::runtime_error("not supported");
     io_context_.post([&, buffer] {
+      if (stop_.load()) {
+        logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        return;
+      }
       logger.trace() << "send context(" << &io_context_ << ") socket ("
                      << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto rc = s_send(&socket_, buffer.data());
@@ -108,10 +116,22 @@ class subscriber : public broker_interface {
 
   std::future<raw_buffer> recv(const std::string& topic) override {
     // promise_ = std::make_unique<std::promise<raw_buffer>>();
+    auto& logger = rsp::libs::logger::logger();
     promise_ = std::promise<raw_buffer>();
+    if (stop_.load()) {
+      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      promise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
+      return promise_.get_future();
+    }
 
     io_context_.post([&] {
-      auto& logger = rsp::libs::logger::logger();
+      if (stop_.load()) {
+        logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        promise_.set_exception(
+            std::make_exception_ptr(interrupted_exception{}));
+        return;
+      }
+
       logger.trace() << "recv context(" << &io_context_ << ") socket ("
                      << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto cp = s_recv(&socket_);
