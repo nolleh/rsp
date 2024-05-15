@@ -47,8 +47,9 @@ class state_login : public base_state {
         MessageType::kResCreateRoom,
         std::bind(&state_login::handle_res_create_room, this,
                   std::placeholders::_1, std::placeholders::_2));
+
     dispatcher_.register_handler(
-        MessageType::kResCreateRoom,
+        MessageType::kResJoinRoom,
         std::bind(&state_login::handle_res_join_room, this,
                   std::placeholders::_1, std::placeholders::_2));
 
@@ -93,7 +94,7 @@ class state_login : public base_state {
   void handle_res_create_room(buffer_ptr buffer, link*) {
     ResCreateRoom create_room;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &create_room)) {
-      logger_.error() << "failed to parse logout" << lg::L_endl;
+      logger_.error() << "failed to parse created room" << lg::L_endl;
       return;
     }
 
@@ -105,7 +106,7 @@ class state_login : public base_state {
   void handle_res_join_room(buffer_ptr buffer, link*) {
     ResJoinRoom join_room;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &join_room)) {
-      logger_.error() << "failed to parse logout" << lg::L_endl;
+      logger_.error() << "failed to parse join room" << lg::L_endl;
       return;
     }
 

@@ -98,19 +98,15 @@ class subscriber : public broker_interface {
     }
 
     io_context_.post([&, buffer] {
-      logger.trace() << "io_context post loop" << stop_.load()
-                     << rsp::libs::logger::L_endl;
       if (stop_.load()) {
         logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
         return;
       }
-      logger.trace() << "about to send" << rsp::libs::logger::L_endl;
       // logger.trace() << "send context(" << &io_context_ << ") socket ("
       //                << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto rc = s_send(&socket_, buffer.data());
       zmq::message_t msg(buffer.size());
       memcpy(msg.data(), buffer.data(), buffer.size());
-      logger.trace() << "msg created" << rsp::libs::logger::L_endl;
 
       auto rc = socket_.send(msg, zmq::send_flags::none);
       // auto rc = s_send(&socket_, buffer.data());

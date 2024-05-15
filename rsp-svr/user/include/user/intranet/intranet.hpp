@@ -5,6 +5,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <typeinfo>
 
 #include <boost/asio.hpp>
 // #include <google/protobuf/port_def.inc>
@@ -39,44 +40,67 @@ class room_sender {
   ~room_sender() { stop(); }
 
   void start() {
-    room_sender_->start();
-
     // sender live longer threads
-    co_spawn(
-        threads_.get_executor(), [self = this] { return self->recv(); },
-        ba::detached);
+    room_sender_->start();
+    threads_.start();
+
+    // co_spawn(
+    //     threads_.get_executor(), [self = this] { return self->start_recv();
+    //     }, ba::detached);
   }
 
   void stop() {
     stop_ = true;
-    threads_.join();
     room_sender_->stop();
+    threads_.join();
   }
 
-  ba::awaitable<void> recv() {
+  ba::awaitable<void> start_recv() {
+    logger_.info() << "start room receiving" << lg::L_endl;
     while (!stop_.load()) {
       // TODO(@nolleh) awaitable.
       // auto buffer = co_await room_sender_->recv("topic");
       auto buffer = room_sender_->recv("topic").get();
 
-      logger_.trace() << "recved from intranet" << lg::L_endl;
-
       namespace msg = rsp::libs::message;
       auto destructed = msg::serializer::destruct_buffer(buffer);
       dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
     }
+    logger_.info() << "stop room receiving" << lg::L_endl;
+    co_return;
+  }
+
+  ba::awaitable<void> recv() {
+    // TODO (@nolleh) improve with executors
+    // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
+    auto buffer = room_sender_->recv("topic").get();
+
+    namespace msg = rsp::libs::message;
+    auto destructed = msg::serializer::destruct_buffer(buffer);
+    dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
     co_return;
   }
 
   template <typename T>
   void send_request(
       MessageType type, const T& req,
-      std::function<void(const std::shared_ptr<Message>)> handler) const {
+      std::function<void(const std::shared_ptr<Message>)> handler) {
     requests_[req.request_id()] =
         std::function<void(const std::shared_ptr<Message>)>(handler);
     namespace msg = rsp::libs::message;
     auto buffer = msg::serializer::serialize(type, req);
     room_sender_->send("topic", buffer);
+
+    logger_.trace() << "send 2 room, requestId:" << req.request_id()
+                    << ", type: " << typeid(req).name() << lg::L_endl;
+
+    // hum......
+    // TODO (@nolleh) improve with executors
+    // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
+    // https://stackoverflow.com/questions/63360248/where-is-stdfuturethen-and-the-concurrency-ts
+    co_spawn(
+        threads_.get_executor(), [self = this] { return self->recv(); },
+        ba::detached);
   }
 
   template <typename T>
@@ -94,7 +118,8 @@ class room_sender {
   }
   template <typename T>
   void on_recv(const T& msg) const {
-    logger_.trace() << "received message" << lg::L_endl;
+    logger_.trace() << "received message requestId: " << msg.request_id() << ","
+                    << typeid(msg).name() << lg::L_endl;
     send_to_waiter(msg);
   }
 
@@ -115,11 +140,11 @@ class room_sender {
 
   message_dispatcher<room_sender> dispatcher_;
   std::shared_ptr<br::broker_interface> room_sender_;
+  std::atomic<bool> stop_;
 
   // TODO(@nolleh) timeout
   mutable std::map<int32_t, std::function<void(const std::shared_ptr<Message>)>>
       requests_;
-  std::atomic<bool> stop_;
 };
 
 class intranet {
@@ -129,7 +154,7 @@ class intranet {
   void start() { room_sender_.start(); }
   void stop() { room_sender_.stop(); }
 
-  const room_sender& room() const { return room_sender_; }
+  room_sender& room() const { return room_sender_; }
 
  private:
   intranet(const intranet&) = delete;

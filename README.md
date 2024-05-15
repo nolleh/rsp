@@ -51,7 +51,8 @@ the dependencies will be descripted below.
     - cmake-3.25.1
     - gcc-12.3.0
     - protoc-3.21.12
-    - [cppzmq](https://zeromq.org/)
+    - [zeromq-4.3.4-6](https://zeromq.org/)
+    - cppzmq-4.10.0-1
 
 ## run
 

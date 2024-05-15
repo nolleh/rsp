@@ -37,6 +37,7 @@ class job_create_room : public job,
   void run() {
     lg::logger().debug() << "job_create_room: " << request_.request_id()
                          << lg::L_endl;
+
     intranet_.room().send_request(
         MessageType::kReqCreateRoom, request_,
         std::bind(&job_create_room::handle_res_create_room, shared_from_this(),
@@ -44,6 +45,7 @@ class job_create_room : public job,
   }
 
   void handle_res_create_room(const std::shared_ptr<Message> msg) {
+    lg::logger().trace() << "handle_res_create_room" << lg::L_endl;
     auto response = std::dynamic_pointer_cast<ResCreateRoom>(msg);
     session_->set_enter_room(response->room_id());
 
