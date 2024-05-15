@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <string>
 
 #include "rsplib/logger/color.hpp"
@@ -174,10 +175,14 @@ class s_logger {
   flags flags_ = L_startWithFlushing;
   log_level level_;
   log_level streaming_level_ = log_level::kTrace;
+
+ private:
+  std::mutex m_;
 };
 
 template <typename T>
 s_logger &s_logger::log(T value) {
+  std::lock_guard<std::mutex> l(m_);
   if (is_null()) return *this;
   auto stream_ptr = &stream();
   s_logger *logger = this;
