@@ -109,7 +109,7 @@ class publisher : public broker_interface {
   std::future<raw_buffer> recv(const std::string& topic) override {
     // static_assert(false, "not supperted calling recv from publisher");
     //
-    if (CastType::kUniCast != type_) {
+    if (CastType::kBroadCast == type_) {
       throw std::runtime_error("not supported");
     }
 
@@ -162,18 +162,18 @@ class publisher : public broker_interface {
   }
 
   void create_broadcast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::pub});
+    socket_ = zmq::socket_t{context_, zmq::socket_type::pub};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_anycast() {
-    // TODO (@nolleh) change 2 req type
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::push});
+    // socket_ = zmq::socket_t{context_, zmq::socket_type::push};
+    socket_ = zmq::socket_t{context_, zmq::socket_type::req};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_unicast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::req});
+    socket_ = zmq::socket_t{context_, zmq::socket_type::req};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 

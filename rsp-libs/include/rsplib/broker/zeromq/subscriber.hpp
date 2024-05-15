@@ -93,13 +93,13 @@ class subscriber : public broker_interface {
     // TODO (@cindy) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
-      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
       return;
     }
 
     io_context_.post([&, buffer] {
       if (stop_.load()) {
-        logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
         return;
       }
       // logger.trace() << "send context(" << &io_context_ << ") socket ("
@@ -119,14 +119,14 @@ class subscriber : public broker_interface {
     auto& logger = rsp::libs::logger::logger();
     promise_ = std::promise<raw_buffer>();
     if (stop_.load()) {
-      logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+      logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
       promise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
       return promise_.get_future();
     }
 
     io_context_.post([&] {
       if (stop_.load()) {
-        logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
         promise_.set_exception(
             std::make_exception_ptr(interrupted_exception{}));
         return;
@@ -170,20 +170,19 @@ class subscriber : public broker_interface {
     }
   }
   void create_broadcast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::sub});
-    // socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
+    socket_ = zmq::socket_t{context_, zmq::socket_type::sub};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_anycast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::pull});
-    // socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
+    // socket_ = zmq::socket_t{context_, zmq::socket_type::pull};
+    socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_unicast() {
     // socket_.set(zmq::sockopt::linger, 1);
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
+    socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
   }
 
   CastType type_;

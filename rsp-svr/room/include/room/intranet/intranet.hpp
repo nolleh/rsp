@@ -25,7 +25,7 @@ class room_receiver {
         dispatcher_(this),
         message_handler_(room_message_handler(intranet)) {
     room_receiver_ =
-        br::broker::s_create_subscriber(CastType::kUniCast, "room", 1, "topic");
+        br::broker::s_create_subscriber(CastType::kAnyCast, "room", 1, "topic");
   }
 
   void start() {
