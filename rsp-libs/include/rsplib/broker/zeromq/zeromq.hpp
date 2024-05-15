@@ -18,6 +18,8 @@ class zeromq : public broker_interface {
  public:
   static std::shared_ptr<zeromq> s_create_publisher(
       CastType type, const std::string& service_name, const uint8_t context) {
+    // cause type parameter, hard to use std::make_shared_ptr 
+    // TODO(@nolleh) specialize template
     return std::shared_ptr<zeromq>(
         new zeromq<publisher>({type, service_name, context}));
   }

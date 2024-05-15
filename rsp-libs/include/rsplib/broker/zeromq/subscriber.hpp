@@ -28,38 +28,35 @@ class subscriber : public broker_interface {
  public:
   subscriber(CastType type, const std::string& service_name,
              const uint8_t context, const std::string& topic)
-      : type_(type), context_id_(context), topics_({topic}) {}
+      : type_(type),
+        context_id_(context),
+        context_(zmq::context_t(context_id_)),
+        // socket_(create_socket()),
+        topics_({topic}) {}
 
   subscriber(subscriber&& r)
       : type_(std::move(r.type_)),
         context_id_(r.context_id_),
         context_(std::move(r.context_)),
-        topics_(std::move(r.topics_)),
-        socket_(std::move(r.socket_)) {}
+        socket_(std::move(r.socket_)),
+        topics_(std::move(r.topics_)) {}
 
   ~subscriber() { stop(); }
 
   void start() override {
+    // zmq::socket_t not allowed to move. so temporarily, do initialize in start
+    create_socket();
     auto& logger = rsp::libs::logger::logger();
     logger.info() << "start subscriber" << rsp::libs::logger::L_endl;
     ba::io_context::work work(io_context_);
     th_ = std::thread([this] { io_context_.run(); });
     io_context_.post([&] {
-      context_ = zmq::context_t(context_id_);
-      switch (type_) {
-        case CastType::kBroadCast:
-          create_broadcast();
-        case CastType::kUniCast:
-          create_unicast();
-        case CastType::kAnyCast:
-          create_anycast();
-      }
+      stop_ = false;
       auto& logger = rsp::libs::logger::logger();
-      logger.info() << "created context(" << &io_context_ << ") socket ("
-                    << &socket_ << ")" << rsp::libs::logger::L_endl;
       socket_.bind("tcp://*:5558");
       // socket_.connect("tcp://localhost:5558");
-      stop_ = false;
+      logger.info() << "created context(" << &io_context_ << ") socket ("
+                    << &socket_ << ")" << rsp::libs::logger::L_endl;
     });
   }
 
@@ -77,12 +74,15 @@ class subscriber : public broker_interface {
                   << ") joinable(" << th_.joinable() << ")"
                   << rsp::libs::logger::L_endl;
 
+    logger.debug() << "context stop, joining.." << rsp::libs::logger::L_endl;
     io_context_.stop();
     if (th_.joinable()) th_.join();
     try {
       promise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
     } catch (const std::future_error& e) {
     }
+
+    logger.debug() << "stopped" << rsp::libs::logger::L_endl;
   }
 
   void add_topic(const std::string& topic) override { topics_.insert(topic); }
@@ -90,23 +90,27 @@ class subscriber : public broker_interface {
   void sub_topic(const std::string& topic) override { topics_.erase(topic); }
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
+    // TODO (@cindy) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
       logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
       return;
     }
-    logger.trace() << "io_context post send" << rsp::libs::logger::L_endl;
-    // throw std::runtime_error("not supported");
+
     io_context_.post([&, buffer] {
+      logger.trace() << "io_context post loop" << stop_.load()
+                     << rsp::libs::logger::L_endl;
       if (stop_.load()) {
         logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
         return;
       }
-      logger.trace() << "send context(" << &io_context_ << ") socket ("
-                     << &socket_ << ")" << rsp::libs::logger::L_endl;
+      logger.trace() << "about to send" << rsp::libs::logger::L_endl;
+      // logger.trace() << "send context(" << &io_context_ << ") socket ("
+      //                << &socket_ << ")" << rsp::libs::logger::L_endl;
       // auto rc = s_send(&socket_, buffer.data());
       zmq::message_t msg(buffer.size());
       memcpy(msg.data(), buffer.data(), buffer.size());
+      logger.trace() << "msg created" << rsp::libs::logger::L_endl;
 
       auto rc = socket_.send(msg, zmq::send_flags::none);
       // auto rc = s_send(&socket_, buffer.data());
@@ -134,12 +138,12 @@ class subscriber : public broker_interface {
 
       logger.trace() << "recv context(" << &io_context_ << ") socket ("
                      << &socket_ << ")" << rsp::libs::logger::L_endl;
-      // auto cp = s_recv(&socket_);
+
       zmq::message_t msg;
-      socket_.recv(&msg);
+      auto rc = socket_.recv(msg, zmq::recv_flags::none);
 
       // if (!cp) {
-      if (msg.size() < 0) {
+      if (!rc || msg.size() < 0) {
         promise_.set_exception(
             std::make_exception_ptr(interrupted_exception{}));
         return;
@@ -156,20 +160,34 @@ class subscriber : public broker_interface {
   }
 
  private:
+  void create_socket() {
+    switch (type_) {
+      case CastType::kBroadCast:
+        create_broadcast();
+        break;
+      case CastType::kUniCast:
+        create_unicast();
+        break;
+      case CastType::kAnyCast:
+        create_anycast();
+        break;
+    }
+  }
   void create_broadcast() {
     socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::sub});
+    // socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_anycast() {
     socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::pull});
+    // socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
   void create_unicast() {
-    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
-    logger::logger().trace() << "create unique subscriber type:rep";
     // socket_.set(zmq::sockopt::linger, 1);
+    socket_ = std::move(zmq::socket_t{context_, zmq::socket_type::rep});
   }
 
   CastType type_;

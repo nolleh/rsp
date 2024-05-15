@@ -41,7 +41,7 @@ class room_receiver {
     namespace msg = rsp::libs::message;
     auto destructed = msg::serializer::destruct_buffer(buffer);
     dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    // start_recv();
+    start_recv();
   }
 
   template <typename T>
