@@ -131,11 +131,11 @@ TEST(Broker, ReqRep) {
   // rep->send("topic", response);
   rsp::libs::message::raw_buffer response{msg.begin(), msg.end()};
   rep->send("topic", response);
- 
+
   auto recv_response = req->recv("service").get();
   std::string recv_response_str{recv_response.data(), recv_response.size()};
   EXPECT_TRUE(msg == recv_response_str);
- 
+
   // wait to finished
   req->stop();
   rep->stop();

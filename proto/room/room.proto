@@ -1,24 +1,24 @@
 syntax = "proto3";
 
 message ReqCreateRoom {
-  int32 request_id = 1;
+  uint64 request_id = 1;
   string uid = 2;
 }
 
 message ResCreateRoom {
-  int32 request_id = 1;
+  uint64 request_id = 1;
   bool success = 2;
-  int32 room_id = 3;
+  uint64 room_id = 3;
 }
 
 message ReqJoinRoom {
-  int32 request_id = 1;
+  uint64 request_id = 1;
   string uid = 2;
-  int32 room_id = 3;
+  uint64 room_id = 3;
 }
 
 message ResJoinRoom {
-  int32 request_id = 1;
+  uint64 request_id = 1;
   bool success = 2;
-  int32 room_id = 3;
+  uint64 room_id = 3;
 }

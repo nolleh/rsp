@@ -7,7 +7,8 @@
 #include <utility>
 
 #include "proto/room/room.pb.h"
-#include "room.hpp"
+#include "room/room/room.hpp"
+#include "rsplib/util/random.hpp"
 
 namespace rsp {
 namespace room {
@@ -22,7 +23,7 @@ class room_manager {
   }
 
   std::shared_ptr<room> create_room(const std::string& uid) {
-    RoomId room_id = rand();
+    RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
     auto created = std::make_shared<room>(room_id, uid);
     std::lock_guard<std::mutex> l(m_);
     // TODO change

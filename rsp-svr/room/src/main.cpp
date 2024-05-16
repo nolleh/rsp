@@ -16,7 +16,7 @@ int main() {
   logger.info() << "started room server" << lg::L_endl;
   rsp::room::intranet intranet;
   intranet.start();
-  
+
   logger.info() << "room server stopped.." << lg::L_endl;
   return 0;
 }
