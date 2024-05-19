@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <utility>
 
 #include "proto/room/room.pb.h"
@@ -26,7 +27,7 @@ class room_manager {
     RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
     auto created = std::make_shared<room>(room_id, uid);
     std::lock_guard<std::mutex> l(m_);
-    // TODO change
+    // TODO(@nolleh) change
     rooms_[room_id] = created;
     return created;
   }

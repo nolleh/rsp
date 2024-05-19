@@ -109,7 +109,8 @@ TEST(ZMQ_SOCKET, RepTcpSocketMessage) {
   EXPECT_EQ(0, smsg.size());
 
   zmq::message_t request;
-  constexpr auto flags = zmq::recv_flags::none /* | zmq::recv_flags::dontwait */;
+  constexpr auto flags =
+      zmq::recv_flags::none /* | zmq::recv_flags::dontwait */;
   const auto res = receiver.recv(request, flags);
   EXPECT_TRUE(res);
 

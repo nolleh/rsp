@@ -27,7 +27,9 @@ class publisher : public broker_interface {
  public:
   publisher(CastType type, const std::string& service_name,
             const uint8_t context)
-      : type_(type), context_id_(context), context_(zmq::context_t(context_id_)) {
+      : type_(type),
+        context_id_(context),
+        context_(zmq::context_t(context_id_)) {
     // address_ = generate_address(type, service_name, context);
   }
 
@@ -83,7 +85,7 @@ class publisher : public broker_interface {
   void sub_topic(const std::string& topic) override {}
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
-    // TODO (@nolleh) wait mechanism
+    // TODO(@nolleh) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
       logger.trace() << "already stopped" << rsp::libs::logger::L_endl;

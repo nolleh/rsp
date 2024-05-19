@@ -22,12 +22,12 @@ enum flags {
   L_level = 128
 };
 
-// semantic addition and substraction for flag enum
+// semantic addition and subtraction for flag enum
 inline flags operator+=(flags& l_flag, flags r_flag) {
   return l_flag = static_cast<flags>(l_flag | r_flag);
 }
 
-// semantic addition and substraction for flag enum
+// semantic addition and subtraction for flag enum
 inline flags operator-=(flags& l_flag, flags r_flag) {
   return l_flag = static_cast<flags>(l_flag & ~r_flag);
 }

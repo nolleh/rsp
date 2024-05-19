@@ -90,7 +90,7 @@ class subscriber : public broker_interface {
   void sub_topic(const std::string& topic) override { topics_.erase(topic); }
 
   void send(const std::string& topic, const raw_buffer& buffer) override {
-    // TODO (@cindy) wait mechanism
+    // TODO(@nolleh) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
       logger.debug() << "already stopped" << rsp::libs::logger::L_endl;

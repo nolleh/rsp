@@ -1,5 +1,7 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
+#pragma once
+
 #include <istream>
 #include <streambuf>
 // https://stackoverflow.com/questions/45722747/how-can-i-create-a-istream-from-a-uint8-t-vector

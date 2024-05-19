@@ -46,7 +46,8 @@ class job_create_room : public job,
 
   void handle_res_create_room(const std::shared_ptr<Message> msg) {
     auto response = std::dynamic_pointer_cast<ResCreateRoom>(msg);
-    lg::logger().trace() << "handle_res_create_room: room_id:" << response->room_id() << lg::L_endl;
+    lg::logger().trace() << "handle_res_create_room: room_id:"
+                         << response->room_id() << lg::L_endl;
     session_->set_enter_room(response->room_id());
 
     const auto buffer =

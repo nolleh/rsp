@@ -20,7 +20,7 @@ using link = rsp::libs::link::link;
 
 class room_receiver {
  public:
-  room_receiver(intranet* intranet)
+  explicit room_receiver(intranet* intranet)
       : logger_(lg::logger()),
         dispatcher_(this),
         message_handler_(room_message_handler(intranet)) {

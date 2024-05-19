@@ -1,10 +1,11 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
-#include <boost/asio.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <boost/asio.hpp>
 
 namespace rsp {
 namespace libs {
@@ -25,9 +26,7 @@ class shared_mutable_buffer {
   typedef boost::asio::mutable_buffer value_type;
   typedef const boost::asio::const_buffer* const_iterator;
   const boost::asio::mutable_buffer* begin() const { return &buffer_; }
-  const boost::asio::mutable_buffer* end() const {
-    return &buffer_ + 1;
-  }
+  const boost::asio::mutable_buffer* end() const { return &buffer_ + 1; }
   std::vector<char>::iterator data_begin() const { return data_->begin(); }
   std::vector<char>::iterator data_end() const { return data_->end(); }
   size_t size() { return data_->size(); }

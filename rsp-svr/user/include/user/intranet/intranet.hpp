@@ -71,7 +71,7 @@ class room_sender {
   }
 
   ba::awaitable<void> recv() {
-    // TODO (@nolleh) improve with executors
+    // TODO(@nolleh) improve with executors
     // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
     auto buffer = room_sender_->recv("topic").get();
 
@@ -95,7 +95,7 @@ class room_sender {
                     << ", type: " << typeid(req).name() << lg::L_endl;
 
     // hum......
-    // TODO (@nolleh) improve with executors
+    // TODO(@nolleh) improve with executors
     // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
     // https://stackoverflow.com/questions/63360248/where-is-stdfuturethen-and-the-concurrency-ts
     co_spawn(

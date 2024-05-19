@@ -1,10 +1,11 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
+#include "rsplib/broker/broker.hpp"
+
 #include <gtest/gtest.h>
 
-#include "zmq.hpp"
-#include "rsplib/broker/broker.hpp"
+#include <zmq.hpp>
 
 TEST(Broker, CreateAnyCastPublisher) {
   namespace br = rsp::libs::broker;
@@ -97,7 +98,8 @@ TEST(Broker, PubSub) {
 
 TEST(Broker, RepInitSendThrowError) {
   namespace br = rsp::libs::broker;
-  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1, "topic");
+  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
+                                             "topic");
   EXPECT_TRUE(nullptr != rep);
   rep->start();
   // wait few sec for bind finished
@@ -112,7 +114,8 @@ TEST(Broker, ReqRep) {
   namespace br = rsp::libs::broker;
   auto req = br::broker::s_create_publisher(CastType::kUniCast, "test", 1);
   EXPECT_TRUE(nullptr != req);
-  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1, "topic");
+  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
+                                             "topic");
   EXPECT_TRUE(nullptr != rep);
 
   req->start();
