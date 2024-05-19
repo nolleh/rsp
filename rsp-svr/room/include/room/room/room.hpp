@@ -1,41 +1,64 @@
 /** Copyright (C) 2024  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "boost/asio.hpp"
+#include "room/room/constant.hpp"
+#include "room/room/room_api_interface.hpp"
+#include "room/room/room_message_interface.hpp"
 #include "rsplib/thread/thread_pool.hpp"
 
 namespace rsp {
 namespace room {
 
 namespace ba = boost::asio;
-using RoomId = long;
 
 class user {
  public:
-  user(std::string uid) : uid_(uid){};
+  explicit user(Uid uid) : uid_(uid) {}
 
  private:
-  std::string uid_;
+  Uid uid_;
+  // TODO(@nolleh) user server information
 };
 
-class room {
+class room : public room_api_inteface, public room_message_interface {
  public:
-  room(RoomId room_id, std::string uid)
+  room(RoomId room_id, Uid uid)
       : room_id_(room_id), users_({user(uid)}), workers_(3) {}
-  void create_room() {}
-  void join_room() {}
 
-  RoomId room_id() {
-    return room_id_;
-  }
+  ~room() { on_destroy_room(); }
+
+  void create_room() { on_created_room(room_id_); }
+
+  void join_room(Uid uid) { on_user_enter(uid); }
+
+  RoomId room_id() { return room_id_; }
 
  private:
+  void send_to_user(const std::vector<Uid> uids, const std::string msg) {
+    // TODO(@nolleh) by using user server information, send the msg to intranet
+  }
+
+  void kick_out_user(Uid uid) {}
+
+  void on_created_room(const RoomId room_id) {}
+
+  void on_user_enter(Uid uid) {}
+
+  void on_destroy_room() {}
+
+  void on_recv_message(Uid from, const std::string msg) {}
+
+  void on_kicked_out_user(Uid uid, KickOutReason reason) {}
+
   RoomId room_id_;
   std::vector<user> users_;
   rsp::libs::thread::thread_pool workers_;
   ba::io_context::strand* strand_;
 };
+
 }  // namespace room
 }  // namespace rsp

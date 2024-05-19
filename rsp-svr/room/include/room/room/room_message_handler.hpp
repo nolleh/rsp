@@ -16,7 +16,7 @@ class intranet;
 
 class room_message_handler {
  public:
-  room_message_handler(intranet* intranet)
+  explicit room_message_handler(intranet* intranet)
       : intranet_(intranet),
         logger_(lg::logger()),
         room_manager_(room_manager::instance()) {}
@@ -43,7 +43,7 @@ class room_message_handler {
     logger_.trace() << "join_room: room_id(" << join_room.room_id() << "), uid("
                     << join_room.uid() << lg::L_endl;
     auto room = room_manager_.find_room(join_room.room_id());
-    room->join_room();
+    room->join_room(join_room.uid());
     ResJoinRoom res_join_room;
     res_join_room.set_request_id(join_room.request_id());
     res_join_room.set_room_id(join_room.room_id());
