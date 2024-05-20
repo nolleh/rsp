@@ -118,3 +118,63 @@ TEST(ZMQ_SOCKET, RepTcpSocketMessage) {
   auto rc = receiver.send(smsg2, zmq::send_flags::none);
   EXPECT_EQ(10, *rc);
 }
+
+TEST(ZMQ_SOCKET, PubSubAsBroadCast) {
+  zmq::context_t context{1};
+  zmq::socket_t sender{context, zmq::socket_type::pub};
+  zmq::socket_t receiver{context, zmq::socket_type::sub};
+  zmq::socket_t receiver2{context, zmq::socket_type::sub};
+  receiver.set(zmq::sockopt::subscribe, "");
+  receiver2.set(zmq::sockopt::subscribe, "");
+
+  sender.bind("inproc://test");
+  receiver.connect("inproc://test");
+  receiver2.connect("inproc://test");
+
+  zmq::message_t smsg(size_t{10});
+  const auto res_send = sender.send(smsg, zmq::send_flags::none);
+  EXPECT_TRUE(res_send);
+  EXPECT_EQ(10, *res_send);
+  EXPECT_EQ(0, smsg.size());
+
+  zmq::message_t push_msg;
+  constexpr auto flags = zmq::recv_flags::dontwait;
+  const auto res = receiver.recv(push_msg, flags);
+  zmq::message_t push_msg2;
+  const auto res2 = receiver2.recv(push_msg2, flags);
+
+  EXPECT_TRUE(res == res2);
+  EXPECT_TRUE(res);
+  EXPECT_TRUE(res2);
+}
+
+TEST(ZMQ_SOCKET, PubSubAsAnyCastByUsingCtx) {
+  zmq::context_t context{1};
+  zmq::context_t context2{2};
+
+  zmq::socket_t sender{context2, zmq::socket_type::pub};
+  zmq::socket_t receiver{context2, zmq::socket_type::sub};
+  zmq::socket_t receiver2{context, zmq::socket_type::sub};
+  receiver.set(zmq::sockopt::subscribe, "");
+  receiver2.set(zmq::sockopt::subscribe, "");
+
+  sender.bind("inproc://test");
+  receiver.connect("inproc://test");
+  receiver2.connect("inproc://test");
+
+  zmq::message_t smsg(size_t{10});
+  const auto res_send = sender.send(smsg, zmq::send_flags::none);
+  EXPECT_TRUE(res_send);
+  EXPECT_EQ(10, *res_send);
+  EXPECT_EQ(0, smsg.size());
+
+  zmq::message_t push_msg;
+  constexpr auto flags = zmq::recv_flags::dontwait;
+  const auto res = receiver.recv(push_msg, flags);
+  zmq::message_t push_msg2;
+  const auto res2 = receiver2.recv(push_msg2, flags);
+
+  EXPECT_TRUE(res != res2);
+  EXPECT_TRUE(res);
+  EXPECT_TRUE(!res2);
+}
