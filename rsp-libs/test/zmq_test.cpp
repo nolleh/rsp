@@ -117,6 +117,12 @@ TEST(ZMQ_SOCKET, RepTcpSocketMessage) {
   zmq::message_t smsg2(size_t{10});
   auto rc = receiver.send(smsg2, zmq::send_flags::none);
   EXPECT_EQ(10, *rc);
+
+  // is it available send any msg, after recv data? (not response message)
+  zmq::message_t smsg3(size_t{20});
+
+  // --> no. only response
+  EXPECT_THROW(receiver.send(smsg3, zmq::send_flags::none), zmq::error_t);
 }
 
 TEST(ZMQ_SOCKET, PubSubAsBroadCast) {
