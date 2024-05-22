@@ -3,8 +3,9 @@
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h>
 #include <zmq.hpp>
+#include <zmq_addon.hpp>
 
-TEST(ZMQ_SOCKET, ReqSocketSend) {
+TEST(ZMQ_REQREP, ReqSocketSend) {
   zmq::context_t ctx{};
   zmq::socket_t req{ctx, zmq::socket_type::req};
   req.connect("inproc://test");
@@ -16,7 +17,7 @@ TEST(ZMQ_SOCKET, ReqSocketSend) {
   EXPECT_EQ(msg.size(), rc);
 }
 
-TEST(ZMQ_SOCKET, RepSocketRecv) {
+TEST(ZMQ_REQREP, RepSocketRecvBuffer) {
   zmq::context_t context;
   zmq::socket_t sender{context, zmq::socket_type::req};
   zmq::socket_t receiver{context, zmq::socket_type::rep};
@@ -34,7 +35,7 @@ TEST(ZMQ_SOCKET, RepSocketRecv) {
   EXPECT_EQ(2, res->size);
 }
 
-TEST(ZMQ_SOCKET, RepSocketSend) {
+TEST(ZMQ_REQREP, RepSocketSendResponseInProc) {
   zmq::context_t context;
   zmq::socket_t sender{context, zmq::socket_type::req};
   zmq::socket_t receiver{context, zmq::socket_type::rep};
@@ -55,7 +56,7 @@ TEST(ZMQ_SOCKET, RepSocketSend) {
   EXPECT_EQ(2, *rc);
 }
 
-TEST(ZMQ_SOCKET, RepTcpSocketSend) {
+TEST(ZMQ_REQREP, SendResponseWithBuffer) {
   zmq::context_t context;
   zmq::socket_t sender{context, zmq::socket_type::req};
   zmq::socket_t receiver{context, zmq::socket_type::rep};
@@ -76,7 +77,7 @@ TEST(ZMQ_SOCKET, RepTcpSocketSend) {
   EXPECT_EQ(2, *rc);
 }
 
-TEST(ZMQ_SOCKET, ZMQ) {
+TEST(ZMQ_REQREP, BasicRecv) {
   zmq::context_t context;
   zmq::socket_t s{context, zmq::socket_type::req};
   zmq::socket_t s2{context, zmq::socket_type::rep};
@@ -94,7 +95,7 @@ TEST(ZMQ_SOCKET, ZMQ) {
   EXPECT_TRUE(res);
 }
 
-TEST(ZMQ_SOCKET, RepTcpSocketMessage) {
+TEST(ZMQ_REQREP, SendResponse) {
   zmq::context_t context;
   zmq::socket_t sender{context, zmq::socket_type::req};
   zmq::socket_t receiver{context, zmq::socket_type::rep};
@@ -125,7 +126,7 @@ TEST(ZMQ_SOCKET, RepTcpSocketMessage) {
   EXPECT_THROW(receiver.send(smsg3, zmq::send_flags::none), zmq::error_t);
 }
 
-TEST(ZMQ_SOCKET, PubSubAsBroadCast) {
+TEST(ZMQ_PUBSUB, PubSubAsBroadCast) {
   zmq::context_t context{1};
   zmq::socket_t sender{context, zmq::socket_type::pub};
   zmq::socket_t receiver{context, zmq::socket_type::sub};
@@ -154,7 +155,7 @@ TEST(ZMQ_SOCKET, PubSubAsBroadCast) {
   EXPECT_TRUE(res2);
 }
 
-TEST(ZMQ_SOCKET, PubSubAsAnyCastByUsingCtx) {
+TEST(ZMQ_PUBSUB, PubSubAsAnyCastByUsingCtx) {
   zmq::context_t context{1};
   zmq::context_t context2{2};
 
@@ -183,4 +184,88 @@ TEST(ZMQ_SOCKET, PubSubAsAnyCastByUsingCtx) {
   EXPECT_TRUE(res != res2);
   EXPECT_TRUE(res);
   EXPECT_TRUE(!res2);
+}
+
+TEST(ZMQ_PUBSUB, TopicRecv) {
+  zmq::context_t context{1};
+  std::string weather = "weather";
+
+  zmq::socket_t sender{context, zmq::socket_type::pub};
+  zmq::socket_t receiver{context, zmq::socket_type::sub};
+  zmq::socket_t receiver2{context, zmq::socket_type::sub};
+  receiver.set(zmq::sockopt::subscribe, "");
+  receiver2.set(zmq::sockopt::subscribe, weather);
+
+  sender.bind("inproc://test");
+  receiver.connect("inproc://test");
+  receiver2.connect("inproc://test");
+
+  const auto topic_send =
+      sender.send(zmq::message_t{weather}, zmq::send_flags::sndmore);
+  EXPECT_TRUE(topic_send);
+  EXPECT_EQ(weather.length(), *topic_send);
+  zmq::message_t smsg(size_t{10});
+  const auto res_send = sender.send(smsg, zmq::send_flags::none);
+  EXPECT_TRUE(res_send);
+  EXPECT_EQ(10, *res_send);
+  EXPECT_EQ(0, smsg.size());
+
+  constexpr auto flags = zmq::recv_flags::none;
+  std::vector<zmq::message_t> recv_msgs;
+  zmq::recv_result_t result =
+      zmq::recv_multipart(receiver, std::back_inserter(recv_msgs));
+  EXPECT_TRUE(result);
+  EXPECT_EQ(2, *result);
+  EXPECT_EQ(weather, recv_msgs[0].to_string());
+  EXPECT_EQ(10, recv_msgs[1].size());
+
+  std::vector<zmq::message_t> recv_msgs2;
+  zmq::recv_result_t result2 =
+      zmq::recv_multipart(receiver2, std::back_inserter(recv_msgs2));
+  EXPECT_TRUE(result2);
+  EXPECT_EQ(2, *result2);
+  EXPECT_EQ(weather, recv_msgs2[0].to_string());
+  EXPECT_EQ(10, recv_msgs2[1].size());
+}
+
+TEST(ZMQ_PUBSUB, TopicFiltered) {
+  zmq::context_t context{1};
+  std::string weather = "weather";
+  std::string ignored = "ignored";
+
+  zmq::socket_t sender{context, zmq::socket_type::pub};
+  zmq::socket_t receiver{context, zmq::socket_type::sub};
+  zmq::socket_t receiver2{context, zmq::socket_type::sub};
+  receiver.set(zmq::sockopt::subscribe, "");
+  receiver2.set(zmq::sockopt::subscribe, weather);
+
+  sender.bind("inproc://test");
+  receiver.connect("inproc://test");
+  receiver2.connect("inproc://test");
+
+  const auto topic_send =
+      sender.send(zmq::message_t{ignored}, zmq::send_flags::sndmore);
+  EXPECT_TRUE(topic_send);
+  EXPECT_EQ(weather.length(), *topic_send);
+  zmq::message_t smsg(size_t{10});
+  const auto res_send = sender.send(smsg, zmq::send_flags::none);
+  EXPECT_TRUE(res_send);
+  EXPECT_EQ(10, *res_send);
+  EXPECT_EQ(0, smsg.size());
+
+  constexpr auto flags = zmq::recv_flags::none;
+  std::vector<zmq::message_t> recv_msgs;
+  zmq::recv_result_t result =
+      zmq::recv_multipart(receiver, std::back_inserter(recv_msgs), zmq::recv_flags::dontwait);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(2, *result);
+  EXPECT_EQ(ignored, recv_msgs[0].to_string());
+  EXPECT_EQ(10, recv_msgs[1].size());
+
+  std::vector<zmq::message_t> recv_msgs2;
+  zmq::recv_result_t result2 =
+      zmq::recv_multipart(receiver2, std::back_inserter(recv_msgs2), zmq::recv_flags::dontwait);
+  EXPECT_TRUE(!result2);
+  // it was garbage value
+  // EXPECT_EQ(0, *result2);
 }
