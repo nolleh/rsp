@@ -36,8 +36,8 @@ target_link_directories(Room PRIVATE
 )
 
 target_link_libraries(Room
-  ${PROJECT_BINARY_DIR}/../../rsp-libs/libLibs.a
-  ${PROJECT_BINARY_DIR}/../../gen-proto/libProto.a
-  protobuf
+  ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
+  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
+  ${Protobuf_LIBRARIES}
   cppzmq
 )

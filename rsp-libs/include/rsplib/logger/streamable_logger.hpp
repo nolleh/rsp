@@ -11,6 +11,10 @@
 #include <mutex>
 #include <string>
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 #include "rsplib/logger/color.hpp"
 #include "rsplib/logger/flag.hpp"
 #include "rsplib/logger/level.hpp"
@@ -39,8 +43,13 @@ class s_logger {
     GetModuleFileNameA(nullptr, buf, MAX_PATH);
     return buf;
 
-#else
+#elif defined(__APPLE__)
+    char buf[PATH_MAX];
+    uint32_t bufsize = PATH_MAX;
+    if (!_NSGetExecutablePath(buf, &bufsize)) puts(buf);
+    return 0;
 
+#else
     static_assert(false, "unrecognized platform");
 
 #endif

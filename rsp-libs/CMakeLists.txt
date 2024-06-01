@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 project(Libs)
 
+cmake_policy(SET CMP0135 NEW)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-cmake_policy(SET CMP0135 NEW)
 
 find_package(Boost)
 find_package(cppzmq)
-# find_package(Protobuf)
+find_package(Protobuf)
 
 # download gtest
 # https://google.github.io
@@ -42,14 +43,15 @@ target_include_directories(Libs PUBLIC
   ${Boost_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/include
   ${Proto_DIR}
-  cppzmq
+  ${cppzmq_INCLUDE_DIR}
+  ${Protobuf_INCLUDE_DIR}
 )
 
 target_link_directories(Libs PUBLIC
   # ${Boost_DIR}/lib
   ${Boost_LIBRARY_DIRS}
-  ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
-  cppzmq
+  ${CMAKE_BINARY_DIR}/gen-proto
+  # protobuf
 )
 
 enable_testing()
@@ -61,15 +63,19 @@ add_executable(LibsTest
 )
 
 target_include_directories(LibsTest PRIVATE
-  ${PROJECT_BINARY_DIR}
+  ${CMAKE_BINARY_DIR}
+)
+
+target_link_directories(LibsTest PRIVATE
+  ${Boost_LIBRARY_DIRS}
 )
 
 target_link_libraries(LibsTest PRIVATE
   GTest::gtest_main
   Libs
   ## added because link fail
-  protobuf
-  ${PROJECT_BINARY_DIR}/../gen-proto/libProto.a
+  ${Protobuf_LIBRARIES}
+  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
   cppzmq
 )
 

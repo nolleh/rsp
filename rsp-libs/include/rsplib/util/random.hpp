@@ -6,10 +6,10 @@ namespace rsp {
 namespace libs {
 namespace util {
 
-inline ulong rng(ulong min, ulong max) {
+inline uint64_t rng(uint64_t min, uint64_t max) {
   thread_local std::random_device rd;
   thread_local std::mt19937 rng{rd()};
-  std::uniform_int_distribution<ulong> uni{min, max};
+  std::uniform_int_distribution<uint64_t> uni{min, max};
   return uni(rng);
 }
 
