@@ -109,31 +109,31 @@ class s_logger {
   virtual s_logger &print_level() = 0;
 
   s_logger &trace(std::source_location s = std::source_location::current()) {
-    *this << log_level::kTrace << L_time << L_space << executable_name()
+    *this << log_level::kTrace << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &debug(std::source_location s = std::source_location::current()) {
-    *this << log_level::kDebug << L_time << L_space << executable_name()
+    *this << log_level::kDebug << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &info(std::source_location s = std::source_location::current()) {
-    *this << log_level::kInfo << L_time << L_space << executable_name()
+    *this << log_level::kInfo << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &warn(std::source_location s = std::source_location::current()) {
-    *this << log_level::kWarn << L_time << L_space << executable_name()
+    *this << log_level::kWarn << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &error(std::source_location s = std::source_location::current()) {
-    *this << log_level::kError << L_time << L_space << executable_name()
+    *this << log_level::kError << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
@@ -147,10 +147,16 @@ class s_logger {
  protected:
   explicit s_logger(flags initFlag = L_null,
                     log_level level = log_level::kTrace)
-      : global_flags_{initFlag}, flags_{initFlag}, level_(level) {}
+      : global_flags_{initFlag},
+        flags_{initFlag},
+        level_(level),
+        executable_name_(executable_name()) {}
   explicit s_logger(flags initFlag = L_null, streamable & = std::clog,
                     log_level level = log_level::kTrace)
-      : global_flags_{initFlag}, flags_{initFlag}, level_(level) {}
+      : global_flags_{initFlag},
+        flags_{initFlag},
+        level_(level),
+        executable_name_(executable_name()) {}
 
   virtual s_logger &log_time();
 
@@ -187,6 +193,7 @@ class s_logger {
 
  private:
   std::mutex m_;
+  std::string executable_name_;
 };
 
 template <typename T>
