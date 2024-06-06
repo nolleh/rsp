@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-PIDS=$(ps -ax -o ppid,pid,command --no-headers |
+# --no-headers
+PIDS=$(ps -ax -o ppid,pid,command |
 	sed -r 's/^ +//g;s/ +/ /g' |
 	grep "rsp-svr" | grep -v "grep" | cut -f 2 -d " ")
 
