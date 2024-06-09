@@ -41,12 +41,21 @@ class room_message_handler {
 
   User2RoomResJoinRoom handle(const User2RoomReqJoinRoom& join_room) {
     logger_.trace() << "join_room: room_id(" << join_room.room_id() << "), uid("
-                    << join_room.uid() << lg::L_endl;
+                    << join_room.uid() << ")" << lg::L_endl;
     auto room = room_manager_.find_room(join_room.room_id());
+    if (!room) {
+      User2RoomResJoinRoom res_join_room;
+      res_join_room.set_request_id(join_room.request_id());
+      res_join_room.set_room_id(join_room.room_id());
+      res_join_room.set_success(false);
+      return res_join_room;
+    }
+
     room->join_room(join_room.uid());
     User2RoomResJoinRoom res_join_room;
     res_join_room.set_request_id(join_room.request_id());
     res_join_room.set_room_id(join_room.room_id());
+    res_join_room.set_success(true);
     return res_join_room;
   }
 

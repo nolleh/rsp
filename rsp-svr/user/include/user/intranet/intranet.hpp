@@ -135,6 +135,7 @@ class room_sender {
 
     auto handler = iter->second;
     handler(std::make_shared<T>(t));
+    requests_.erase(iter);
   }
 
   lg::s_logger& logger_;
