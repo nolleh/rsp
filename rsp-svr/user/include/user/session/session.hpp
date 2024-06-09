@@ -6,8 +6,8 @@
 #include <string>
 
 #include "proto/common/ping.pb.h"
-#include "proto/user/login.pb.h"
 #include "proto/room/room.pb.h"
+#include "proto/user/login.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
 #include "rsplib/link/link.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -77,7 +77,8 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   template <typename Message>
   void on_recv(Message&& msg) {
-    lg::logger().debug() << "session - base on_recv" << lg::L_endl;
+    lg::logger().debug() << "session - on_recv" << typeid(msg).name()
+                         << lg::L_endl;
     last_received_ = std::time(nullptr);
   }
 
@@ -161,6 +162,9 @@ void session::on_recv(ReqLogout& msg);
 
 template <>
 void session::on_recv(ReqCreateRoom& msg);
+
+template <>
+void session::on_recv(ReqJoinRoom& msg);
 
 }  // namespace session
 }  // namespace user
