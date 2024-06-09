@@ -30,7 +30,7 @@ class publisher : public broker_interface {
       : type_(type),
         context_id_(context),
         context_(zmq::context_t(context_id_)),
-        host_(host) {
+        addr_("tcp://" + host) {
     // address_ = generate_address(type, service_name, context);
   }
 
@@ -40,19 +40,21 @@ class publisher : public broker_interface {
       : type_(std::move(r.type_)),
         context_id_(r.context_id_),
         context_(std::move(r.context_)),
+        addr_(std::move(r.addr_)),
         socket_(std::move(r.socket_)) {}
+
 
   void start() override {
     create_socket();
     auto& logger = rsp::libs::logger::logger();
-    logger.info() << "start publisher" << rsp::libs::logger::L_endl;
+    logger.info() << "start publisher:" << addr_ << rsp::libs::logger::L_endl;
     ba::io_context::work work(io_context_);
     th_ = std::thread([this] { io_context_.run(); });
     io_context_.post([&] {
       stop_ = false;
-      socket_.connect("tcp://" + host_ + ":5558");
+      socket_.connect(addr_);
       logger.info() << "created context(" << &io_context_ << ") socket ("
-                    << &socket_ << ")" << rsp::libs::logger::L_endl;
+                    << &socket_ << ") " << rsp::libs::logger::L_endl;
     });
   }
 
@@ -183,7 +185,7 @@ class publisher : public broker_interface {
   CastType type_;
   uint8_t context_id_;
   zmq::context_t context_;
-  std::string host_;
+  std::string addr_;
   address address_;
 
   std::thread th_;

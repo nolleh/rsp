@@ -36,7 +36,7 @@ class room_sender {
     room_sender_ =
         /* the host will be substituted by room-managers response */
         br::broker::s_create_publisher(CastType::kUniCast, "room", 1,
-                                       "127.0.0.1");
+                                       "127.0.0.1:5558");
   }
 
   ~room_sender() { stop(); }
