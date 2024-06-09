@@ -26,10 +26,11 @@ namespace ba = boost::asio;
 class publisher : public broker_interface {
  public:
   publisher(CastType type, const std::string& service_name,
-            const uint8_t context)
+            const uint8_t context, const std::string& host)
       : type_(type),
         context_id_(context),
-        context_(zmq::context_t(context_id_)) {
+        context_(zmq::context_t(context_id_)),
+        host_(host) {
     // address_ = generate_address(type, service_name, context);
   }
 
@@ -49,7 +50,7 @@ class publisher : public broker_interface {
     th_ = std::thread([this] { io_context_.run(); });
     io_context_.post([&] {
       stop_ = false;
-      socket_.connect("tcp://127.0.0.1:5558");
+      socket_.connect("tcp://" + host_ + ":5558");
       logger.info() << "created context(" << &io_context_ << ") socket ("
                     << &socket_ << ")" << rsp::libs::logger::L_endl;
     });
@@ -181,13 +182,14 @@ class publisher : public broker_interface {
 
   CastType type_;
   uint8_t context_id_;
+  zmq::context_t context_;
+  std::string host_;
   address address_;
 
   std::thread th_;
   ba::io_context io_context_;
   ba::executor_work_guard<decltype(io_context_.get_executor())> work_guard_{
       io_context_.get_executor()};
-  zmq::context_t context_;
   zmq::socket_t socket_;
   std::promise<int> spromise_;
   std::promise<raw_buffer> rpromise_;

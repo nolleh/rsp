@@ -17,7 +17,8 @@ namespace broker {
 class broker {
  public:
   static std::shared_ptr<broker_interface> s_create_publisher(
-      CastType type, const std::string& service_name, const uint8_t context);
+      CastType type, const std::string& service_name, const uint8_t context,
+      const std::string& host);
 
   static std::shared_ptr<broker_interface> s_create_subscriber(
       CastType type, const std::string& service_name, const uint8_t context,

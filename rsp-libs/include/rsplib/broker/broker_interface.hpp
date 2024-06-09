@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
-#include "rsplib/message/types.hpp"
 #include "rsplib/broker/address.hpp"
 #include "rsplib/broker/cast_type.hpp"
+#include "rsplib/message/types.hpp"
 
 namespace rsp {
 namespace libs {
@@ -27,11 +27,12 @@ using raw_buffer = rsp::libs::message::raw_buffer;
 class broker_interface {
  public:
   static std::shared_ptr<broker_interface> s_create_publisher(
-      CastType type, const std::string& service_name, const uint8_t context);
+      CastType type, const std::string& service_name, const uint8_t context,
+      const std::string& host);
 
   static std::shared_ptr<broker_interface> s_create_subscriber(
       CastType type, const std::string& service_name, const uint8_t context,
-      const std::string& topic = NULL);
+      const std::string& topic = nullptr);
 
   virtual void start() = 0;
 

@@ -17,11 +17,13 @@ namespace libs {
 namespace broker {
 
 std::shared_ptr<broker_interface> broker::s_create_publisher(
-    CastType type, const std::string& service_name, const uint8_t context) {
+    CastType type, const std::string& service_name, const uint8_t context,
+    const std::string& host) {
   std::shared_ptr<broker_interface> pub = nullptr;
 
 #ifdef ZEROMQ
-  pub = zeromq<publisher>::s_create_publisher(type, service_name, context);
+  pub =
+      zeromq<publisher>::s_create_publisher(type, service_name, context, host);
 
 #endif
   return pub;

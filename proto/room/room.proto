@@ -22,3 +22,9 @@ message ResJoinRoom {
   bool success = 2;
   uint64 room_id = 3;
 }
+
+message FwdRoom {
+  uint64 request_id = 1;
+  string message = 2;
+  repeated string = 3;
+}
