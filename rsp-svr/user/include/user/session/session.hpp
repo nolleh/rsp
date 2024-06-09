@@ -6,8 +6,8 @@
 #include <string>
 
 #include "proto/common/ping.pb.h"
-#include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
 #include "rsplib/link/link.hpp"
 #include "rsplib/logger/logger.hpp"

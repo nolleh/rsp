@@ -8,7 +8,7 @@
 #include <string>
 
 #include "proto/common/message_type.pb.h"
-#include "proto/room/room.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "proto/user/login.pb.h"
 #include "rspcli/state/state.hpp"
 
@@ -67,6 +67,11 @@ class state_login : public base_state {
     } else if (command == "2") {
       send_message<ReqCreateRoom>(MessageType::kReqCreateRoom);
     } else if (command == "3") {
+      prompt_ << "put room id that you want to enter\n";
+      std::cout << "> ";
+      std::string room_id;
+      std::cin >> room_id;
+
       send_message<ReqJoinRoom>(MessageType::kReqJoinRoom);
     }
   }
@@ -116,8 +121,8 @@ class state_login : public base_state {
 
   template <typename T>
   void send_message(MessageType type) {
-    T logout;
-    auto message = rsp::libs::message::serializer::serialize(type, logout);
+    T msg;
+    auto message = rsp::libs::message::serializer::serialize(type, msg);
     try {
       socket_->send(boost::asio::buffer(message));
     } catch (const std::exception& e) {
@@ -127,6 +132,13 @@ class state_login : public base_state {
       next_ = State::kExit;
     }
   }
+
+  void send_join_room_message(uint64_t room_id) {
+    ReqJoinRoom join_room;
+    join_room.set_room_id(room_id);
+    join_room.set_request_id(get_request_id());
+  }
+
 };
 
 }  // namespace state

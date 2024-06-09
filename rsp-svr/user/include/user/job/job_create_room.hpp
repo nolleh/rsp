@@ -8,6 +8,7 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rsplib/job/job.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
@@ -38,20 +39,30 @@ class job_create_room : public job,
     lg::logger().debug() << "job_create_room: " << request_.request_id()
                          << lg::L_endl;
 
+    User2RoomReqCreateRoom request;
+    // TODO(@nolleh) need to be changed
+    request.set_request_id(request_.request_id());
+    request.set_uid(session_->uid());
+
     intranet_.room().send_request(
-        MessageType::kReqCreateRoom, request_,
+        MessageType::kUser2RoomReqCreateRoom, request,
         std::bind(&job_create_room::handle_res_create_room, shared_from_this(),
                   ph::_1));
   }
 
   void handle_res_create_room(const std::shared_ptr<Message> msg) {
-    auto response = std::dynamic_pointer_cast<ResCreateRoom>(msg);
+    auto room_response = std::dynamic_pointer_cast<User2RoomResCreateRoom>(msg);
     lg::logger().trace() << "handle_res_create_room: room_id:"
-                         << response->room_id() << lg::L_endl;
-    session_->set_enter_room(response->room_id());
+                         << room_response->room_id() << lg::L_endl;
+    session_->set_enter_room(room_response->room_id());
+
+    ResCreateRoom response;
+    response.set_request_id(room_response->request_id());
+    response.set_room_id(room_response->room_id());
+    response.set_success(room_response->success());
 
     const auto buffer =
-        message::serializer::serialize(MessageType::kResCreateRoom, *response);
+        message::serializer::serialize(MessageType::kResCreateRoom, response);
     session_->send(buffer);
   }
 

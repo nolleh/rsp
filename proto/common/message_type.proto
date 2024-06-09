@@ -3,6 +3,8 @@ syntax = "proto3";
 enum MessageType {
   kPing = 0;
   kPong = 1;
+
+  // user
   kReqLogin = 2;
   kResLogin = 3;
   kReqLogout = 4;
@@ -11,4 +13,14 @@ enum MessageType {
   kResCreateRoom = 7;
   kReqJoinRoom = 8;
   kResJoinRoom = 9;
+  kReqFwdRoom = 10;
+  kResFwdRoom = 11;
+
+  //room
+  kUser2RoomReqCreateRoom = 12;
+  kUser2RoomResCreateRoom = 13;
+  kUser2RoomReqJoinRoom = 14;
+  kUser2RoomResJoinRoom = 15;
+  kUser2RoomReqFwdRoom = 16;
+  kUser2RoomResFwdRoom = 17;
 }

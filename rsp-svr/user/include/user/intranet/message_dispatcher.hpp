@@ -30,10 +30,10 @@ class message_dispatcher : public dispatcher_interface {
       : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
     REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
     REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
-    REG_HANDLER(dispatcher_, MessageType::kResCreateRoom,
-                handle_buffer<ResCreateRoom>);
-    REG_HANDLER(dispatcher_, MessageType::kResJoinRoom,
-                handle_buffer<ResJoinRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomResCreateRoom,
+                handle_buffer<User2RoomResCreateRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomResJoinRoom,
+                handle_buffer<User2RoomResJoinRoom>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }

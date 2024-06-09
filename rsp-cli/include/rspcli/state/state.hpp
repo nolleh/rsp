@@ -172,6 +172,10 @@ class base_state {
                   std::placeholders::_2));
   }
 
+  uint64_t get_request_id() {
+    return request_id_++;
+  }
+
   State state_ = State::kInit;
   State next_ = State::kInit;
   socket* socket_;
@@ -182,6 +186,7 @@ class base_state {
 
  private:
   conn_interpreter interpreter_;
+  uint64_t request_id_;
 };
 
 }  // namespace state

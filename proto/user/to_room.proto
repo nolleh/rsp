@@ -1,37 +1,33 @@
 syntax = "proto3";
 
-message User2RoomReqCreateRoom {
+message ReqCreateRoom {
   uint64 request_id = 1;
-  string uid = 2;
 }
 
-message User2RoomResCreateRoom {
+message ResCreateRoom {
   uint64 request_id = 1;
-  string uid = 2;
-  bool success = 3;
-  uint64 room_id = 4;
-}
-
-message User2RoomReqJoinRoom {
-  uint64 request_id = 1;
-  string uid = 2;
+  bool success = 2;
   uint64 room_id = 3;
 }
 
-message User2RoomResJoinRoom {
+message ReqJoinRoom {
   uint64 request_id = 1;
-  string uid = 2;
   uint64 room_id = 3;
-  bool success = 4;
 }
 
-message User2RoomReqFwdRoom {
+message ResJoinRoom {
+  uint64 request_id = 1;
+  bool success = 2;
+  uint64 room_id = 3;
+}
+
+message ReqFwdRoom {
   uint64 request_id = 1;
   string message = 2;
   repeated string users = 3;
 }
 
-message User2RoomResFwdRoom {
+message ResFwdRoom {
   uint64 request_id = 1;
   string message = 2;
   repeated string users = 3;

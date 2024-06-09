@@ -7,6 +7,7 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
@@ -36,14 +37,14 @@ using link = rsp::libs::link::link;
 class message_dispatcher : public dispatcher_interface {
  public:
   message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
+    REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
+    REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
     REG_HANDLER(dispatcher_, MessageType::kReqLogin, handle_buffer<ReqLogin>);
     REG_HANDLER(dispatcher_, MessageType::kReqLogout, handle_buffer<ReqLogout>);
     REG_HANDLER(dispatcher_, MessageType::kReqCreateRoom,
                 handle_buffer<ReqCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kReqJoinRoom,
                 handle_buffer<ReqJoinRoom>);
-    REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
-    REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
 
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));

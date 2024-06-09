@@ -17,3 +17,4 @@ message ReqLogout {
 message ResLogout {
   string uid = 1;
 }
+

@@ -6,6 +6,7 @@
 
 #include "proto/common/ping.pb.h"
 #include "room/intranet/message_dispatcher.hpp"
+#include "room/intranet/message_trait.hpp"
 #include "room/room/room_message_handler.hpp"
 #include "rsplib/broker/broker.hpp"
 #include "rsplib/link/link.hpp"
@@ -48,7 +49,7 @@ class room_receiver {
   void on_recv(const T& msg) {
     logger_.trace() << "on_recv" << typeid(msg).name() << lg::L_endl;
     auto response = message_handler_.handle(msg);
-    send_response(MessageType::kResCreateRoom, response);
+    send_response(message_trait<T>::res_type, response);
   }
 
   template <typename T>
