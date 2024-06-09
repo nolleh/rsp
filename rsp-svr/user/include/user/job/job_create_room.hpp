@@ -36,7 +36,8 @@ class job_create_room : public job,
         request_(create_room) {}
 
   void run() {
-    lg::logger().debug() << "job_create_room: " << request_.DebugString() << lg::L_endl;
+    lg::logger().debug() << "job_create_room: " << request_.DebugString()
+                         << lg::L_endl;
 
     User2RoomReqCreateRoom request;
     // TODO(@nolleh) need to be changed

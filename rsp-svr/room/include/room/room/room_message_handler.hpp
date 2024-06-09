@@ -28,7 +28,8 @@ class room_message_handler {
   }
 
   User2RoomResCreateRoom handle(const User2RoomReqCreateRoom& create_room) {
-    logger_.trace() << "create_room: " << create_room.DebugString() << lg::L_endl;
+    logger_.trace() << "create_room: " << create_room.DebugString()
+                    << lg::L_endl;
     auto room = room_manager_.create_room(create_room.uid());
     User2RoomResCreateRoom res_create_room;
     res_create_room.set_success(true);

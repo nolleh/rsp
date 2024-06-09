@@ -255,16 +255,16 @@ TEST(ZMQ_PUBSUB, TopicFiltered) {
 
   constexpr auto flags = zmq::recv_flags::none;
   std::vector<zmq::message_t> recv_msgs;
-  zmq::recv_result_t result =
-      zmq::recv_multipart(receiver, std::back_inserter(recv_msgs), zmq::recv_flags::dontwait);
+  zmq::recv_result_t result = zmq::recv_multipart(
+      receiver, std::back_inserter(recv_msgs), zmq::recv_flags::dontwait);
   EXPECT_TRUE(result);
   EXPECT_EQ(2, *result);
   EXPECT_EQ(ignored, recv_msgs[0].to_string());
   EXPECT_EQ(10, recv_msgs[1].size());
 
   std::vector<zmq::message_t> recv_msgs2;
-  zmq::recv_result_t result2 =
-      zmq::recv_multipart(receiver2, std::back_inserter(recv_msgs2), zmq::recv_flags::dontwait);
+  zmq::recv_result_t result2 = zmq::recv_multipart(
+      receiver2, std::back_inserter(recv_msgs2), zmq::recv_flags::dontwait);
   EXPECT_TRUE(!result2);
   // it was garbage value
   // EXPECT_EQ(0, *result2);

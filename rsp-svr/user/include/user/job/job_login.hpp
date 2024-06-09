@@ -29,7 +29,8 @@ class job_login : public job {
       : session_(session), request_(login) {}
 
   void run() {
-    lg::logger().debug() << "job_login: " << request_.DebugString() << lg::L_endl;
+    lg::logger().debug() << "job_login: " << request_.DebugString()
+                         << lg::L_endl;
     // TODO(@nolleh) signup / login process.
     // session_ = std::dynamic_pointer_cast<session>(link);
     send_res_login(request_.uid(), session_);

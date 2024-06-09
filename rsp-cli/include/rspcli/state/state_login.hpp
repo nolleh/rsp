@@ -8,8 +8,8 @@
 #include <string>
 
 #include "proto/common/message_type.pb.h"
-#include "proto/user/to_room.pb.h"
 #include "proto/user/login.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
@@ -137,7 +137,8 @@ class state_login : public base_state {
     ReqJoinRoom join_room;
     join_room.set_room_id(room_id);
     join_room.set_request_id(get_request_id());
-    auto message = rsp::libs::message::serializer::serialize(MessageType::kReqJoinRoom, join_room);
+    auto message = rsp::libs::message::serializer::serialize(
+        MessageType::kReqJoinRoom, join_room);
     try {
       socket_->send(boost::asio::buffer(message));
     } catch (const std::exception& e) {

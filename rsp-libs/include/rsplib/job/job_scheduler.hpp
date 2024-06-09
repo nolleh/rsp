@@ -25,7 +25,7 @@ class job_scheduler {
  public:
   ~job_scheduler() {
     auto& logger = logger::logger();
-    logger.trace() << "detroy job scheduler" << logger::L_endl;
+    logger.trace() << "destroy job scheduler" << logger::L_endl;
     clear();
     logger.debug() << "fin destroy job scheduler" << logger::L_endl;
   }
