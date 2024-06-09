@@ -26,5 +26,5 @@ message ResJoinRoom {
 message FwdRoom {
   uint64 request_id = 1;
   string message = 2;
-  repeated string = 3;
+  repeated string users = 3;
 }
