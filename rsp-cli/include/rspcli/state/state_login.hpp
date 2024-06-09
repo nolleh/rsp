@@ -69,10 +69,9 @@ class state_login : public base_state {
     } else if (command == "3") {
       prompt_ << "put room id that you want to enter\n";
       std::cout << "> ";
-      std::string room_id;
+      uint64_t room_id;
       std::cin >> room_id;
-
-      send_message<ReqJoinRoom>(MessageType::kReqJoinRoom);
+      send_join_room_message(room_id);
     }
   }
 
@@ -122,6 +121,7 @@ class state_login : public base_state {
   template <typename T>
   void send_message(MessageType type) {
     T msg;
+    msg.set_request_id(get_request_id());
     auto message = rsp::libs::message::serializer::serialize(type, msg);
     try {
       socket_->send(boost::asio::buffer(message));
@@ -137,8 +137,16 @@ class state_login : public base_state {
     ReqJoinRoom join_room;
     join_room.set_room_id(room_id);
     join_room.set_request_id(get_request_id());
+    auto message = rsp::libs::message::serializer::serialize(MessageType::kReqJoinRoom, join_room);
+    try {
+      socket_->send(boost::asio::buffer(message));
+    } catch (const std::exception& e) {
+      logger_.warn() << "send exception, possible: peer closed:" << e.what()
+                     << lg::L_endl;
+      close();
+      next_ = State::kExit;
+    }
   }
-
 };
 
 }  // namespace state

@@ -35,7 +35,7 @@ class job_join_room : public job,
         request_(join_room) {}
 
   void run() {
-    lg::logger().debug() << "job_join_room: " << request_.request_id()
+    lg::logger().debug() << "job_join_room: " << request_.DebugString()
                          << lg::L_endl;
 
     User2RoomReqJoinRoom request;
@@ -43,7 +43,7 @@ class job_join_room : public job,
     request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
-    
+
     intranet_.room().send_request(
         MessageType::kUser2RoomReqJoinRoom, request,
         std::bind(&job_join_room::handle_res_join_room, shared_from_this(),
@@ -52,8 +52,8 @@ class job_join_room : public job,
 
   void handle_res_join_room(const std::shared_ptr<Message> msg) {
     auto room_response = std::dynamic_pointer_cast<User2RoomResJoinRoom>(msg);
-    lg::logger().trace() << "handle_res_join_room: room_id:"
-                         << room_response->room_id() << lg::L_endl;
+    lg::logger().trace() << "handle_res_join_room: "
+                         << room_response->DebugString() << lg::L_endl;
     session_->set_enter_room(room_response->room_id());
 
     ResCreateRoom response;

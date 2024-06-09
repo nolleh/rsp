@@ -6,6 +6,7 @@
 #include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
 #include "rsplib/message/message_dispatcher.hpp"
+#include "rsplib/message/serializer.hpp"
 
 namespace rsp {
 namespace user {
@@ -51,6 +52,7 @@ class message_dispatcher : public dispatcher_interface {
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
     T t;
+    libs::message::serializer::deserialize(*buffer, &t);
     handler_->on_recv(t);
   }
 

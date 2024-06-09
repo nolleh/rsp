@@ -28,8 +28,7 @@ class room_message_handler {
   }
 
   User2RoomResCreateRoom handle(const User2RoomReqCreateRoom& create_room) {
-    logger_.trace() << "create_room: uid(" << create_room.uid() << ")"
-                    << lg::L_endl;
+    logger_.trace() << "create_room: " << create_room.DebugString() << lg::L_endl;
     auto room = room_manager_.create_room(create_room.uid());
     User2RoomResCreateRoom res_create_room;
     res_create_room.set_success(true);
@@ -40,8 +39,7 @@ class room_message_handler {
   }
 
   User2RoomResJoinRoom handle(const User2RoomReqJoinRoom& join_room) {
-    logger_.trace() << "join_room: room_id(" << join_room.room_id() << "), uid("
-                    << join_room.uid() << ")" << lg::L_endl;
+    logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
     auto room = room_manager_.find_room(join_room.room_id());
     if (!room) {
       User2RoomResJoinRoom res_join_room;

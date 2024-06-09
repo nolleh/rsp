@@ -23,7 +23,6 @@ namespace message {
 
 namespace lg = rsp::libs::logger;
 namespace ph = std::placeholders;
-namespace message = libs::message;
 using dispatcher_interface = libs::message::message_dispatcher_interface;
 using lib_dispatcher = libs::message::message_dispatcher;
 using raw_buffer = libs::message::raw_buffer;
@@ -73,7 +72,7 @@ class message_dispatcher : public dispatcher_interface {
 
   template <typename Message>
   void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
-    auto success = message::serializer::deserialize(*buffer, message);
+    auto success = libs::message::serializer::deserialize(*buffer, message);
     if (!success) {
       auto& logger = lg::logger();
       logger.error() << "something wrong. failed to parse login message"

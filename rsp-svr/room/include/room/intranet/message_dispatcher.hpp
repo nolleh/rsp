@@ -5,12 +5,14 @@
 #include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
 #include "rsplib/message/message_dispatcher.hpp"
+#include "rsplib/message/serializer.hpp"
 
 namespace rsp {
 namespace room {
 
 namespace lg = rsp::libs::logger;
 namespace ph = std::placeholders;
+namespace message = rsp::libs::message;
 
 using dispatcher_interface = libs::message::message_dispatcher_interface;
 using lib_dispatcher = libs::message::message_dispatcher;
@@ -49,6 +51,7 @@ class message_dispatcher : public dispatcher_interface {
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
     T t;
+    message::serializer::deserialize(*buffer, &t);
     handler_->on_recv(t);
   }
 
