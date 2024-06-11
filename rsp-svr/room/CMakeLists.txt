@@ -10,34 +10,36 @@ find_package(cppzmq)
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)
-  set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
+    set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
 if(NOT DEFINED Libs_DIR)
-  set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
+    set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
 endif()
 
-add_executable(Room
-  ${SRC}
+add_executable(Room ${SRC})
+
+# used generator expression
+# (notwork) cmake-lint: disable=C0301
+# https://cmake.org/cmake/help/latest/manual
+# /cmake-generator-expressions.7.html#variable-queries
+target_compile_options(Room PRIVATE $<$<CONFIG:Debug>:-g>)
+
+target_include_directories(
+    Room
+    PRIVATE
+        # ${Boost_DIR}/include
+        ${Boost_INCLUDE_DIR}
+        ${Libs_DIR}/include
+        ${Proto_DIR}
+        ${PROJECT_SOURCE_DIR}/include
 )
 
-target_include_directories(Room PRIVATE
-  # ${Boost_DIR}/include
-  ${Boost_INCLUDE_DIR}
-  ${Libs_DIR}/include
-  ${Proto_DIR}
-  ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_directories(Room PRIVATE
-  # ${Boost_DIR}/lib
-  ${Boost_LIBRARY_DIRS}
-  cppzmq
-)
-
-target_link_libraries(Room
-  ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
-  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
-  ${Protobuf_LIBRARIES}
-  cppzmq
+target_link_libraries(
+    Room
+    ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
+    ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
+    ${Protobuf_LIBRARIES}
+    ${Boost_LIBRARIES}
+    cppzmq
 )

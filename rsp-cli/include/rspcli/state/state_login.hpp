@@ -121,6 +121,7 @@ class state_login : public base_state {
   template <typename T>
   void send_message(MessageType type) {
     T msg;
+    msg.set_request_id(get_request_id());
     auto message = rsp::libs::message::serializer::serialize(type, msg);
     try {
       socket_->send(boost::asio::buffer(message));

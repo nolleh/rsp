@@ -7,10 +7,7 @@ find_package(Boost)
 find_package(Protobuf)
 find_package(cppzmq)
 
-configure_file(
-  config.h.in
-  ${PROJECT_SOURCE_DIR}/include/user/config.h
-)
+configure_file(config.h.in ${PROJECT_SOURCE_DIR}/include/user/config.h)
 
 # source_group("cpp"
 #   FILES
@@ -20,39 +17,38 @@ configure_file(
 
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)
-  set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
+    set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
 endif()
 
 if(NOT DEFINED Libs_DIR)
-  set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
+    set(Libs_DIR ${CMAKE_SOURCE_DIR}/../rsp-libs)
 endif()
 
-add_executable(User
-  ${SRC}
+add_executable(User ${SRC})
+
+# used generator expression
+# lint disable (not work...hum...)
+# cmake-lint: disable=C0301
+# https://cmake.org/cmake/help/latest/manual
+# /cmake-generator-expressions.7.html#variable-queries
+target_compile_options(User PRIVATE $<$<CONFIG:Debug>:-g>)
+
+target_include_directories(
+    User
+    PRIVATE
+        # ${Boost_DIR}/include
+        ${Boost_INCLUDE_DIR}
+        ${Protobuf_INCLUDE_DIR}
+        ${Libs_DIR}/include
+        ${Proto_DIR}
+        ${PROJECT_SOURCE_DIR}/include
 )
 
-target_compile_options(User PRIVATE
-  -g
-)
-
-target_include_directories(User PRIVATE
-  # ${Boost_DIR}/include
-  ${Boost_INCLUDE_DIR}
-  ${Protobuf_INCLUDE_DIR}
-  ${Libs_DIR}/include
-  ${Proto_DIR}
-  ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_directories(User PRIVATE
-  # ${Boost_DIR}/lib
-  ${Boost_LIBRARY_DIRS}
-  cppzmq
-)
-
-target_link_libraries(User
-  ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
-  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
-  ${Protobuf_LIBRARIES}
-  cppzmq
+target_link_libraries(
+    User
+    ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
+    ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
+    ${Boost_LIBRARIES}
+    ${Protobuf_LIBRARIES}
+    cppzmq
 )
