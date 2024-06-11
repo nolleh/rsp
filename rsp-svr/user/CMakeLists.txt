@@ -31,6 +31,10 @@ add_executable(User
   ${SRC}
 )
 
+target_compile_options(User PRIVATE
+  -g
+)
+
 target_include_directories(User PRIVATE
   # ${Boost_DIR}/include
   ${Boost_INCLUDE_DIR}
