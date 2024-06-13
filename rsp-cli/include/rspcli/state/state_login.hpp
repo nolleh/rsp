@@ -114,6 +114,11 @@ class state_login : public base_state {
       return;
     }
 
+    if (!join_room.success()) {
+      logger_.info() << "unable to join room";
+      return;
+    }
+
     logger_.info() << "joined room #" << join_room.room_id() << lg::L_endl;
     next_ = State::kInRoom;
   }

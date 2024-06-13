@@ -75,36 +75,11 @@ class base_state {
     }
   }
 
-  void send_login(const std::string& uid) {
-    ReqLogin login;
-    login.set_uid(uid);
-    auto message = rsp::libs::message::serializer::serialize(
-        MessageType::kReqLogin, login);
-    try {
-      socket_->send(boost::asio::buffer(message));
-    } catch (const std::exception& e) {
-      logger_.warn() << "send exception, possible: peer closed:" << e.what()
-                     << lg::L_endl;
-      close();
-      next_ = State::kExit;
-    }
-  }
-
   State handle_buffer(std::array<char, 128> buf, size_t len) {
     interpreter_.handle_buffer(buf, len);
     return next_;
   }
 
-  void handle_res_login(buffer_ptr buffer, link*) {
-    ResLogin login;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &login)) {
-      logger_.error() << "failed to parse reslogin" << lg::L_endl;
-      return;
-    }
-
-    logger_.info() << "success to login:" << login.uid() << lg::L_endl;
-    next_ = State::kLoggedIn;
-  }
 
   void handle_ping(buffer_ptr buffer, link*) { send_pong(); }
 
@@ -115,16 +90,6 @@ class base_state {
   }
 
   virtual void init() {
-    dispatcher_.register_handler(
-        MessageType::kResLogin,
-        std::bind(&base_state::handle_res_login, this, std::placeholders::_1,
-                  std::placeholders::_2));
-
-    std::string uid;
-    prompt_ << "type user name to login";
-    std::cout << "> ";
-    std::cin >> uid;
-    send_login(uid);
   }
 
   friend std::ostream& operator<<(std::ostream&, const base_state&);
