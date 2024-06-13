@@ -38,21 +38,6 @@ class state_login : public base_state {
   }
 
   void init() override {
-    dispatcher_.register_handler(
-        MessageType::kResLogout,
-        std::bind(&state_login::handle_res_logout, this, std::placeholders::_1,
-                  std::placeholders::_2));
-
-    dispatcher_.register_handler(
-        MessageType::kResCreateRoom,
-        std::bind(&state_login::handle_res_create_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-
-    dispatcher_.register_handler(
-        MessageType::kResJoinRoom,
-        std::bind(&state_login::handle_res_join_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-
     // std::string commands[]{"logout", "create_room", "join_room"};
     //
     // auto command_direction = join(',', commands);
@@ -79,6 +64,20 @@ class state_login : public base_state {
   explicit state_login(socket* socket) : base_state(socket) {
     state_ = State::kLoggedIn;
     next_ = state_;
+    dispatcher_.register_handler(
+        MessageType::kResLogout,
+        std::bind(&state_login::handle_res_logout, this, std::placeholders::_1,
+                  std::placeholders::_2));
+
+    dispatcher_.register_handler(
+        MessageType::kResCreateRoom,
+        std::bind(&state_login::handle_res_create_room, this,
+                  std::placeholders::_1, std::placeholders::_2));
+
+    dispatcher_.register_handler(
+        MessageType::kResJoinRoom,
+        std::bind(&state_login::handle_res_join_room, this,
+                  std::placeholders::_1, std::placeholders::_2));
   }
 
  private:
@@ -116,6 +115,7 @@ class state_login : public base_state {
 
     if (!join_room.success()) {
       logger_.info() << "unable to join room";
+      init();
       return;
     }
 

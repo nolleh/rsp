@@ -24,11 +24,15 @@ class state_in_room : public base_state {
   ~state_in_room() { dispatcher_.unregister_handler(MessageType::kResLogout); }
 
   void init() override {
+    // TODO(@nolleh) does dispatcher really need a ability
+    // register same message type with different instance? hum...
+    // client state is changed, and old state is erased after newer one,
+    // registered type is accidentally erased issue is there.
+    // so until mind is arranged, used redundant register
     dispatcher_.register_handler(
         MessageType::kResLogout,
         std::bind(&state_in_room::handle_res_logout, this,
                   std::placeholders::_1, std::placeholders::_2));
-
     // std::string commands[]{"logout", "create_room", "join_room"};
     //
     // auto command_direction = join(',', commands);
@@ -47,6 +51,10 @@ class state_in_room : public base_state {
   explicit state_in_room(socket* socket) : base_state(socket) {
     state_ = State::kInRoom;
     next_ = state_;
+    // dispatcher_.register_handler(
+    //     MessageType::kResLogout,
+    //     std::bind(&state_in_room::handle_res_logout, this,
+    //               std::placeholders::_1, std::placeholders::_2));
   }
 
  private:
