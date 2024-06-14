@@ -80,7 +80,6 @@ class base_state {
     return next_;
   }
 
-
   void handle_ping(buffer_ptr buffer, link*) { send_pong(); }
 
   void handle_unknown(link*) {
@@ -89,8 +88,7 @@ class base_state {
     next_ = State::kExit;
   }
 
-  virtual void init() {
-  }
+  virtual void init() {}
 
   friend std::ostream& operator<<(std::ostream&, const base_state&);
 
@@ -122,6 +120,26 @@ class base_state {
     socket_->close();
   }
 
+  template <typename SyncReadStream>
+  void read_with_timeout(
+      SyncReadStream* s,
+      const boost::asio::deadline_timer::duration_type& expiry_time) {
+    boost::asio::deadline_timer timer(s->get_executor());
+    timer.expires_from_now(expiry_time);
+    timer.async_wait(
+        [&s](const boost::system::error_code& error) { s->cancel(); });
+
+    auto ptr =
+        std::shared_ptr<std::array<char, 128>>(new std::array<char, 128>);
+    boost::asio::async_read(
+        *s, boost::asio::buffer(*ptr),
+        [this, ptr, &timer](const boost::system::error_code& error,
+                            size_t size) {
+          timer.cancel();
+          handle_buffer(*ptr, size);
+        });
+  }
+
  protected:
   explicit base_state(socket* socket)
       : socket_(socket),
@@ -137,9 +155,7 @@ class base_state {
                   std::placeholders::_2));
   }
 
-  uint64_t get_request_id() {
-    return request_id_++;
-  }
+  uint64_t get_request_id() { return request_id_++; }
 
   State state_ = State::kInit;
   State next_ = State::kInit;

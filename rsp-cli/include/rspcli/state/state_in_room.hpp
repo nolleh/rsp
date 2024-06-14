@@ -6,6 +6,9 @@
 #include <memory>
 #include <string>
 
+#include <boost/asio/buffer.hpp>
+#include <boost/optional.hpp>
+
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "proto/user/to_room.pb.h"
@@ -37,7 +40,7 @@ class state_in_room : public base_state {
     //
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
-    prompt_ << "possible command \n1) logout 2)read message\n 3)send message";
+    prompt_ << "possible command \n1) logout 2) read message\n 3) send message";
     std::cout << "> ";
     std::string command;
     std::cin >> command;
@@ -47,6 +50,9 @@ class state_in_room : public base_state {
         send_message(MessageType::kReqLogout, ReqLogout{});
         break;
       case 2:
+        std::cout << "read for 3 sec.." << std::endl;
+        read_with_timeout(socket_, boost::posix_time::seconds(3));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         init();
         break;
       case 3:

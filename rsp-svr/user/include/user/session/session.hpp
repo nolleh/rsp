@@ -49,11 +49,12 @@ class session : public link, public std::enable_shared_from_this<session> {
   }
 
   void start() {
+    // TODO(@nolleh) revive after client handle ping
     // https://stackoverflow.com/questions/70939861/does-boostasio-co-spawn-create-an-actual-thread
-    co_spawn(
-        worker_.get_executor(),
-        [self = shared_from_this()] { return self->send_heartbeats(); },
-        ba::detached);
+    // co_spawn(
+    //     worker_.get_executor(),
+    //     [self = shared_from_this()] { return self->send_heartbeats(); },
+    //     ba::detached);
   }
 
   void stop(bool force_close) {
