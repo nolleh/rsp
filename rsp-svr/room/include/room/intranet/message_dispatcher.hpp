@@ -34,6 +34,8 @@ class message_dispatcher : public dispatcher_interface {
                 handle_buffer<User2RoomReqCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqJoinRoom,
                 handle_buffer<User2RoomReqJoinRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdRoom,
+                handle_buffer<User2RoomReqFwdRoom>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }

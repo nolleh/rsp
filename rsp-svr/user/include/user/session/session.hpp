@@ -166,6 +166,9 @@ void session::on_recv(ReqCreateRoom& msg);
 template <>
 void session::on_recv(ReqJoinRoom& msg);
 
+template <>
+void session::on_recv(ReqFwdRoom& msg);
+
 }  // namespace session
 }  // namespace user
 }  // namespace rsp

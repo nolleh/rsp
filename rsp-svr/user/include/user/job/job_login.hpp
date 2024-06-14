@@ -52,8 +52,8 @@ class job_login : public job {
   }
 
  private:
-  const ReqLogin request_;
   const session_ptr session_;
+  const ReqLogin request_;
 };
 
 }  // namespace job

@@ -46,9 +46,11 @@ class s_logger {
 #elif defined(__APPLE__)
     char buf[PATH_MAX];
     uint32_t bufsize = PATH_MAX;
-    if (!_NSGetExecutablePath(buf, &bufsize)) puts(buf);
-    return buf;
+    if (_NSGetExecutablePath(buf, &bufsize)) return {};
 
+    puts(buf);
+    std::string path{buf};
+    return path.substr(path.find_last_of('/') + 1);
 #else
     static_assert(false, "unrecognized platform");
 

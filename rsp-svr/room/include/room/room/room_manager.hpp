@@ -29,6 +29,7 @@ class room_manager {
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
     rooms_[room_id] = created;
+    user_rooms_[uid] = room_id;
     return created;
   }
 
@@ -41,6 +42,31 @@ class room_manager {
     return room->second;
   }
 
+  std::shared_ptr<room> join_room(const std::string& uid,
+                                  const RoomId room_id) {
+    auto room = find_room(room_id);
+    if (!room) {
+      return nullptr;
+    }
+
+    rooms_[room_id] = room;
+    user_rooms_[uid] = room_id;
+    return room;
+  }
+
+  std::shared_ptr<room> find_room(Uid uid) {
+    RoomId room_id = 0;
+    {
+      std::lock_guard<std::mutex> l(m_);
+      auto room_iter = user_rooms_.find(uid);
+      if (user_rooms_.end() == room_iter) {
+        return nullptr;
+      }
+      room_id = room_iter->second;
+    }
+    return find_room(room_id);
+  }
+
  private:
   room_manager() {}
   static std::once_flag s_flag;
@@ -48,6 +74,7 @@ class room_manager {
 
   std::mutex m_;
   std::map<RoomId, std::shared_ptr<room>> rooms_;
+  std::map<Uid, RoomId> user_rooms_;
 };
 
 }  // namespace room

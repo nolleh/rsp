@@ -27,13 +27,13 @@ message User2RoomResJoinRoom {
 
 message User2RoomReqFwdRoom {
   uint64 request_id = 1;
-  string message = 2;
-  repeated string users = 3;
+  string uid = 2;
+  string message = 3;
 }
 
 message User2RoomResFwdRoom {
   uint64 request_id = 1;
-  string message = 2;
-  repeated string users = 3;
+  string uid = 2;
+  string message = 3;
   bool success = 4;
 }

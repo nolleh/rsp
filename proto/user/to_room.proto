@@ -23,13 +23,15 @@ message ResJoinRoom {
 
 message ReqFwdRoom {
   uint64 request_id = 1;
-  string message = 2;
-  repeated string users = 3;
+  string uid = 2;
+  string message = 3;
+  // repeated string users = 3;
 }
 
 message ResFwdRoom {
   uint64 request_id = 1;
-  string message = 2;
-  repeated string users = 3;
+  string uid = 2;
+  string message = 3;
+  // repeated string users = 3;
   bool success = 4;
 }

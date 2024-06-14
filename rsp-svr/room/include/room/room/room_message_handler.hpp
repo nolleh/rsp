@@ -41,7 +41,7 @@ class room_message_handler {
 
   User2RoomResJoinRoom handle(const User2RoomReqJoinRoom& join_room) {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
-    auto room = room_manager_.find_room(join_room.room_id());
+    auto room = room_manager_.join_room(join_room.uid(), join_room.room_id());
     if (!room) {
       User2RoomResJoinRoom res_join_room;
       res_join_room.set_request_id(join_room.request_id());
@@ -56,6 +56,26 @@ class room_message_handler {
     res_join_room.set_room_id(join_room.room_id());
     res_join_room.set_success(true);
     return res_join_room;
+  }
+
+  User2RoomResFwdRoom handle(const User2RoomReqFwdRoom& fwd_room) {
+    logger_.trace() << "fwd_room: " << fwd_room.DebugString() << lg::L_endl;
+    auto room = room_manager_.find_room(fwd_room.uid());
+    if (!room) {
+      User2RoomResFwdRoom res_fwd_room;
+      res_fwd_room.set_request_id(fwd_room.request_id());
+      res_fwd_room.set_uid(fwd_room.uid());
+      res_fwd_room.set_success(false);
+      return res_fwd_room;
+    }
+
+    room->on_recv_message(fwd_room.uid(), fwd_room.message());
+
+    User2RoomResFwdRoom res_fwd_room;
+    res_fwd_room.set_request_id(fwd_room.request_id());
+    res_fwd_room.set_uid(fwd_room.uid());
+    res_fwd_room.set_success(true);
+    return res_fwd_room;
   }
 
  private:

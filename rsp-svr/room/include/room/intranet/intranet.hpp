@@ -56,7 +56,7 @@ class room_receiver {
   void send_response(MessageType type, const T& res) {
     namespace msg = rsp::libs::message;
     auto buffer = msg::serializer::serialize(type, res);
-    logger_.trace() << "send_reponse" << lg::L_endl;
+    logger_.trace() << "send_reponse: " << typeid(res).name() << lg::L_endl;
     room_receiver_->send("topic", buffer);
   }
 

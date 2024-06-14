@@ -39,9 +39,11 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<rsp_cli::state::base_state> client = nullptr;
     for (;;) {
       if (create) {
+        // give a chance old state client to erase handler
+        client = nullptr;
         client = rsp_cli::state::factory::create(curr, &socket);
-        client->init();
       }
+      client->init();
       std::array<char, 128> buf;
       boost::system::error_code error;
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);

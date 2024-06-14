@@ -7,8 +7,8 @@
 #include <string>
 
 #include "proto/common/message_type.pb.h"
-#include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
@@ -29,21 +29,35 @@ class state_in_room : public base_state {
     // client state is changed, and old state is erased after newer one,
     // registered type is accidentally erased issue is there.
     // so until mind is arranged, used redundant register
-    dispatcher_.register_handler(
-        MessageType::kResLogout,
-        std::bind(&state_in_room::handle_res_logout, this,
-                  std::placeholders::_1, std::placeholders::_2));
+    // dispatcher_.register_handler(
+    //     MessageType::kResLogout,
+    //     std::bind(&state_in_room::handle_res_logout, this,
+    //               std::placeholders::_1, std::placeholders::_2));
     // std::string commands[]{"logout", "create_room", "join_room"};
     //
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
-    prompt_ << "possible command \n1) logout\n";
+    prompt_ << "possible command \n1) logout 2)read message\n 3)send message";
     std::cout << "> ";
     std::string command;
     std::cin >> command;
 
-    if (command == "1") {
-      send_message<ReqLogout>(MessageType::kReqLogout);
+    switch (std::stoi(command)) {
+      case 1:
+        send_message(MessageType::kReqLogout, ReqLogout{});
+        break;
+      case 2:
+        init();
+        break;
+      case 3:
+        prompt_ << "type message to send";
+        std::cout << "> ";
+        std::string msg;
+        std::cin >> msg;
+        ReqFwdRoom fwd;
+        fwd.set_message(msg);
+        send_message(MessageType::kReqFwdRoom, fwd);
+        break;
     }
   }
 
@@ -51,10 +65,14 @@ class state_in_room : public base_state {
   explicit state_in_room(socket* socket) : base_state(socket) {
     state_ = State::kInRoom;
     next_ = state_;
-    // dispatcher_.register_handler(
-    //     MessageType::kResLogout,
-    //     std::bind(&state_in_room::handle_res_logout, this,
-    //               std::placeholders::_1, std::placeholders::_2));
+    dispatcher_.register_handler(
+        MessageType::kResLogout,
+        std::bind(&state_in_room::handle_res_logout, this,
+                  std::placeholders::_1, std::placeholders::_2));
+    dispatcher_.register_handler(
+        MessageType::kResFwdRoom,
+        std::bind(&state_in_room::handle_res_fwd_room, this,
+                  std::placeholders::_1, std::placeholders::_2));
   }
 
  private:
@@ -71,10 +89,20 @@ class state_in_room : public base_state {
     next_ = State::kExit;
   }
 
+  void handle_res_fwd_room(buffer_ptr buffer, link*) {
+    ResFwdRoom fwd_room;
+    if (!rsp::libs::message::serializer::deserialize(*buffer, &fwd_room)) {
+      logger_.error() << "failed to fwd room" << lg::L_endl;
+      return;
+    }
+
+    logger_.debug() << "successfully sent message: " << fwd_room.message()
+                    << lg::L_endl;
+  }
+
   template <typename T>
-  void send_message(MessageType type) {
-    T logout;
-    auto message = rsp::libs::message::serializer::serialize(type, logout);
+  void send_message(MessageType type, T&& msg) {
+    auto message = rsp::libs::message::serializer::serialize(type, msg);
     try {
       socket_->send(boost::asio::buffer(message));
     } catch (const std::exception& e) {

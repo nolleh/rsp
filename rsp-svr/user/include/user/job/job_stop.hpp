@@ -4,6 +4,7 @@
 
 #include "user/session/session.hpp"
 #include "user/session/session_manager.hpp"
+
 namespace rsp {
 namespace user {
 namespace job {
