@@ -7,7 +7,6 @@
 #include <vector>
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
 
 #include "rsplib/buffer/shared_const_buffer.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
@@ -27,8 +26,8 @@ namespace server {
 
 using boost::asio::ip::tcp;
 
-namespace ph = std::placeholders;
 using conn_interpreter = message::conn_interpreter;
+namespace ph = std::placeholders;
 namespace lg = logger;
 using link = link::link;
 using raw_buffer = message::raw_buffer;
