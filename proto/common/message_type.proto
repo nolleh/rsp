@@ -15,12 +15,14 @@ enum MessageType {
   kResJoinRoom = 9;
   kReqFwdRoom = 10;
   kResFwdRoom = 11;
+  kReqFwdClient = 12;
+  kResFwdClient = 13;
 
   //room
-  kUser2RoomReqCreateRoom = 12;
-  kUser2RoomResCreateRoom = 13;
-  kUser2RoomReqJoinRoom = 14;
-  kUser2RoomResJoinRoom = 15;
-  kUser2RoomReqFwdRoom = 16;
-  kUser2RoomResFwdRoom = 17;
+  kUser2RoomReqCreateRoom = 14;
+  kUser2RoomResCreateRoom = 15;
+  kUser2RoomReqJoinRoom = 16;
+  kUser2RoomResJoinRoom = 17;
+  kUser2RoomReqFwdRoom = 18;
+  kUser2RoomResFwdRoom = 19;
 }

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message ReqFwdClient {
+  uint64 request_id = 1;
+  string uid = 2;
+  string message = 3;
+  // repeated string users = 3;
+}
+
+message ResFwdClient {
+  uint64 request_id = 1;
+  string uid = 2;
+  string message = 3;
+  // repeated string users = 3;
+  bool success = 4;
+}
