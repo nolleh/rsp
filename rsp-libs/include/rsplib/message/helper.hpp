@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "rsplib/message/types.hpp"
 

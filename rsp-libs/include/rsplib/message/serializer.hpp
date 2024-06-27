@@ -18,28 +18,6 @@ struct meta {
   size_t payload_size;
   MessageType type;
   raw_buffer payload;
-
-  meta() {}
-  meta(size_t p_size, size_t p_payload_size, MessageType p_type,
-       const raw_buffer& p_payload)
-      : size(p_size),
-        payload_size(p_payload_size),
-        type(p_type),
-        payload(p_payload) {}
-
-  meta(const meta& r)
-      : size(r.size),
-        payload_size(r.payload_size),
-        type(r.type),
-        payload(r.payload) {}
-
-  meta& operator=(meta&& r) {
-    size = std::move(r.size);
-    payload_size = std::move(r.payload_size);
-    type = std::move(r.type);
-    payload = std::move(r.payload);
-    return *this;
-  }
 };
 
 class serializer {
@@ -69,12 +47,12 @@ class serializer {
       return {};
     }
 
-    // full message is retrievend
+    // full message is retrieved
     int type_parts;
     if (!mget(buffer, &type_parts, kContentLen)) return {};
     const auto type = static_cast<MessageType>(type_parts);
-    raw_buffer payload;
 
+    raw_buffer payload;
     std::for_each(buffer.cbegin() + kContentLen + kType, buffer.cend(),
                   [&payload](auto k) { payload.emplace_back(k); });
 
