@@ -41,13 +41,13 @@ inline void mset(raw_buffer* dest, T&& t) {
 
 template <typename T>
 inline bool mget(const raw_buffer& src, T* dest, uint8_t offset) {
-  if (src.size() <= offset) {
+  if (src.size() < offset + sizeof(*dest)) {
     return false;
   }
   // memcpy(reinterpret_cast<T*>(&src[0] + offset), dest, sizeof(dest));
   const auto ptr = reinterpret_cast<const char*>(&src[0] + offset);
   // byte array, so you can use like this.
-  std::copy(ptr, ptr + sizeof(*dest), dest);
+  std::copy_n(ptr, sizeof(*dest), dest);
   return true;
 }
 

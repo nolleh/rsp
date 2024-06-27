@@ -59,7 +59,7 @@ class conn_interpreter {
   }
 
   void attach_link(link* link) {
-    // ts is garenteed from user.
+    // ts is guaranteed from user.
     // this is temp code.
     link_ = link;
   }

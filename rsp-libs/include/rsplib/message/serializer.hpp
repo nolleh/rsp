@@ -61,6 +61,7 @@ class serializer {
 
   static meta destruct_buffer(const raw_buffer& buffer) {
     size_t content_length;
+    // TODO(@nolleh)
     if (!mget(buffer, &content_length, 0)) return {};
     const size_t message_len = kContentLen + kType + content_length;
 
