@@ -8,7 +8,6 @@
 
 #include "room/intranet/message_dispatcher.hpp"
 #include "room/intranet/message_trait.hpp"
-#include "room/intranet/user_sender.hpp"
 #include "room/room/room_message_handler.hpp"
 #include "rsplib/broker/broker.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -23,12 +22,20 @@ namespace msg = rsp::libs::message;
 using address = std::string;
 class user_topology {
  public:
-  explicit user_topology(intranet* intranet)
+  user_topology()
       : logger_(lg::logger()),
         dispatcher_(this),
-        message_handler_(room_message_handler(intranet)) {}
+        message_handler_(room_message_handler()) {}
 
   void register_server(const address& addr) {
+    {
+      std::lock_guard<std::mutex> l{m_};
+      auto iter = user_servers_.find(addr);
+      if (user_servers_.end() != iter) {
+        return;
+      }
+    }
+
     auto svr =
         br::broker::s_create_publisher(CastType::kUniCast, "user", 1, addr);
     std::lock_guard<std::mutex> l{m_};
@@ -42,9 +49,14 @@ class user_topology {
 
   template <typename T>
   uint8_t send_message(const address& addr, const T& req) {
-    auto iter = user_servers_.find(addr);
-    if (user_servers_.end() == iter) {
-      return -1;
+    decltype(user_servers_)::const_iterator iter;
+
+    {
+      std::lock_guard<std::mutex> l{m_};
+      iter = user_servers_.find(addr);
+      if (user_servers_.end() == iter) {
+        return -1;
+      }
     }
 
     auto buffer = msg::serializer::serialize(message_trait<T>::type, req);

@@ -12,14 +12,12 @@ namespace room {
 
 namespace lg = rsp::libs::logger;
 
-class intranet;
+// class intranet;
 
 class room_message_handler {
  public:
-  explicit room_message_handler(intranet* intranet)
-      : intranet_(intranet),
-        logger_(lg::logger()),
-        room_manager_(room_manager::instance()) {}
+  room_message_handler()
+      : logger_(lg::logger()), room_manager_(room_manager::instance()) {}
 
   Pong handle(const Ping& ping) {
     logger_.trace() << "ping " << lg::L_endl;
@@ -30,6 +28,10 @@ class room_message_handler {
   User2RoomResCreateRoom handle(const User2RoomReqCreateRoom& create_room) {
     logger_.trace() << "create_room: " << create_room.DebugString()
                     << lg::L_endl;
+
+    // TODO(@nolleh) do not initialize here. let's make glob. pubsub
+    // register_user_server(create_room);
+
     auto room = room_manager_.create_room(create_room.uid());
     User2RoomResCreateRoom res_create_room;
     res_create_room.set_success(true);
@@ -41,6 +43,8 @@ class room_message_handler {
 
   User2RoomResJoinRoom handle(const User2RoomReqJoinRoom& join_room) {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
+    // register_user_server(join_room);
+
     auto room = room_manager_.join_room(join_room.uid(), join_room.room_id());
     if (!room) {
       User2RoomResJoinRoom res_join_room;
@@ -79,9 +83,11 @@ class room_message_handler {
   }
 
  private:
+  void register_user_server(const User2RoomReqCreateRoom& msg);
+  void register_user_server(const User2RoomReqJoinRoom& msg);
+
   lg::s_logger& logger_;
   room_manager& room_manager_;
-  intranet* intranet_;
 };
 }  // namespace room
 }  // namespace rsp

@@ -118,6 +118,7 @@ class room_sender {
   void on_recv(const Pong& pong) const {
     logger_.debug() << "received pong" << lg::L_endl;
   }
+
   template <typename T>
   void on_recv(const T& msg) const {
     logger_.trace() << "received message requestId: " << msg.request_id() << ","

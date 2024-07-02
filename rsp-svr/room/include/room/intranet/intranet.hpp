@@ -17,10 +17,11 @@ class intranet {
  public:
   static intranet& instance();
   intranet()
-      : logger_(lg::logger()), room_receiver_(this), user_topology_(this) {}
+      : logger_(lg::logger()), room_receiver_(), user_topology_() {}
 
   // TODO(@nolleh) check
   const room_receiver& responder() const { return room_receiver_; }
+  user_topology& user_topology() { return user_topology_; }
 
   void start() { room_receiver_.start(); }
 
@@ -33,7 +34,7 @@ class intranet {
 
   lg::s_logger& logger_;
   room_receiver room_receiver_;
-  user_topology user_topology_;
+  class user_topology user_topology_;
 };
 
 }  // namespace room

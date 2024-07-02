@@ -20,10 +20,10 @@ namespace br = rsp::libs::broker;
 class intranet;
 class room_receiver {
  public:
-  explicit room_receiver(intranet* intranet)
+  room_receiver()
       : logger_(lg::logger()),
         dispatcher_(this),
-        message_handler_(room_message_handler(intranet)) {
+        message_handler_(room_message_handler()) {
     room_receiver_ =
         br::broker::s_create_subscriber(CastType::kAnyCast, "room", 1, "topic");
   }
@@ -46,9 +46,7 @@ class room_receiver {
 
   template <typename T>
   void on_recv(const T& msg) {
-    logger_.trace() << "on_recv" << typeid(msg).name() << lg::L_endl;
-    auto response = message_handler_.handle(msg);
-    send_response(message_trait<T>::res_type, response);
+    handle(msg);
   }
 
   template <typename T>
@@ -60,15 +58,24 @@ class room_receiver {
   }
 
  private:
+  template <typename T>
+  void handle(const T& msg) {
+    logger_.trace() << "on_recv: " << typeid(msg).name() << lg::L_endl;
+    auto response = message_handler_.handle(msg);
+    send_response(message_trait<T>::res_type, response);
+  }
+
   lg::s_logger& logger_;
+  intranet* intranet_;
   message_dispatcher<room_receiver> dispatcher_;
   std::shared_ptr<br::broker_interface> room_receiver_;
   room_message_handler message_handler_;
 };
 
 // template <>
-// void room_receiver::on_recv(const Ping& ping) {
-//   logger_.debug() << "received ping" << lg::L_endl;
+// void room_receiver::on_recv(const User2RoomReqCreateRoom& msg) {
+//   handle(msg);
 // }
+
 }  // namespace room
 }  // namespace rsp

@@ -2,7 +2,8 @@ syntax = "proto3";
 
 message User2RoomReqCreateRoom {
   uint64 request_id = 1;
-  string uid = 2;
+  string addr = 2;
+  string uid = 3;
 }
 
 message User2RoomResCreateRoom {
@@ -14,8 +15,9 @@ message User2RoomResCreateRoom {
 
 message User2RoomReqJoinRoom {
   uint64 request_id = 1;
-  string uid = 2;
-  uint64 room_id = 3;
+  string addr = 2;
+  string uid = 3;
+  uint64 room_id = 4;
 }
 
 message User2RoomResJoinRoom {
