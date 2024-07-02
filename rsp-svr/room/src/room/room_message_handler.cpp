@@ -9,11 +9,11 @@ namespace room {
 
 void room_message_handler::register_user_server(
     const User2RoomReqCreateRoom& msg) {
-  intranet::instance().user_topology().register_server(msg.addr());
+  intranet::instance().user().register_server(msg.addr());
 }
 void room_message_handler::register_user_server(
     const User2RoomReqJoinRoom& msg) {
-  intranet::instance().user_topology().register_server(msg.addr());
+  intranet::instance().user().register_server(msg.addr());
 }
 
 }  // namespace room

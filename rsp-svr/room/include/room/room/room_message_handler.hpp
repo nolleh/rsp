@@ -30,7 +30,7 @@ class room_message_handler {
                     << lg::L_endl;
 
     // TODO(@nolleh) do not initialize here. let's make glob. pubsub
-    // register_user_server(create_room);
+    register_user_server(create_room);
 
     auto room = room_manager_.create_room(create_room.uid());
     User2RoomResCreateRoom res_create_room;
@@ -43,7 +43,7 @@ class room_message_handler {
 
   User2RoomResJoinRoom handle(const User2RoomReqJoinRoom& join_room) {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
-    // register_user_server(join_room);
+    register_user_server(join_room);
 
     auto room = room_manager_.join_room(join_room.uid(), join_room.room_id());
     if (!room) {
@@ -80,6 +80,15 @@ class room_message_handler {
     res_fwd_room.set_uid(fwd_room.uid());
     res_fwd_room.set_success(true);
     return res_fwd_room;
+  }
+
+  void handle(const User2RoomResFwdClient& fwd_room) {
+    logger_.trace() << "fwd_client: " << fwd_room.DebugString() << lg::L_endl;
+    auto room = room_manager_.find_room(fwd_room.uid());
+    // if (!room) {
+    // }
+
+    // room->on_recv_message(fwd_room.uid(), fwd_room.message());
   }
 
  private:

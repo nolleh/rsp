@@ -25,4 +25,6 @@ enum MessageType {
   kUser2RoomResJoinRoom = 17;
   kUser2RoomReqFwdRoom = 18;
   kUser2RoomResFwdRoom = 19;
+  kUser2RoomReqFwdClient = 20;
+  kUser2RoomResFwdClient = 21;
 }

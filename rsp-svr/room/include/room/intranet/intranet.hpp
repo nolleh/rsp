@@ -21,7 +21,7 @@ class intranet {
 
   // TODO(@nolleh) check
   const room_receiver& responder() const { return room_receiver_; }
-  user_topology& user_topology() { return user_topology_; }
+  user_topology& user() { return user_topology_; }
 
   void start() { room_receiver_.start(); }
 
@@ -34,7 +34,7 @@ class intranet {
 
   lg::s_logger& logger_;
   room_receiver room_receiver_;
-  class user_topology user_topology_;
+  user_topology user_topology_;
 };
 
 }  // namespace room

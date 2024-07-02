@@ -6,7 +6,7 @@
 #include <mutex>
 #include <string>
 
-#include "room/intranet/message_dispatcher.hpp"
+#include "room/intranet/unicast_message_dispatcher.hpp"
 #include "room/intranet/message_trait.hpp"
 #include "room/room/room_message_handler.hpp"
 #include "rsplib/broker/broker.hpp"
@@ -65,14 +65,14 @@ class user_topology {
 
   template <typename T>
   void on_recv(const T& msg) {
-    logger_.trace() << "on_recv" << typeid(msg).name() << lg::L_endl;
+    logger_.trace() << "on_recv:" << typeid(msg).name() << lg::L_endl;
     message_handler_.handle(msg);
   }
 
  private:
   lg::s_logger& logger_;
   std::mutex m_;
-  message_dispatcher<user_topology> dispatcher_;
+  unicast_message_dispatcher<user_topology> dispatcher_;
   std::map<address, std::shared_ptr<br::broker_interface>> user_servers_;
   room_message_handler message_handler_;
 };
