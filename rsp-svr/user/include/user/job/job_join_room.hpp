@@ -43,6 +43,7 @@ class job_join_room : public job,
     request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
+    request.set_addr(intranet_.me().addr());
 
     intranet_.room().send_request(
         MessageType::kUser2RoomReqJoinRoom, request,

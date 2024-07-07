@@ -43,6 +43,7 @@ class job_create_room : public job,
     // TODO(@nolleh) need to be changed
     request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
+    request.set_addr(intranet_.me().addr());
 
     intranet_.room().send_request(
         MessageType::kUser2RoomReqCreateRoom, request,

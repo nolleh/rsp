@@ -1,10 +1,10 @@
 
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
+#include "rsplib/broker/broker.hpp"
+
 #include <memory>
 #include <string>
-
-#include "rsplib/broker/broker.hpp"
 
 #define ZEROMQ
 
@@ -31,11 +31,11 @@ std::shared_ptr<broker_interface> broker::s_create_publisher(
 
 std::shared_ptr<broker_interface> broker::s_create_subscriber(
     CastType type, const std::string& service_name, const uint8_t context,
-    const std::string& topic) {
+    const std::string& addr, const std::string& topic) {
   std::shared_ptr<broker_interface> sub = nullptr;
 #ifdef ZEROMQ
   sub = zeromq<subscriber>::s_create_subscriber(type, service_name, context,
-                                                topic);
+                                                addr, topic);
 
 #endif
   return sub;

@@ -27,10 +27,12 @@ namespace ba = boost::asio;
 class subscriber : public broker_interface {
  public:
   subscriber(CastType type, const std::string& service_name,
-             const uint8_t context, const std::string& topic)
+             const uint8_t context, const std::string& addr,
+             const std::string& topic)
       : type_(type),
         context_id_(context),
         context_(zmq::context_t(context_id_)),
+        addr_(addr),
         // socket_(create_socket()),
         topics_({topic}) {}
 
@@ -38,6 +40,7 @@ class subscriber : public broker_interface {
       : type_(std::move(r.type_)),
         context_id_(r.context_id_),
         context_(std::move(r.context_)),
+        addr_(std::move(r.addr_)),
         socket_(std::move(r.socket_)),
         topics_(std::move(r.topics_)) {}
 
@@ -53,7 +56,7 @@ class subscriber : public broker_interface {
     io_context_.post([&] {
       stop_ = false;
       auto& logger = rsp::libs::logger::logger();
-      socket_.bind("tcp://*:5558");
+      socket_.bind(addr_);
       // socket_.connect("tcp://localhost:5558");
       logger.info() << "created context(" << &io_context_ << ") socket ("
                     << &socket_ << ")" << rsp::libs::logger::L_endl;
@@ -189,6 +192,7 @@ class subscriber : public broker_interface {
 
   CastType type_;
   uint8_t context_id_;
+  std::string addr_;
   std::set<std::string> topics_;
 
   std::thread th_;

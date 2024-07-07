@@ -11,8 +11,8 @@
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
-#include "proto/user/to_room.pb.h"
 #include "proto/user/to_client.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
@@ -88,9 +88,9 @@ class state_in_room : public base_state {
         std::bind(&state_in_room::handle_res_fwd_room, this,
                   std::placeholders::_1, std::placeholders::_2));
     dispatcher_.register_handler(
-      MessageType::kReqFwdClient,
-      std::bind(&state_in_room::handle_req_fwd_cli, this,
-                std::placeholders::_1, std::placeholders::_2));
+        MessageType::kReqFwdClient,
+        std::bind(&state_in_room::handle_req_fwd_cli, this,
+                  std::placeholders::_1, std::placeholders::_2));
   }
 
  private:

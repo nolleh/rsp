@@ -26,11 +26,11 @@ namespace ba = boost::asio;
 class publisher : public broker_interface {
  public:
   publisher(CastType type, const std::string& service_name,
-            const uint8_t context, const std::string& host)
+            const uint8_t context, const std::string& addr)
       : type_(type),
         context_id_(context),
         context_(zmq::context_t(context_id_)),
-        addr_("tcp://" + host) {
+        addr_(addr) {
     // address_ = generate_address(type, service_name, context);
   }
 
