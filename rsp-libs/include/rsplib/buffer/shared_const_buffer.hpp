@@ -10,7 +10,6 @@
 
 namespace rsp {
 namespace libs {
-namespace buffer {
 // A reference-counted non-modifiable buffer class.
 class shared_const_buffer {
  public:
@@ -35,6 +34,5 @@ class shared_const_buffer {
   std::shared_ptr<std::vector<char>> data_;
   boost::asio::const_buffer buffer_;
 };
-}  // namespace buffer
 }  // namespace libs
 }  // namespace rsp

@@ -75,7 +75,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   // no handle for message type, just send buffer
   void send(const raw_buffer& msg) {
     lg::logger().debug() << "post impl" << lg::L_endl;
-    buffer::shared_const_buffer buffer{msg};
+    shared_const_buffer buffer{msg};
     strand_.post(
         std::bind(&tcp_connection::send_impl, shared_from_this(), buffer));
   }
@@ -153,7 +153,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     socket_.close();
   }
 
-  void send_impl(buffer::shared_const_buffer buffer) {
+  void send_impl(shared_const_buffer buffer) {
     if (!socket_.is_open()) return;
     namespace asio = boost::asio;
     auto handler = asio::bind_executor(
@@ -162,7 +162,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     asio::async_write(socket_, buffer, handler);
   }
 
-  void handle_write(buffer::shared_const_buffer buffer,
+  void handle_write(shared_const_buffer buffer,
                     const boost::system::error_code& error, size_t bytes) {
     if (sent_shutdown_) {
       return;

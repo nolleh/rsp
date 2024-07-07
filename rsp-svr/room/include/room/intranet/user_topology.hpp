@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 
+#include "room/types.hpp"
 #include "room/intranet/unicast_message_dispatcher.hpp"
 #include "room/intranet/message_trait.hpp"
 #include "room/room/room_message_handler.hpp"
@@ -19,7 +20,6 @@ namespace lg = rsp::libs::logger;
 namespace br = rsp::libs::broker;
 namespace msg = rsp::libs::message;
 
-using address = std::string;
 class user_topology {
  public:
   user_topology()
@@ -27,7 +27,7 @@ class user_topology {
         dispatcher_(this),
         message_handler_(room_message_handler()) {}
 
-  void register_server(const address& addr) {
+  void register_server(const Address& addr) {
     {
       std::lock_guard<std::mutex> l{m_};
       auto iter = user_servers_.find(addr);
@@ -42,13 +42,13 @@ class user_topology {
     user_servers_[addr] = svr;
   }
 
-  void unregister_server(const address& addr) {
+  void unregister_server(const Address& addr) {
     std::lock_guard<std::mutex> l{m_};
     user_servers_.erase(addr);
   }
 
   template <typename T>
-  uint8_t send_message(const address& addr, const T& req) {
+  uint8_t send_message(const Address& addr, const T& req) {
     decltype(user_servers_)::const_iterator iter;
 
     {
@@ -73,7 +73,7 @@ class user_topology {
   lg::s_logger& logger_;
   std::mutex m_;
   unicast_message_dispatcher<user_topology> dispatcher_;
-  std::map<address, std::shared_ptr<br::broker_interface>> user_servers_;
+  std::map<Address, std::shared_ptr<br::broker_interface>> user_servers_;
   room_message_handler message_handler_;
 };
 }  // namespace room

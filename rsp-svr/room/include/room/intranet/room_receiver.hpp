@@ -41,6 +41,7 @@ class room_receiver {
     namespace msg = rsp::libs::message;
     auto destructed = msg::serializer::destruct_buffer(buffer);
     dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+    logger_.trace() << "dispatch finished. start recv" << lg::L_endl;
     start_recv();
   }
 

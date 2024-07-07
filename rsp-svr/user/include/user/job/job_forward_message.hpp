@@ -39,7 +39,7 @@ class job_forward_message
     User2RoomReqFwdRoom request;
     // TODO(@nolleh) need to be changed
     request.set_request_id(request_.request_id());
-    request.set_uid(request_.uid());
+    request.set_uid(session_->uid());
     request.set_message(request_.message());
 
     intranet_.room().send_request(

@@ -9,7 +9,6 @@
 
 namespace rsp {
 namespace libs {
-namespace buffer {
 
 // A reference-counted modifiable buffer class.
 class shared_mutable_buffer {
@@ -35,6 +34,5 @@ class shared_mutable_buffer {
   std::shared_ptr<std::vector<char>> data_;
   boost::asio::mutable_buffer buffer_;
 };
-}  // namespace buffer
 }  // namespace libs
 }  // namespace rsp

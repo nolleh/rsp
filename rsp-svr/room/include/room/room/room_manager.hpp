@@ -23,9 +23,10 @@ class room_manager {
     return *room_manager::s_instance;
   }
 
-  std::shared_ptr<room> create_room(const std::string& uid) {
+  std::shared_ptr<room> create_room(const std::string& uid,
+                                    const std::string& addr) {
     RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
-    auto created = std::make_shared<room>(room_id, uid);
+    auto created = std::make_shared<room>(room_id, user{uid, addr});
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
     rooms_[room_id] = created;

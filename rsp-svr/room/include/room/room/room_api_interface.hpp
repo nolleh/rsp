@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "room/room/constant.hpp"
+#include "room/types.hpp"
 namespace rsp {
 namespace room {
 

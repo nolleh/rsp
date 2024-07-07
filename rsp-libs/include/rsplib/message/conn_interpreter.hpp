@@ -26,7 +26,6 @@ class link;
 namespace message {
 
 namespace lg = rsp::libs::logger;
-using shared_mutable_buffer = buffer::shared_mutable_buffer;
 using link = rsp::libs::link::link;
 /** this class instantiated(owned) per connection for buffering
  * no concern about stratgy (patt) for serializer, for now

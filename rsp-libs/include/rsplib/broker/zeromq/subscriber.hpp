@@ -97,6 +97,7 @@ class subscriber : public broker_interface {
       return;
     }
 
+    logger.debug() << "send post" << rsp::libs::logger::L_endl;
     io_context_.post([&, buffer] {
       if (stop_.load()) {
         logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
@@ -125,6 +126,7 @@ class subscriber : public broker_interface {
     }
 
     io_context_.post([&] {
+      logger.debug() << "run recv post logic" << rsp::libs::logger::L_endl;
       if (stop_.load()) {
         logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
         promise_.set_exception(
