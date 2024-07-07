@@ -14,7 +14,7 @@ namespace server {
 
 class worker {
  public:
-  using thread_pool = rsp::libs::thread::thread_pool;
+  using thread_pool = rsp::libs::thread_pool;
   static worker& instance() {
     std::call_once(worker::s_flag,
                    []() { worker::s_instance.reset(new worker()); });

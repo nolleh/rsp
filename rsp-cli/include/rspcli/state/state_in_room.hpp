@@ -12,6 +12,7 @@
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "proto/user/to_room.pb.h"
+#include "proto/user/to_client.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
@@ -40,30 +41,37 @@ class state_in_room : public base_state {
     //
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
+
+    read_with_timeout(socket_, boost::posix_time::seconds(3));
     prompt_ << "possible command \n1) logout 2) read message\n 3) send message";
     std::cout << "> ";
     std::string command;
     std::cin >> command;
 
-    switch (std::stoi(command)) {
-      case 1:
-        send_message(MessageType::kReqLogout, ReqLogout{});
-        break;
-      case 2:
-        std::cout << "read for 3 sec.." << std::endl;
-        read_with_timeout(socket_, boost::posix_time::seconds(3));
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        init();
-        break;
-      case 3:
-        prompt_ << "type message to send";
-        std::cout << "> ";
-        std::string msg;
-        std::cin >> msg;
-        ReqFwdRoom fwd;
-        fwd.set_message(msg);
-        send_message(MessageType::kReqFwdRoom, fwd);
-        break;
+    try {
+      switch (std::stoi(command)) {
+        case 1:
+          send_message(MessageType::kReqLogout, ReqLogout{});
+          break;
+        case 2:
+          std::cout << "read for 3 sec.." << std::endl;
+          read_with_timeout(socket_, boost::posix_time::seconds(3));
+          std::this_thread::sleep_for(std::chrono::seconds(3));
+          init();
+          break;
+        case 3:
+          prompt_ << "type message to send";
+          std::cout << "> ";
+          std::string msg;
+          std::getline(std::cin >> std::ws, msg);
+          ReqFwdRoom fwd;
+          fwd.set_message(msg);
+          send_message(MessageType::kReqFwdRoom, fwd);
+          break;
+      }
+    } catch (std::invalid_argument const& ex) {
+      prompt_ << "your command is incorrect";
+      init();
     }
   }
 
@@ -79,6 +87,10 @@ class state_in_room : public base_state {
         MessageType::kResFwdRoom,
         std::bind(&state_in_room::handle_res_fwd_room, this,
                   std::placeholders::_1, std::placeholders::_2));
+    dispatcher_.register_handler(
+      MessageType::kReqFwdClient,
+      std::bind(&state_in_room::handle_req_fwd_cli, this,
+                std::placeholders::_1, std::placeholders::_2));
   }
 
  private:
@@ -103,6 +115,16 @@ class state_in_room : public base_state {
     }
 
     logger_.debug() << "successfully sent message: " << fwd_room.message()
+                    << lg::L_endl;
+  }
+
+  void handle_req_fwd_cli(buffer_ptr buffer, link*) {
+    ReqFwdClient fwd_client;
+    if (!rsp::libs::message::serializer::deserialize(*buffer, &fwd_client)) {
+      logger_.error() << "failed to fwd room" << lg::L_endl;
+      return;
+    }
+    logger_.debug() << "room sent message: " << fwd_client.message()
                     << lg::L_endl;
   }
 

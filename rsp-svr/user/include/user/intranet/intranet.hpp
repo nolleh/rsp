@@ -22,7 +22,7 @@
 namespace rsp {
 namespace user {
 namespace lg = rsp::libs::logger;
-namespace th = rsp::libs::thread;
+namespace libs = rsp::libs;
 namespace br = rsp::libs::broker;
 namespace ba = boost::asio;
 
@@ -140,7 +140,7 @@ class room_sender {
   }
 
   lg::s_logger& logger_;
-  th::thread_pool threads_;
+  libs::thread_pool threads_;
 
   message_dispatcher<room_sender> dispatcher_;
   std::shared_ptr<br::broker_interface> room_sender_;

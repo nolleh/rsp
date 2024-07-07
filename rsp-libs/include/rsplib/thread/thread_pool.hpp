@@ -14,7 +14,6 @@
 namespace asio = boost::asio;
 namespace rsp {
 namespace libs {
-namespace thread {
 
 namespace log = rsp::libs::logger;
 class thread_pool {
@@ -23,6 +22,10 @@ class thread_pool {
   ~thread_pool() { stop(); }
 
   asio::io_context* io_context() { return &io_context_; }
+
+  size_t size() {
+    return size_;
+  }
 
   void start() {
     if (!thread_pool_) {
@@ -87,6 +90,5 @@ class thread_pool {
   size_t size_;
   std::unique_ptr<boost::asio::detail::thread_group> thread_pool_;
 };
-}  // namespace thread
 }  // namespace libs
 }  // namespace rsp

@@ -6,9 +6,11 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "proto/room/room.pb.h"
 #include "room/room/room.hpp"
+#include "rsplib/thread/thread_pool.hpp"
 #include "rsplib/util/random.hpp"
 
 namespace rsp {
@@ -26,7 +28,9 @@ class room_manager {
   std::shared_ptr<room> create_room(const std::string& uid,
                                     const std::string& addr) {
     RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
-    auto created = std::make_shared<room>(room_id, user{uid, addr});
+    auto created =
+        std::make_shared<room>(room_id, user{uid, addr},
+                               &strands_.at(rooms_.size() % strands_.size()));
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
     rooms_[room_id] = created;
@@ -69,13 +73,20 @@ class room_manager {
   }
 
  private:
-  room_manager() {}
+  room_manager()
+      : workers_(30),
+        strands_{workers_.size() / 10,
+                 ba::io_context::strand(*workers_.io_context())} {}
+
   static std::once_flag s_flag;
   static std::unique_ptr<room_manager> s_instance;
 
   std::mutex m_;
   std::map<RoomId, std::shared_ptr<room>> rooms_;
   std::map<Uid, RoomId> user_rooms_;
+
+  rsp::libs::thread_pool workers_;
+  std::vector<ba::io_context::strand> strands_;
 };
 
 }  // namespace room

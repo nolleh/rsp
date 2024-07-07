@@ -81,8 +81,8 @@ class tcp_server {
     start_accept();
   }
 
-  thread::thread_pool acceptor_threads_;
-  thread::thread_pool io_threads_;
+  thread_pool acceptor_threads_;
+  thread_pool io_threads_;
   tcp::acceptor acceptor_;
   dispatcher* dispatcher_;
   std::set<server_event*> event_subscribers_;

@@ -14,7 +14,6 @@
 #include "rsplib/buffer/buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/types.hpp"
-#include "rsplib/thread/thread_pool.hpp"
 
 namespace rsp {
 namespace room {
@@ -35,21 +34,25 @@ class room : public room_api_inteface,
              public room_message_interface,
              public std::enable_shared_from_this<room> {
  public:
-  room(RoomId room_id, user user)
+  room(RoomId room_id, user user, ba::io_context::strand* strand)
       : room_id_(room_id),
+        owner_(user),
         users_{{user.uid, user}},
-        workers_(3),
-        io_context_(workers_.io_context()),
-        strand_(*io_context_),
-        logger_(lg::logger()) {
+        strand_(strand),
+        logger_(lg::logger()) {}
+
+  ~room() {
+    strand_->post(std::bind(&room::on_destroy_room, shared_from_this()));
   }
 
-  ~room() { on_destroy_room(); }
-
-  void create_room() { on_created_room(room_id_); }
+  void create_room() {
+    strand_->post(
+        std::bind(&room::on_created_room, shared_from_this(), room_id_));
+  }
 
   void join_room(const Uid& uid, const Address& addr) {
-    on_user_enter(uid, addr);
+    strand_->post(
+        std::bind(&room::on_user_enter, shared_from_this(), uid, addr));
   }
 
   RoomId room_id() { return room_id_; }
@@ -68,7 +71,7 @@ class room : public room_api_inteface,
       return false;
     }
 
-    strand_.post(std::bind(&room::send_to_user_impl, shared_from_this(),
+    strand_->post(std::bind(&room::send_to_user_impl, shared_from_this(),
                             std::make_shared<std::vector<user>>(users),
                             rsp::libs::buffer::make_buffer_ptr(msg)));
 
@@ -79,7 +82,7 @@ class room : public room_api_inteface,
     std::vector<user> users;
     std::transform(users_.cbegin(), users_.cend(), std::back_inserter(users),
                    [](const auto& pair) { return pair.second; });
-    strand_.dispatch(std::bind(&room::send_to_user_impl, shared_from_this(),
+    strand_->dispatch(std::bind(&room::send_to_user_impl, shared_from_this(),
                                 std::make_shared<std::vector<user>>(users),
                                 rsp::libs::buffer::make_buffer_ptr(msg)));
   }
@@ -90,6 +93,7 @@ class room : public room_api_inteface,
 
   void on_user_enter(const Uid& uid, const Address& addr) {
     users_.insert({uid, user(uid, addr)});
+    send_to_all_user("uid:(" + uid + ") has entered room");
   }
 
   void on_destroy_room() {}
@@ -97,11 +101,8 @@ class room : public room_api_inteface,
   void on_recv_message(Uid from, const std::string msg) {
     logger_.debug() << "message from user(" << from << "): message: " << msg
                     << lg::L_endl;
-
     // echo
-    strand_.post(std::bind(&room::send_to_all_user, shared_from_this(), msg));
-    logger_.debug() << "strand post done" << msg
-                    << lg::L_endl;
+    strand_->post(std::bind(&room::send_to_all_user, shared_from_this(), msg));
   }
 
   void on_kicked_out_user(Uid uid, KickOutReason reason) {}
@@ -113,10 +114,9 @@ class room : public room_api_inteface,
   }
 
   RoomId room_id_;
+  user owner_;
   std::map<Uid, user> users_;
-  rsp::libs::thread::thread_pool workers_;
-  ba::io_context* io_context_;
-  ba::io_context::strand strand_;
+  ba::io_context::strand* strand_;
   lg::s_logger& logger_;
 };
 
