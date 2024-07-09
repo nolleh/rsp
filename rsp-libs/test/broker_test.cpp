@@ -102,7 +102,7 @@ TEST(Broker, PubSub) {
 TEST(Broker, RepInitSendThrowError) {
   namespace br = rsp::libs::broker;
   auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
-                                             "tcp://*.5558", "topic");
+                                             "tcp://*:5558", "topic");
   EXPECT_TRUE(nullptr != rep);
   rep->start();
   // wait few sec for bind finished
