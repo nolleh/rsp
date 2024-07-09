@@ -10,7 +10,7 @@ TEST(Broker, CreateAnyCastPublisher) {
   namespace br = rsp::libs::broker;
 
   auto pub = br::broker::s_create_publisher(CastType::kAnyCast, "test", 1,
-                                            "127.0.0.1:5558");
+                                            "tcp://127.0.0.1:5558");
   EXPECT_TRUE(pub != nullptr);
   // auto address = pub->get_addr();
   // auto prefix = address.substr(0, 6);
@@ -22,7 +22,7 @@ TEST(Broker, CreateUniCastPublisher) {
   namespace br = rsp::libs::broker;
 
   auto pub = br::broker::s_create_publisher(CastType::kUniCast, "test", 1,
-                                            "127.0.0.1:5558");
+                                            "tcp://127.0.0.1:5558");
   EXPECT_TRUE(pub != nullptr);
   //   auto address = pub->get_addr();
   //   auto prefix = address.substr(0, 6);
@@ -34,7 +34,7 @@ TEST(Broker, CreateBroadCastPublisher) {
   namespace br = rsp::libs::broker;
 
   auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1,
-                                            "127.0.0.1:5558");
+                                            "tcp://127.0.0.1:5558");
   EXPECT_TRUE(pub != nullptr);
   //   auto address = pub->get_addr();
   //   auto prefix = address.substr(0, 6);
@@ -45,8 +45,8 @@ TEST(Broker, CreateBroadCastPublisher) {
 TEST(Broker, CreateAnyCastSubscriber) {
   namespace br = rsp::libs::broker;
 
-  auto pub =
-      br::broker::s_create_subscriber(CastType::kAnyCast, "test", 1, "topic");
+  auto pub = br::broker::s_create_subscriber(CastType::kAnyCast, "test", 1,
+                                             "tcp://*.5558", "topic");
   EXPECT_TRUE(pub != nullptr);
   // auto address = pub->get_addr();
   // auto prefix = address.substr(0, 6);
@@ -57,8 +57,8 @@ TEST(Broker, CreateAnyCastSubscriber) {
 TEST(Broker, CreateUniCastSubscriber) {
   namespace br = rsp::libs::broker;
 
-  auto pub =
-      br::broker::s_create_subscriber(CastType::kUniCast, "test", 1, "topic");
+  auto pub = br::broker::s_create_subscriber(CastType::kUniCast, "test", 1,
+                                             "tcp://*.5558", "topic");
   EXPECT_TRUE(pub != nullptr);
   //   auto address = pub->get_addr();
   //   auto prefix = address.substr(0, 6);
@@ -69,20 +69,20 @@ TEST(Broker, CreateUniCastSubscriber) {
 TEST(Broker, CreateBroadCastSubscriber) {
   namespace br = rsp::libs::broker;
 
-  auto pub =
-      br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1, "topic");
-  EXPECT_TRUE(pub != nullptr);
-  pub->stop();
+  auto sub = br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1,
+                                             "tcp://*.5558", "topic");
+  EXPECT_TRUE(sub != nullptr);
+  sub->stop();
 }
 
 TEST(Broker, PubSub) {
   namespace br = rsp::libs::broker;
   auto pub = br::broker::s_create_publisher(CastType::kBroadCast, "test", 1,
-                                            "127.0.0.1:5558");
+                                            "tcp://127.0.0.1:5558");
   EXPECT_TRUE(nullptr != pub);
 
-  auto sub =
-      br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1, "topic");
+  auto sub = br::broker::s_create_subscriber(CastType::kBroadCast, "test", 1,
+                                             "tcp://*:5558", "topic");
   EXPECT_TRUE(nullptr != sub);
 
   pub->start();
@@ -102,7 +102,7 @@ TEST(Broker, PubSub) {
 TEST(Broker, RepInitSendThrowError) {
   namespace br = rsp::libs::broker;
   auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
-                                             "topic");
+                                             "tcp://*.5558", "topic");
   EXPECT_TRUE(nullptr != rep);
   rep->start();
   // wait few sec for bind finished
@@ -116,10 +116,10 @@ TEST(Broker, RepInitSendThrowError) {
 TEST(Broker, ReqRep) {
   namespace br = rsp::libs::broker;
   auto req = br::broker::s_create_publisher(CastType::kUniCast, "test", 1,
-                                            "127.0.0.1:5558");
+                                            "tcp://127.0.0.1:5558");
   EXPECT_TRUE(nullptr != req);
   auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
-                                             "topic");
+                                             "tcp://*:5558", "topic");
   EXPECT_TRUE(nullptr != rep);
 
   req->start();
