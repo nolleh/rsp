@@ -9,7 +9,9 @@ namespace room {
 
 void room_message_handler::register_user_server(
     const User2RoomReqCreateRoom& msg) {
-  intranet::instance().user().register_server(msg.addr());
+  // TODO(@nolleh) this!
+  // intranet::instance();
+  // intranet::instance().user().register_server(msg.addr());
 }
 void room_message_handler::register_user_server(
     const User2RoomReqJoinRoom& msg) {

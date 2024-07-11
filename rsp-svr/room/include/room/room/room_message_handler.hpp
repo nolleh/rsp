@@ -30,7 +30,7 @@ class room_message_handler {
                     << lg::L_endl;
 
     // TODO(@nolleh) do not initialize here. let's make glob. pubsub
-    // register_user_server(create_room);
+    register_user_server(create_room);
 
     auto room =
         room_manager_.create_room(create_room.uid(), create_room.addr());

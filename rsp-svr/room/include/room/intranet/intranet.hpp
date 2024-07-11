@@ -21,7 +21,7 @@ class intranet {
 
   // TODO(@nolleh) check
   const room_receiver& responder() const { return room_receiver_; }
-  user_topology& user() { return user_topology_; }
+  const user_topology& user() const { return user_topology_; }
 
   void start() { room_receiver_.start(); }
 
