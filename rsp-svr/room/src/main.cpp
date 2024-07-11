@@ -14,7 +14,7 @@ int main() {
   auto& logger = lg::logger(lg::log_level::kTrace);
 
   logger.info() << "started room server" << lg::L_endl;
-  rsp::room::intranet intranet;
+  auto& intranet = rsp::room::intranet::instance();
   intranet.start();
 
   logger.info() << "room server stopped.." << lg::L_endl;

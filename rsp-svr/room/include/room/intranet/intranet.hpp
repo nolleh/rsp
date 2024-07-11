@@ -16,8 +16,6 @@ using link = rsp::libs::link::link;
 class intranet {
  public:
   static intranet& instance();
-  intranet()
-      : logger_(lg::logger()), room_receiver_(), user_topology_() {}
 
   // TODO(@nolleh) check
   const room_receiver& responder() const { return room_receiver_; }
@@ -28,6 +26,8 @@ class intranet {
  private:
   static std::once_flag s_flag;
   static std::unique_ptr<intranet> s_instance;
+  intranet()
+      : logger_(lg::logger()), room_receiver_(), user_topology_() {}
 
   intranet(const intranet&) = delete;
   intranet& operator=(const intranet&) = delete;
