@@ -11,6 +11,7 @@
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "user/session/session.hpp"
+#include "user/session/session_manager.hpp"
 
 namespace rsp {
 namespace user {
@@ -35,6 +36,7 @@ class job_login : public job {
     // session_ = std::dynamic_pointer_cast<session>(link);
     send_res_login(request_.uid(), session_);
     session_->set_user(request_.uid());
+    session::session_manager::instance().add_session(session_);
   }
 
   void send_res_login(std::string uid, const session_ptr& session) const {

@@ -8,6 +8,7 @@
 #include "proto/common/ping.pb.h"
 #include "proto/user/login.pb.h"
 #include "proto/user/to_room.pb.h"
+#include "proto/room/room.pb.h"
 #include "rsplib/job/job_scheduler.hpp"
 #include "rsplib/link/link.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -95,9 +96,9 @@ class session : public link, public std::enable_shared_from_this<session> {
   void set_user(const std::string& uid) { uid_ = uid; }
   void set_enter_room(uint32_t room_id) { room_id_ = room_id; }
 
-  std::string uid() { return uid_; }
+  std::string uid() const { return uid_; }
 
-  uint16_t room_id() { return room_id_; }
+  uint16_t room_id() const { return room_id_; }
 
  private:
   void enqueue_job(libs::job::job_ptr job) {
@@ -169,6 +170,9 @@ void session::on_recv(ReqJoinRoom& msg);
 
 template <>
 void session::on_recv(ReqFwdRoom& msg);
+
+template <>
+void session::on_recv(User2RoomReqFwdClient& msg);
 
 }  // namespace session
 }  // namespace user

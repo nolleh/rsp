@@ -14,7 +14,6 @@
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
-#include "user/job/job_login.hpp"
 #include "user/session/session.hpp"
 
 namespace rsp {

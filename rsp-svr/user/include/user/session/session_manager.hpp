@@ -30,9 +30,17 @@ class session_manager {
     return *session_manager::s_instance;
   }
 
-  void add_session(const session& session) { add_session(session.conn_ptr()); }
+  void add_session(const session_ptr& s_ptr) {
+    sessions_[s_ptr->conn_ptr()] = s_ptr;
+    uid_sessions_[s_ptr->uid()] = s_ptr;
+  }
 
   void add_session(const server::connection_ptr& conn) {
+    auto iter = sessions_.find(conn);
+    if (sessions_.end() != iter) {
+      return;
+    }
+
     const auto s = std::make_shared<session>(conn);
     s->start();
     sessions_[conn] = s;
@@ -46,12 +54,22 @@ class session_manager {
     sessions_.erase(conn);
   }
 
+  std::shared_ptr<session> find_session(const std::string& uid) {
+    auto iter = uid_sessions_.find(uid);
+    if (uid_sessions_.end() != iter) {
+      return nullptr;
+    }
+
+    return iter->second;
+  }
+
  private:
   session_manager() {}
   static std::once_flag s_flag;
   static std::unique_ptr<session_manager> s_instance;
 
-  std::map<server::connection_ptr, std::shared_ptr<session>> sessions_;
+  std::map<server::connection_ptr, session_ptr> sessions_;
+  std::map<std::string, session_ptr> uid_sessions_;
 };
 
 }  // namespace session
