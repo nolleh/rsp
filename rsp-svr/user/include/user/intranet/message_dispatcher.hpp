@@ -40,7 +40,7 @@ class message_dispatcher : public dispatcher_interface {
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResFwdRoom,
                 handle_buffer<User2RoomResFwdRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdClient,
-                handle_buffer_to_session<User2RoomReqFwdClient>);
+                handle_buffer<User2RoomReqFwdClient>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }
@@ -60,26 +60,6 @@ class message_dispatcher : public dispatcher_interface {
     T t;
     libs::message::serializer::deserialize(*buffer, &t);
     handler_->on_recv(t);
-  }
-
-  template <typename T>
-  void handle_buffer_to_session(buffer_ptr buffer, link* l) {
-    T t;
-    pass_to_session(buffer, &t, l);
-  }
-
-  template <typename Message>
-  void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
-    auto success = libs::message::serializer::deserialize(*buffer, message);
-    if (!success) {
-      auto& logger = lg::logger();
-      logger.error() << "something wrong. failed to parse login message"
-                     << lg::L_endl;
-      return;
-    }
-
-    auto s = session::session_manager::instance().find_session(message->uid());
-    s->on_recv(*message);
   }
 
  private:
