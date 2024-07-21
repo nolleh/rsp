@@ -29,26 +29,44 @@ message User2RoomResJoinRoom {
 
 message User2RoomReqFwdRoom {
   uint64 request_id = 1;
-  string uid = 2;
-  string message = 3;
+  uint64 room_id = 2;
+  // used to validate
+  string uid = 3;
+  string message = 4;
 }
 
 message User2RoomResFwdRoom {
   uint64 request_id = 1;
-  string uid = 2;
-  string message = 3;
-  bool success = 4;
+  uint64 room_id = 2;
+  // used to validate
+  string uid = 3;
+  string message = 4;
+  bool success = 5;
+}
+
+/** used when fwd client */
+enum SenderType {
+  kContent = 0;
+  kUser = 1;
 }
 
 message User2RoomReqFwdClient {
   uint64 request_id = 1;
-  string uid = 2;
-  string message = 3;
+  SenderType sender_type = 2;
+  // only useful when sender type is user
+  string sender_uid = 3;
+  // specify recipient
+  string uid = 4;
+  string message = 5;
 }
 
 message User2RoomResFwdClient {
   uint64 request_id = 1;
-  string uid = 2;
-  string message = 3;
-  bool success = 4;
+  SenderType sender_type = 2;
+  // only useful when sender type is user
+  string sender_uid = 3;
+  // specify recipient
+  string uid = 4;
+  string message = 5;
+  bool success = 6;
 }

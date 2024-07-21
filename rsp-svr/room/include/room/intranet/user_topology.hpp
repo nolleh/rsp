@@ -66,7 +66,7 @@ class user_topology {
   }
 
   template <typename T>
-  uint8_t send_message(const Address& addr, const T& req) {
+  uint8_t send_message(const Address& addr, const T& req) const {
     decltype(user_servers_)::const_iterator iter;
 
     {
@@ -78,7 +78,8 @@ class user_topology {
     }
 
     auto buffer = msg::serializer::serialize(message_trait<T>::type, req);
-    return iter->second->send("topic", buffer);
+    iter->second->send("topic", buffer);
+    return buffer.size();
   }
 
   template <typename T>
