@@ -68,6 +68,10 @@ class message_dispatcher : public dispatcher_interface {
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
     T t;
+    auto& logger = lg::logger();
+    logger.debug() << "session message dispather, dispatched. deserialize and "
+                      "invoke handler, type:"
+                   << typeid(t).name() << lg::L_endl;
     pass_to_session(buffer, &t, l);
   }
 
@@ -88,6 +92,8 @@ class message_dispatcher : public dispatcher_interface {
  private:
   lib_dispatcher& dispatcher_;
 };
+
+#undef REG_HANDLER
 }  // namespace message
 }  // namespace user
 }  // namespace rsp

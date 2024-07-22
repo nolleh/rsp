@@ -25,6 +25,11 @@ class room_manager {
     return *room_manager::s_instance;
   }
 
+  ~room_manager() {
+    workers_.stop();
+  }
+
+
   std::shared_ptr<room> create_room(const std::string& uid,
                                     const std::string& addr) {
     RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
@@ -76,7 +81,9 @@ class room_manager {
   room_manager()
       : workers_(30),
         strands_{workers_.size() / 10,
-                 ba::io_context::strand(*workers_.io_context())} {}
+                 ba::io_context::strand(*workers_.io_context())} {
+    workers_.start();
+  }
 
   static std::once_flag s_flag;
   static std::unique_ptr<room_manager> s_instance;

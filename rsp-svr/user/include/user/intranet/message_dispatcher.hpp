@@ -1,6 +1,7 @@
-
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 #pragma once
+
+#include <typeinfo>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/common/ping.pb.h"
@@ -26,13 +27,15 @@ using link = rsp::libs::link::link;
   dispatcher.register_handler(                 \
       type, std::bind(&message_dispatcher::handler, this, ph::_1, ph::_2))
 
+
 template <typename Handler>
 class message_dispatcher : public dispatcher_interface {
  public:
   explicit message_dispatcher(Handler* handler)
       : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
-    REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
-    REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
+    // TODO(@nolleh)
+    // REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
+    // REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResCreateRoom,
                 handle_buffer<User2RoomResCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResJoinRoom,
@@ -57,7 +60,10 @@ class message_dispatcher : public dispatcher_interface {
 
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
+    auto& logger = lg::logger();
     T t;
+    logger.debug() << "dispatched. deserialize and invoke handler, type:"
+                   << typeid(t).name() << lg::L_endl;
     libs::message::serializer::deserialize(*buffer, &t);
     handler_->on_recv(t);
   }
@@ -66,6 +72,8 @@ class message_dispatcher : public dispatcher_interface {
   Handler* handler_;
   lib_dispatcher& dispatcher_;
 };
+
+#undef REG_HANDLER
 
 }  // namespace user
 }  // namespace rsp

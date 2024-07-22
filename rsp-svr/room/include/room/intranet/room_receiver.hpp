@@ -39,6 +39,10 @@ class room_receiver {
     start_recv();
   }
 
+  void stop() {
+    threads_.stop();
+  }
+
   void start_recv() {
     auto buffer = room_receiver_->recv("topic").get();
 

@@ -73,6 +73,7 @@ class room : public room_api_inteface,
   }
 
   void send_to_all_user(const user& sender, const std::string& msg) {
+    logger_.trace() << "send_to_all user pop" << lg::L_endl;
     return send_to_all_user(SenderType::kUser, std::make_shared<user>(sender),
                             msg);
   }
@@ -139,6 +140,8 @@ class room : public room_api_inteface,
     std::vector<user> users;
     std::transform(users_.cbegin(), users_.cend(), std::back_inserter(users),
                    [](const auto& pair) { return pair.second; });
+    logger_.debug() << "send_to_all_user, # of users: " << users.size()
+                    << lg::L_endl;
     strand_->dispatch(std::bind(&room::send_to_user_impl, shared_from_this(),
                                 sender_type, sender,
                                 std::make_shared<std::vector<user>>(users),

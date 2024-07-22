@@ -31,6 +31,7 @@ class user_receiver {
   }
 
   void start() {
+    // threads_.start();
     subscriber_->start();
 
     // hum......
@@ -42,7 +43,10 @@ class user_receiver {
         ba::detached);
   }
 
-  void stop() { subscriber_->stop(); }
+  void stop() {
+    subscriber_->stop();
+    threads_.stop();
+  }
 
   template <typename T>
   void on_recv(const T& t) {
