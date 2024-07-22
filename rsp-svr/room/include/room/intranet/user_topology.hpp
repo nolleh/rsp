@@ -79,6 +79,8 @@ class user_topology {
 
     auto buffer = msg::serializer::serialize(message_trait<T>::type, req);
     iter->second->send("topic", buffer);
+    logger_.debug() << "send message to user unicast(" << addr << ")"
+                    << lg::L_endl;
     return buffer.size();
   }
 

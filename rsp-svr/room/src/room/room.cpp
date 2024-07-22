@@ -23,6 +23,7 @@ void room::send_to_user_impl(const SenderType& sender_type,
 
   std::for_each(users->cbegin(), users->cend(),
                 [&user_servers, &msg](const auto& user) {
+                  msg.set_uid(user.uid);
                   user_servers.send_message(user.addr, msg);
                 });
 }

@@ -22,8 +22,15 @@ class intranet {
  public:
   static intranet& instance();
 
-  void start() { room_sender_.start(); }
-  void stop() { room_sender_.stop(); }
+  void start() {
+    user_receiver_.start();
+    room_sender_.start();
+  }
+
+  void stop() {
+    user_receiver_.stop();
+    room_sender_.stop();
+  }
 
   user_receiver& me() const { return user_receiver_; }
   room_sender& room() const { return room_sender_; }
@@ -36,6 +43,7 @@ class intranet {
   static std::unique_ptr<intranet> s_instance;
 
   intranet() : logger_(lg::logger()) {}
+
   lg::s_logger& logger_;
   mutable user_receiver user_receiver_;
   mutable room_sender room_sender_;

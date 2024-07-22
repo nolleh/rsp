@@ -29,7 +29,6 @@ struct user {
 
   const Uid uid;
   const Address addr;
-  // TODO(@nolleh) user server information
 };
 
 class room : public room_api_inteface,

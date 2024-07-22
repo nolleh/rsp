@@ -16,12 +16,14 @@ namespace room {
 
 namespace lg = rsp::libs::logger;
 namespace br = rsp::libs::broker;
+namespace ba = boost::asio;
 
 class intranet;
 class room_receiver {
  public:
   room_receiver()
       : logger_(lg::logger()),
+        threads_(1),
         dispatcher_(this),
         message_handler_(room_message_handler()) {
     room_receiver_ = br::broker::s_create_subscriber(
@@ -32,6 +34,8 @@ class room_receiver {
     room_receiver_->start();
     // logger_.info() << "waiting message is ready" << lg::L_endl;
     // sleep(3);
+
+    // TODO(@nolleh) return start and give a work
     start_recv();
   }
 
@@ -67,6 +71,7 @@ class room_receiver {
   }
 
   lg::s_logger& logger_;
+  libs::thread_pool threads_;
   intranet* intranet_;
   message_dispatcher<room_receiver> dispatcher_;
   std::shared_ptr<br::broker_interface> room_receiver_;
