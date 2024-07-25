@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+#include <typeinfo>
 
 #include <boost/asio.hpp>
 
@@ -31,7 +32,7 @@ class user_receiver {
   }
 
   void start() {
-    // threads_.start();
+    threads_.start();
     subscriber_->start();
 
     // hum......
@@ -48,22 +49,29 @@ class user_receiver {
     threads_.stop();
   }
 
+  void on_recv(const Ping& ping) {
+    logger_.debug() << "received ping" << lg::L_endl;
+  }
+  void on_recv(const Pong& pong) {
+    logger_.debug() << "received pong" << lg::L_endl;
+  }
+
   template <typename T>
   void on_recv(const T& t) {
-    logger_.debug() << "on recv on user listening intranet receiver"
-                    << lg::L_endl;
+    logger_.debug() << "on recv on user listening intranet receiver, type:"
+                    << typeid(t).name() << lg::L_endl;
     pass_to_session(t);
   }
 
  private:
   ba::awaitable<void> start_recv() {
     auto buffer = subscriber_->recv("topic").get();
-    logger_.trace() << "got message from intranet" << lg::L_endl;
 
     namespace msg = rsp::libs::message;
     auto destructed = msg::serializer::destruct_buffer(buffer);
     dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    logger_.trace() << "dispatch finished. start recv" << lg::L_endl;
+    logger_.trace() << "dispatch finished. destructed type:" << destructed.type
+                    << ", start recv" << lg::L_endl;
     co_return;
   }
 
@@ -83,10 +91,10 @@ class user_receiver {
   std::shared_ptr<br::broker_interface> subscriber_;
 };
 
-template <>
-inline void user_receiver::on_recv(const Ping&) {}
-
-template <>
-inline void user_receiver::on_recv(const Pong&) {}
+// template <>
+// inline void user_receiver::on_recv(const Ping&) {}
+//
+// template <>
+// inline void user_receiver::on_recv(const Pong&) {}
 }  // namespace user
 }  // namespace rsp

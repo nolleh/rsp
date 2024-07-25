@@ -34,8 +34,8 @@ class message_dispatcher : public dispatcher_interface {
   explicit message_dispatcher(Handler* handler)
       : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
     // TODO(@nolleh)
-    // REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
-    // REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
+    REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
+    REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResCreateRoom,
                 handle_buffer<User2RoomResCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResJoinRoom,
@@ -48,6 +48,7 @@ class message_dispatcher : public dispatcher_interface {
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }
 
+#undef REG_HANDLER
   void dispatch(MessageType type, const raw_buffer& buffer,
                 link* link) override {
     dispatcher_.dispatch(type, buffer, link);
@@ -72,8 +73,6 @@ class message_dispatcher : public dispatcher_interface {
   Handler* handler_;
   lib_dispatcher& dispatcher_;
 };
-
-#undef REG_HANDLER
 
 }  // namespace user
 }  // namespace rsp

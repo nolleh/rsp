@@ -23,8 +23,8 @@ class intranet {
   static intranet& instance();
 
   void start() {
-    user_receiver_.start();
     room_sender_.start();
+    user_receiver_.start();
   }
 
   void stop() {

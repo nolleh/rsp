@@ -53,7 +53,7 @@ class job_forward_message
     lg::logger().trace() << "handle_res_fwd_room: success:"
                          << room_response->success() << lg::L_endl;
 
-    ResCreateRoom response;
+    ResFwdRoom response;
     response.set_request_id(room_response->request_id());
     response.set_success(room_response->success());
 

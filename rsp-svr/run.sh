@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
+set -e
 
-if [ "$1" == "--bg" ]; then BG=True; else BG=False; fi
+source opts.sh
+
+opts "$@"
 
 # ORIGIN_WS="$PWD"
 
-if [ "$BG" == "True" ]; then
-	# for filename retrieve, actually move the directory
-	#  cd ../build/rsp-svr/user || exit
-	# ./User &
-	../build/rsp-svr/user/User &
-	../build/rsp-svr/room/Room &
+if [ "$BG" == "true" ]; then
+  # for filename retrieve, actually move the directory
+  #  cd ../build/rsp-svr/user || exit
+  # ./User &
+  if [ "$USER" == "true" ]; then
+    ../build/rsp-svr/user/User &
+  fi
+
+  if [ "$ROOM" == "true" ]; then
+    ../build/rsp-svr/room/Room &
+  fi
 else
-	../build/rsp-svr/user/User
-	../build/rsp-svr/room/Room
+  if [ "$USER" == "true" ]; then
+    ../build/rsp-svr/user/User
+  fi
+
+  if [ "$ROOM" == "true" ]; then
+    ../build/rsp-svr/room/Room
+  fi
 fi
 
 # cd "$ORIGIN_WS"

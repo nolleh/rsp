@@ -24,3 +24,5 @@ MESSAGE_TRAIT(User2RoomReqJoinRoom, MessageType::kUser2RoomReqJoinRoom,
               MessageType::kUser2RoomResJoinRoom);
 MESSAGE_TRAIT(User2RoomReqFwdRoom, MessageType::kUser2RoomReqFwdRoom,
               MessageType::kUser2RoomResFwdRoom);
+MESSAGE_TRAIT(User2RoomReqFwdClient, MessageType::kUser2RoomReqFwdClient,
+              MessageType::kUser2RoomResFwdClient);
