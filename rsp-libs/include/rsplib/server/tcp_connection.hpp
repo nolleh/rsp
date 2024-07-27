@@ -74,7 +74,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   // no handle for message type, just send buffer
   void send(const raw_buffer& msg) {
-    lg::logger().debug() << "post impl" << lg::L_endl;
+    lg::logger().debug() << "send post impl" << lg::L_endl;
     shared_const_buffer buffer{msg};
     strand_.post(
         std::bind(&tcp_connection::send_impl, shared_from_this(), buffer));

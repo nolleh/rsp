@@ -21,17 +21,22 @@ using link = rsp::libs::link::link;
 
 #define REG_HANDLER(dispatcher, type, handler) \
   dispatcher.register_handler(                 \
-      type, std::bind(&message_dispatcher::handler, this, ph::_1, ph::_2))
+      type,                                    \
+      std::bind(&unicast_message_dispatcher::handler, this, ph::_1, ph::_2))
 
+template <typename Handler>
 class unicast_message_dispatcher : public dispatcher_interface {
  public:
-  unicast_message_dispatcher() : dispatcher_(lib_dispatcher::instance()) {
+  explicit unicast_message_dispatcher(Handler* handler)
+      : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
     // REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
     // REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
-    // dispatcher_.register_unknown_message_handler(
-    //     std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdClient,
+                handle_buffer<User2RoomReqFwdClient>);
+    dispatcher_.register_unknown_message_handler(
+        std::bind(&unicast_message_dispatcher::handle_unknown, this, ph::_1));
   }
-
+#undef REG_HANDLER
   void dispatch(MessageType type, const raw_buffer& buffer,
                 link* link) override {
     dispatcher_.dispatch(type, buffer, link);
@@ -49,25 +54,16 @@ class unicast_message_dispatcher : public dispatcher_interface {
   // let's consider after development was got some where.
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
+    auto& logger = lg::logger();
     T t;
-    pass_to_session(buffer, &t, l);
-  }
-
-  template <typename Message>
-  void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
-    auto success = libs::message::serializer::deserialize(*buffer, message);
-    if (!success) {
-      auto& logger = lg::logger();
-      logger.error() << "something wrong. failed to parse login message"
-                     << lg::L_endl;
-      return;
-    }
-
-    auto session = dynamic_cast<session::session*>(l);
-    session->on_recv(*message);
+    logger.debug() << "dispatched. deserialize and invoke handler, type:"
+                   << typeid(t).name() << lg::L_endl;
+    libs::message::serializer::deserialize(*buffer, &t);
+    handler_->on_recv(t);
   }
 
  private:
+  Handler* handler_;
   lib_dispatcher& dispatcher_;
 };
 

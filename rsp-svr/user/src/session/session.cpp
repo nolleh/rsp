@@ -74,7 +74,7 @@ void session::on_recv(ReqFwdRoom& request) {
 }
 
 template <>
-void session::on_recv(User2RoomReqFwdClient& request) {
+void session::on_recv(const User2RoomReqFwdClient& request) {
   last_received_ = std::time(nullptr);
   namespace job = rsp::user::job;
   auto runner = std::make_shared<job::job_cli_forward_message>(

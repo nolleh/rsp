@@ -56,7 +56,7 @@ class session_manager {
 
   std::shared_ptr<session> find_session(const std::string& uid) {
     auto iter = uid_sessions_.find(uid);
-    if (uid_sessions_.end() != iter) {
+    if (uid_sessions_.end() == iter) {
       return nullptr;
     }
 

@@ -8,9 +8,9 @@
 
 #include "rsplib/broker/broker.hpp"
 #include "rsplib/logger/logger.hpp"
-#include "user/intranet/message_dispatcher.hpp"
 #include "user/intranet/types.hpp"
-#include "user/session/session.hpp"
+#include "user/intranet/unicast_message_dispatcher.hpp"
+#include "user/session/session_manager.hpp"
 
 namespace rsp {
 namespace user {
@@ -79,6 +79,8 @@ class user_receiver {
   void pass_to_session(const Message& message) {
     auto s = session::session_manager::instance().find_session(message.uid());
     if (nullptr == s) {
+      logger_.debug() << "failed to find out session for uid(" << message.uid()
+                      << ")" << lg::L_endl;
       return;
     }
     s->on_recv(message);
@@ -87,7 +89,7 @@ class user_receiver {
   lg::s_logger& logger_;
   libs::thread_pool threads_;
 
-  message_dispatcher<user_receiver> dispatcher_;
+  unicast_message_dispatcher<user_receiver> dispatcher_;
   std::shared_ptr<br::broker_interface> subscriber_;
 };
 

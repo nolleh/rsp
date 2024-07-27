@@ -172,7 +172,7 @@ template <>
 void session::on_recv(ReqFwdRoom& msg);
 
 template <>
-void session::on_recv(User2RoomReqFwdClient& msg);
+void session::on_recv(const User2RoomReqFwdClient& msg);
 
 }  // namespace session
 }  // namespace user
