@@ -54,9 +54,10 @@ class state_in_room : public base_state {
           send_message(MessageType::kReqLogout, ReqLogout{});
           break;
         case 2:
-          std::cout << "read for 3 sec.." << std::endl;
-          read_with_timeout(socket_, boost::posix_time::seconds(3));
-          std::this_thread::sleep_for(std::chrono::seconds(3));
+          std::cout << "read message.." << std::endl;
+          // read_with_timeout(socket_, boost::posix_time::seconds(3));
+          read_message();
+          std::this_thread::sleep_for(std::chrono::seconds(1));
           init();
           break;
         case 3:
@@ -124,8 +125,9 @@ class state_in_room : public base_state {
       logger_.error() << "failed to fwd room" << lg::L_endl;
       return;
     }
-    logger_.debug() << "room sent message: " << fwd_client.message()
-                    << lg::L_endl;
+    auto message = "room sent message: " + fwd_client.message();
+    std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m"
+              << std::endl;
   }
 
   template <typename T>
@@ -139,6 +141,16 @@ class state_in_room : public base_state {
       close();
       next_ = State::kExit;
     }
+  }
+
+  void read_message() {
+    std::array<char, 128> buf;
+    boost::system::error_code error;
+    auto len = socket_->read_some(boost::asio::buffer(buf), error);
+    if (error) {
+      throw boost::system::system_error(error);
+    }
+    handle_buffer(buf, len);
   }
 };
 

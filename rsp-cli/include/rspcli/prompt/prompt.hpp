@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <cstring>
 
 namespace rsp {
 namespace cli {
@@ -24,7 +25,7 @@ class prompt {
   explicit prompt(State* state) : state_(state) {}
 
   template <typename T>
-  prompt& operator<<(T& value) {
+  prompt& operator<<(const T& value) {
     const int kWidth = 50;
     std::cout << "\x1b[" << color::kMagenta << "m" << std::setw(kWidth)
               << std::setfill('=') << std::endl;
@@ -33,7 +34,7 @@ class prompt {
 
     std::cout << "\x1b[0m" << std::endl;
 
-    std::cout << std::setw(kWidth - strlen(value)) << std::setfill(' ')
+    std::cout << std::setw(kWidth - std::strlen(value)) << std::setfill(' ')
               << value;
 
     std::cout << "\x1b[" << color::kMagenta << "m";

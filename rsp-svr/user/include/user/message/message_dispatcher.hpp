@@ -72,21 +72,20 @@ class message_dispatcher : public dispatcher_interface {
     logger.debug() << "session message dispather, dispatched. deserialize and "
                       "invoke handler, type:"
                    << typeid(t).name() << lg::L_endl;
-    pass_to_session(buffer, &t, l);
-  }
-
-  template <typename Message>
-  void pass_to_session(buffer_ptr buffer, Message* message, link* l) {
-    auto success = libs::message::serializer::deserialize(*buffer, message);
+    auto success = libs::message::serializer::deserialize(*buffer, &t);
     if (!success) {
       auto& logger = lg::logger();
       logger.error() << "something wrong. failed to parse login message"
                      << lg::L_endl;
       return;
     }
+    pass_to_session(t, l);
+  }
 
+  template <typename Message>
+  void pass_to_session(const Message& message, link* l) const {
     auto session = dynamic_cast<session::session*>(l);
-    session->on_recv(*message);
+    session->on_recv(message);
   }
 
  private:

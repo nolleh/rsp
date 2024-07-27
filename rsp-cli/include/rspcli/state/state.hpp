@@ -135,6 +135,8 @@ class base_state {
         *s, boost::asio::buffer(*ptr),
         [this, ptr, &timer](const boost::system::error_code& error,
                             size_t size) {
+          logger_.info() << "async read: " << error << ", size:" << size
+                         << lg::L_endl;
           timer.cancel();
           handle_buffer(*ptr, size);
         });

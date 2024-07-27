@@ -154,22 +154,22 @@ class session : public link, public std::enable_shared_from_this<session> {
 };
 
 template <>
-void session::on_recv(Ping& msg);
+void session::on_recv(const Ping& msg);
 
 template <>
-void session::on_recv(ReqLogin& msg);
+void session::on_recv(const ReqLogin& msg);
 
 template <>
-void session::on_recv(ReqLogout& msg);
+void session::on_recv(const ReqLogout& msg);
 
 template <>
-void session::on_recv(ReqCreateRoom& msg);
+void session::on_recv(const ReqCreateRoom& msg);
 
 template <>
-void session::on_recv(ReqJoinRoom& msg);
+void session::on_recv(const ReqJoinRoom& msg);
 
 template <>
-void session::on_recv(ReqFwdRoom& msg);
+void session::on_recv(const ReqFwdRoom& msg);
 
 template <>
 void session::on_recv(const User2RoomReqFwdClient& msg);
