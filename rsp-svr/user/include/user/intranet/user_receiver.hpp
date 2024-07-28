@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <typeinfo>
+#include <atomic>
 
 #include <boost/asio.hpp>
 
@@ -22,7 +23,8 @@ namespace ba = boost::asio;
 class user_receiver {
  public:
   user_receiver() : logger_(lg::logger()), threads_(1), dispatcher_(this) {
-    subscriber_ = br::broker::s_create_subscriber(CastType::kAnyCast, "room", 1,
+    // used as notification
+    subscriber_ = br::broker::s_create_subscriber(CastType::kSub, "room", 1,
                                                   "tcp://*:5560", "topic");
   }
 
@@ -32,6 +34,7 @@ class user_receiver {
   }
 
   void start() {
+    stop_ = false;
     threads_.start();
     subscriber_->start();
 
@@ -45,6 +48,7 @@ class user_receiver {
   }
 
   void stop() {
+    stop_ = true;
     subscriber_->stop();
     threads_.stop();
   }
@@ -65,13 +69,15 @@ class user_receiver {
 
  private:
   ba::awaitable<void> start_recv() {
-    auto buffer = subscriber_->recv("topic").get();
+    while (!stop_.load()) {
+      auto buffer = subscriber_->recv("topic").get();
 
-    namespace msg = rsp::libs::message;
-    auto destructed = msg::serializer::destruct_buffer(buffer);
-    dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    logger_.trace() << "dispatch finished. destructed type:" << destructed.type
-                    << ", start recv" << lg::L_endl;
+      namespace msg = rsp::libs::message;
+      auto destructed = msg::serializer::destruct_buffer(buffer);
+      dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+      logger_.trace() << "dispatch finished. destructed type:"
+                      << destructed.type << ", start recv" << lg::L_endl;
+    }
     co_return;
   }
 
@@ -91,6 +97,7 @@ class user_receiver {
 
   unicast_message_dispatcher<user_receiver> dispatcher_;
   std::shared_ptr<br::broker_interface> subscriber_;
+  std::atomic<bool> stop_;
 };
 
 // template <>

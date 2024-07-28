@@ -172,10 +172,20 @@ class subscriber : public broker_interface {
       case CastType::kAnyCast:
         create_anycast();
         break;
+      case CastType::kSub:
+        create_sub();
+        break;
+      case CastType::kRep:
+        create_rep();
+        break;
+      default:
+        create_broadcast();
+        break;
     }
   }
   void create_broadcast() {
     socket_ = zmq::socket_t{context_, zmq::socket_type::sub};
+    socket_.set(zmq::sockopt::subscribe, "");
     // socket_.set(zmq::sockopt::linger, 1);
   }
 
@@ -187,6 +197,16 @@ class subscriber : public broker_interface {
 
   void create_unicast() {
     // socket_.set(zmq::sockopt::linger, 1);
+    socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
+  }
+
+  void create_sub() {
+    socket_ = zmq::socket_t{context_, zmq::socket_type::sub};
+    socket_.set(zmq::sockopt::subscribe, "");
+    // socket_.set(zmq::sockopt::linger, 1);
+  }
+
+  void create_rep() {
     socket_ = zmq::socket_t{context_, zmq::socket_type::rep};
   }
 

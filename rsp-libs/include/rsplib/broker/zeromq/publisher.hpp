@@ -43,7 +43,6 @@ class publisher : public broker_interface {
         addr_(std::move(r.addr_)),
         socket_(std::move(r.socket_)) {}
 
-
   void start() override {
     create_socket();
     auto& logger = rsp::libs::logger::logger();
@@ -163,6 +162,12 @@ class publisher : public broker_interface {
       case CastType::kAnyCast:
         create_anycast();
         break;
+      case CastType::kPub:
+        create_pub();
+        break;
+      default:
+        create_broadcast();
+        break;
     }
   }
 
@@ -178,7 +183,12 @@ class publisher : public broker_interface {
   }
 
   void create_unicast() {
-    socket_ = zmq::socket_t{context_, zmq::socket_type::req};
+    socket_ = zmq::socket_t{context_, zmq::socket_type::pub};
+    // socket_.set(zmq::sockopt::linger, 1);
+  }
+
+  void create_pub() {
+    socket_ = zmq::socket_t{context_, zmq::socket_type::pub};
     // socket_.set(zmq::sockopt::linger, 1);
   }
 

@@ -37,7 +37,7 @@ class user_topology {
     }
 
     auto svr =
-        br::broker::s_create_publisher(CastType::kUniCast, "user", 1, addr);
+        br::broker::s_create_publisher(CastType::kPub, "user", 1, addr);
     std::lock_guard<std::mutex> l{m_};
     user_servers_[addr] = svr;
     svr->start();
@@ -79,7 +79,7 @@ class user_topology {
 
     auto buffer = msg::serializer::serialize(message_trait<T>::type, req);
     iter->second->send("topic", buffer);
-    logger_.debug() << "send message to user unicast(" << addr
+    logger_.debug() << "sent message to user unicast(" << addr
                     << "), type:" << typeid(req).name() << lg::L_endl;
     return buffer.size();
   }

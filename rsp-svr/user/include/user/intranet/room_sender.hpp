@@ -31,7 +31,7 @@ class room_sender {
   room_sender() : logger_(lg::logger()), threads_(1), dispatcher_(this) {
     room_sender_ =
         /* the host will be substituted by room-managers response */
-        br::broker::s_create_publisher(CastType::kUniCast, "room", 1,
+        br::broker::s_create_publisher(CastType::kAnyCast, "room", 1,
                                        "tcp://127.0.0.1:5559");
   }
 
