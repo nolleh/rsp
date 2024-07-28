@@ -111,30 +111,35 @@ class s_logger {
   virtual s_logger &print_level() = 0;
 
   s_logger &trace(std::source_location s = std::source_location::current()) {
+    std::lock_guard<std::mutex> l(m_);
     *this << log_level::kTrace << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &debug(std::source_location s = std::source_location::current()) {
+    std::lock_guard<std::mutex> l(m_);
     *this << log_level::kDebug << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &info(std::source_location s = std::source_location::current()) {
+    std::lock_guard<std::mutex> l(m_);
     *this << log_level::kInfo << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &warn(std::source_location s = std::source_location::current()) {
+    std::lock_guard<std::mutex> l(m_);
     *this << log_level::kWarn << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
   }
 
   s_logger &error(std::source_location s = std::source_location::current()) {
+    std::lock_guard<std::mutex> l(m_);
     *this << log_level::kError << L_time << L_space << executable_name_
           << "::" << s << L_space << L_level;
     return *this;
@@ -200,7 +205,6 @@ class s_logger {
 
 template <typename T>
 s_logger &s_logger::log(T value) {
-  std::lock_guard<std::mutex> l(m_);
   if (is_null()) return *this;
   auto stream_ptr = &stream();
   s_logger *logger = this;

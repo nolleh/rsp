@@ -26,6 +26,8 @@ class prompt {
 
   template <typename T>
   prompt& operator<<(const T& value) {
+    // clear scr
+    std::cout << "\033[2J\033[1;1H";
     const int kWidth = 50;
     std::cout << "\x1b[" << color::kMagenta << "m" << std::setw(kWidth)
               << std::setfill('=') << std::endl;
