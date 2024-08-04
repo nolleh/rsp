@@ -57,9 +57,10 @@ class job_join_room : public job,
                          << room_response->DebugString() << lg::L_endl;
     session_->set_enter_room(room_response->room_id());
 
-    ResCreateRoom response;
+    ResJoinRoom response;
     response.set_room_id(room_response->room_id());
     response.set_request_id(room_response->request_id());
+    response.set_success(room_response->success());
 
     const auto buffer =
         message::serializer::serialize(MessageType::kResJoinRoom, response);

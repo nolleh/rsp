@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "proto/common/sender-type.proto";
+
 message User2RoomReqCreateRoom {
   uint64 request_id = 1;
   string addr = 2;
@@ -42,12 +44,6 @@ message User2RoomResFwdRoom {
   string uid = 3;
   string message = 4;
   bool success = 5;
-}
-
-/** used when fwd client */
-enum SenderType {
-  kContent = 0;
-  kUser = 1;
 }
 
 message User2RoomReqFwdClient {

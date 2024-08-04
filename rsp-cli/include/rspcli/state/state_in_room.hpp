@@ -41,8 +41,7 @@ class state_in_room : public base_state {
     //
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
-
-    read_with_timeout(socket_, boost::posix_time::seconds(3));
+    //
     prompt_ << "possible command \n1) logout 2) read message\n 3) send message";
     std::cout << "> ";
     std::string command;
@@ -125,6 +124,7 @@ class state_in_room : public base_state {
       logger_.error() << "failed to fwd room" << lg::L_endl;
       return;
     }
+    auto sender = fwd_client;
     auto message = "room sent message: " + fwd_client.message();
     std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m"
               << std::endl;

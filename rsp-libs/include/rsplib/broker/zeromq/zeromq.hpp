@@ -40,8 +40,9 @@ class zeromq : public broker_interface {
 
   void sub_topic(const std::string& topic) override { impl_.sub_topic(topic); }
 
-  void send(const std::string& topic, const raw_buffer& buffer) override {
-    impl_.send(topic, buffer);
+  std::future<int> send(const std::string& topic,
+                        const raw_buffer& buffer) override {
+    return impl_.send(topic, buffer);
   }
 
   std::future<raw_buffer> recv(const std::string& topic) override {

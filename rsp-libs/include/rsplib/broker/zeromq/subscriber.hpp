@@ -92,18 +92,22 @@ class subscriber : public broker_interface {
 
   void sub_topic(const std::string& topic) override { topics_.erase(topic); }
 
-  void send(const std::string& topic, const raw_buffer& buffer) override {
+  std::future<int> send(const std::string& topic,
+                        const raw_buffer& buffer) override {
     // TODO(@nolleh) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
       logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
-      return;
+      spromise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
     }
 
     logger.debug() << "send post" << rsp::libs::logger::L_endl;
+    spromise_ = std::promise<int>();
     io_context_.post([&, buffer] {
       if (stop_.load()) {
         logger.debug() << "already stopped" << rsp::libs::logger::L_endl;
+        spromise_.set_exception(
+            std::make_exception_ptr(interrupted_exception{}));
         return;
       }
       // logger.trace() << "send context(" << &io_context_ << ") socket ("
@@ -115,7 +119,9 @@ class subscriber : public broker_interface {
       auto rc = socket_.send(msg, zmq::send_flags::none);
       // auto rc = s_send(&socket_, buffer.data());
       logger.trace() << "send:" << rc.value() << rsp::libs::logger::L_endl;
+      spromise_.set_value(rc.value());
     });
+    return spromise_.get_future();
   }
 
   std::future<raw_buffer> recv(const std::string& topic) override {
@@ -222,6 +228,7 @@ class subscriber : public broker_interface {
   zmq::context_t context_;
   zmq::socket_t socket_;
   // std::unique_ptr<std::promise<raw_buffer>> promise_;
+  std::promise<int> spromise_;
   std::promise<raw_buffer> promise_;
   std::atomic<bool> stop_;
 };

@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+/** used when fwd client */
+enum SenderType {
+  kContent = 0;
+  kUser = 1;
+}

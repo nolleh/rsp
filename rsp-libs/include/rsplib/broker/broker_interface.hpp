@@ -42,7 +42,8 @@ class broker_interface {
 
   virtual void sub_topic(const std::string& topic) = 0;
 
-  virtual void send(const std::string& topic, const raw_buffer& os) = 0;
+  virtual std::future<int> send(const std::string& topic,
+                                const raw_buffer& os) = 0;
 
   virtual std::future<raw_buffer> recv(const std::string& topic) = 0;
 

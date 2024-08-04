@@ -25,14 +25,13 @@ class room_manager {
     return *room_manager::s_instance;
   }
 
-  ~room_manager() {
-    workers_.stop();
-  }
-
+  ~room_manager() { workers_.stop(); }
 
   std::shared_ptr<room> create_room(const std::string& uid,
                                     const std::string& addr) {
-    RoomId room_id = rsp::libs::util::rng(10000, ULONG_MAX);
+    // temporarily for test convenient
+    RoomId room_id = rsp::libs::util::rng(10000, 100000);
+    // auto room_id = (--rooms_.end())->first + 1;
     auto created =
         std::make_shared<room>(room_id, user{uid, addr},
                                &strands_.at(rooms_.size() % strands_.size()));

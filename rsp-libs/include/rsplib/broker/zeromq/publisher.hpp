@@ -86,17 +86,20 @@ class publisher : public broker_interface {
 
   void sub_topic(const std::string& topic) override {}
 
-  void send(const std::string& topic, const raw_buffer& buffer) override {
+  std::future<int> send(const std::string& topic,
+                        const raw_buffer& buffer) override {
     // TODO(@nolleh) wait mechanism
     auto& logger = rsp::libs::logger::logger();
     if (stop_.load()) {
       logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
-      return;
+      spromise_.set_exception(std::make_exception_ptr(interrupted_exception{}));
     }
     spromise_ = std::promise<int>();
     io_context_.post([&, buffer] {
       if (stop_.load()) {
         logger.trace() << "already stopped" << rsp::libs::logger::L_endl;
+        spromise_.set_exception(
+            std::make_exception_ptr(interrupted_exception{}));
         return;
       }
       logger.trace() << "send context(" << &io_context_ << ") socket ("
@@ -108,6 +111,7 @@ class publisher : public broker_interface {
       auto rc = socket_.send(msg, zmq::send_flags::none);
       spromise_.set_value(rc.value());
     });
+    return spromise_.get_future();
   }
 
   std::future<raw_buffer> recv(const std::string& topic) override {

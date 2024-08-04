@@ -41,6 +41,8 @@ class job_cli_forward_message
     // TODO(@nolleh) need to be changed
     request.set_request_id(request_.request_id());
     request.set_uid(request_.uid());
+    request.set_sender_type(request_.sender_type());
+    request.set_sender_uid(request_.sender_uid());
     request.set_message(request_.message());
     const auto buffer =
         message::serializer::serialize(MessageType::kReqFwdClient, request);
