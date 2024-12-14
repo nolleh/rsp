@@ -169,6 +169,9 @@ class publisher : public broker_interface {
       case CastType::kPub:
         create_pub();
         break;
+      case CastType::kReq:
+        create_req();
+        break;
       default:
         create_broadcast();
         break;
@@ -184,6 +187,10 @@ class publisher : public broker_interface {
     // socket_ = zmq::socket_t{context_, zmq::socket_type::push};
     socket_ = zmq::socket_t{context_, zmq::socket_type::req};
     // socket_.set(zmq::sockopt::linger, 1);
+  }
+
+  void create_req() {
+    socket_ = zmq::socket_t{context_, zmq::socket_type::req};
   }
 
   void create_unicast() {

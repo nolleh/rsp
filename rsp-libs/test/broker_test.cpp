@@ -115,10 +115,10 @@ TEST(Broker, RepInitSendThrowError) {
 
 TEST(Broker, ReqRep) {
   namespace br = rsp::libs::broker;
-  auto req = br::broker::s_create_publisher(CastType::kUniCast, "test", 1,
+  auto req = br::broker::s_create_publisher(CastType::kReq, "test", 1,
                                             "tcp://127.0.0.1:5558");
   EXPECT_TRUE(nullptr != req);
-  auto rep = br::broker::s_create_subscriber(CastType::kUniCast, "service", 1,
+  auto rep = br::broker::s_create_subscriber(CastType::kRep, "service", 1,
                                              "tcp://*:5558", "topic");
   EXPECT_TRUE(nullptr != rep);
 
@@ -134,8 +134,6 @@ TEST(Broker, ReqRep) {
   auto str_recv_msg = std::string{recv_msg.data(), recv_msg.size()};
   EXPECT_EQ(msg, str_recv_msg);
 
-  // rsp::libs::message::raw_buffer response{msg.begin(), msg.end()};
-  // rep->send("topic", response);
   rsp::libs::message::raw_buffer response{msg.begin(), msg.end()};
   rep->send("topic", response);
 
