@@ -19,8 +19,9 @@ namespace state {
 // 2.separate base <-> init
 class state_init : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket) {
-    return std::shared_ptr<base_state>(new state_init(socket));
+  static std::shared_ptr<base_state> create(socket* socket,
+                                            struct context* context) {
+    return std::shared_ptr<base_state>(new state_init(socket, context));
   }
 
   ~state_init() {}
@@ -60,7 +61,8 @@ class state_init : public base_state {
   }
 
  protected:
-  explicit state_init(socket* socket) : base_state(socket) {
+  explicit state_init(socket* socket, struct context* context)
+      : base_state(socket, context) {
     state_ = State::kInit;
     next_ = state_;
     dispatcher_.register_handler(

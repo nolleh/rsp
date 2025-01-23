@@ -11,11 +11,12 @@ namespace rsp {
 namespace cli {
 namespace state {
 
-using creator = std::function<std::shared_ptr<base_state>(socket*)>;
+using creator = std::function<std::shared_ptr<base_state>(socket*, context*)>;
 class factory {
  public:
-  static std::shared_ptr<base_state> create(State state, socket* socket) {
-    return s_warehouse[state](socket);
+  static std::shared_ptr<base_state> create(State state, socket* socket,
+                                            context* context) {
+    return s_warehouse[state](socket, context);
   }
 
  private:

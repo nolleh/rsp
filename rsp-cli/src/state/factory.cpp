@@ -18,6 +18,6 @@ std::map<State, creator> factory::s_warehouse = {
     {State::kInRoom, state_in_room::create},
     {State::kExit, state_exit::create}};
 
-}
+}  // namespace state
 }  // namespace cli
 }  // namespace rsp

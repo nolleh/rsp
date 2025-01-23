@@ -27,8 +27,9 @@ inline std::string join(char delimiter, Args&&... args) {
 
 class state_login : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket) {
-    return std::shared_ptr<state_login>(new state_login(socket));
+  static std::shared_ptr<base_state> create(socket* socket,
+                                            struct context* context) {
+    return std::shared_ptr<state_login>(new state_login(socket, context));
   }
 
   ~state_login() {
@@ -61,7 +62,8 @@ class state_login : public base_state {
   }
 
  protected:
-  explicit state_login(socket* socket) : base_state(socket) {
+  explicit state_login(socket* socket, struct context* context)
+      : base_state(socket, context) {
     state_ = State::kLoggedIn;
     next_ = state_;
     dispatcher_.register_handler(
@@ -101,8 +103,10 @@ class state_login : public base_state {
       return;
     }
 
-    logger_.info() << "created room #" << create_room.room_id()
-                   << ", and joined" << lg::L_endl;
+    RoomId room_id = create_room.room_id();
+    context_->room_id = room_id;
+    logger_.info() << "created room #" << room_id << ", and joined"
+                   << lg::L_endl;
     next_ = State::kInRoom;
   }
 
@@ -120,6 +124,7 @@ class state_login : public base_state {
     }
 
     logger_.info() << "joined room #" << join_room.room_id() << lg::L_endl;
+    context_->room_id = join_room.room_id();
     next_ = State::kInRoom;
   }
 

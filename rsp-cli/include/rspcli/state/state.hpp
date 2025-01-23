@@ -14,6 +14,7 @@
 #include "proto/common/ping.pb.h"
 #include "proto/user/login.pb.h"
 #include "rspcli/prompt/prompt.hpp"
+#include "rspcli/state/context.hpp"
 #include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
@@ -46,8 +47,9 @@ namespace lg = libs::logger;
 // 2.separate base <-> init
 class base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket) {
-    return std::shared_ptr<base_state>(new base_state(socket));
+  static std::shared_ptr<base_state> create(socket* socket,
+                                            struct context* context) {
+    return std::shared_ptr<base_state>(new base_state(socket, context));
   }
 
   ~base_state() {
@@ -91,6 +93,8 @@ class base_state {
   virtual void init() {}
 
   friend std::ostream& operator<<(std::ostream&, const base_state&);
+
+  context* get_context() { return context_; }
 
   void close() {
     namespace asio = boost::asio::ip;
@@ -143,8 +147,9 @@ class base_state {
   }
 
  protected:
-  explicit base_state(socket* socket)
+  explicit base_state(socket* socket, context* context)
       : socket_(socket),
+        context_(context),
         dispatcher_(message_dispatcher::instance()),
         interpreter_(&dispatcher_),
         logger_(lg::logger()),
@@ -161,7 +166,9 @@ class base_state {
 
   State state_ = State::kInit;
   State next_ = State::kInit;
+
   socket* socket_;
+  context* context_;
   message_dispatcher& dispatcher_;
   lg::s_logger& logger_;
   prompt<base_state> prompt_;

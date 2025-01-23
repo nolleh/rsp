@@ -21,8 +21,9 @@ namespace state {
 
 class state_in_room : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket) {
-    return std::shared_ptr<state_in_room>(new state_in_room(socket));
+  static std::shared_ptr<base_state> create(socket* socket,
+                                            struct context* context) {
+    return std::shared_ptr<state_in_room>(new state_in_room(socket, context));
   }
 
   ~state_in_room() { dispatcher_.unregister_handler(MessageType::kResLogout); }
@@ -76,7 +77,8 @@ class state_in_room : public base_state {
   }
 
  protected:
-  explicit state_in_room(socket* socket) : base_state(socket) {
+  explicit state_in_room(socket* socket, struct context* context)
+      : base_state(socket, context) {
     state_ = State::kInRoom;
     next_ = state_;
     dispatcher_.register_handler(

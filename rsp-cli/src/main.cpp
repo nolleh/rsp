@@ -5,6 +5,7 @@
 
 #include <boost/asio.hpp>
 
+#include "rspcli/state/context.hpp"
 #include "rspcli/state/factory.hpp"
 #include "rspcli/state/state.hpp"
 #include "rsplib/debug/tracer.hpp"
@@ -33,6 +34,8 @@ int main(int argc, char *argv[]) {
 
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
+    struct rsp::cli::state::context context;
+    context.room_id = 0;
 
     auto curr = rsp_cli::state::State::kInit;
     bool create = true;
@@ -41,7 +44,7 @@ int main(int argc, char *argv[]) {
       if (create) {
         // give a chance old state client to erase handler
         client = nullptr;
-        client = rsp_cli::state::factory::create(curr, &socket);
+        client = rsp_cli::state::factory::create(curr, &socket, &context);
       }
       client->init();
       std::array<char, 128> buf;

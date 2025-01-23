@@ -12,8 +12,9 @@ namespace state {
 
 class state_exit : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket) {
-    return std::shared_ptr<state_exit>(new state_exit(socket));
+  static std::shared_ptr<base_state> create(socket* socket,
+                                            struct context* context) {
+    return std::shared_ptr<state_exit>(new state_exit(socket, context));
   }
 
   void init() override {
@@ -22,7 +23,8 @@ class state_exit : public base_state {
   }
 
  protected:
-  explicit state_exit(socket* socket) : base_state(socket) {
+  explicit state_exit(socket* socket, struct context* context)
+      : base_state(socket, context) {
     state_ = State::kExit;
     next_ = state_;
   }
