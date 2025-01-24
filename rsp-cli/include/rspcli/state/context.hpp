@@ -8,7 +8,17 @@ namespace cli {
 namespace state {
 
 struct context {
+  Uid uid;
   RoomId room_id;
+
+  context() {
+    clear();
+  }
+
+  void clear() {
+    uid = "";
+    room_id = 0;
+  }
 };
 
 }  // namespace state

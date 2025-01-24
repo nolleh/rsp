@@ -2,11 +2,13 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace rsp {
 namespace cli {
 namespace state {
 
+using Uid = std::string;
 using RoomId = uint64_t;
 
 }  // namespace state

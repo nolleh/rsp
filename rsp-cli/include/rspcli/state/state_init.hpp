@@ -49,6 +49,7 @@ class state_init : public base_state {
     }
 
     logger_.info() << "success to login:" << login.uid() << lg::L_endl;
+    context_->uid = login.uid();
     next_ = State::kLoggedIn;
   }
 

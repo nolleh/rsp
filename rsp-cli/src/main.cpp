@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
     ip::tcp::socket socket(io_context);
     boost::asio::connect(socket, resolver.resolve(query));
     struct rsp::cli::state::context context;
-    context.room_id = 0;
 
     auto curr = rsp_cli::state::State::kInit;
     bool create = true;

@@ -25,7 +25,8 @@ std::ostream& operator<<(std::ostream& os, const base_state& state) {
       str = "Exit";
       break;
   }
-  os << "[Client:" << &state << "] current state: " << str
+  os << "[Client:" << &state << "] current state: " << str << "\n\x1b["
+     << color::kBlue << "m uid:" << state.context_->uid
      << ", RoomId:" << state.context_->room_id;
   return os;
 }

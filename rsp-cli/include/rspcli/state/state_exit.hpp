@@ -27,6 +27,7 @@ class state_exit : public base_state {
       : base_state(socket, context) {
     state_ = State::kExit;
     next_ = state_;
+    context->clear();
   }
 };
 
