@@ -26,7 +26,11 @@ class state_in_room : public base_state {
     return std::shared_ptr<state_in_room>(new state_in_room(socket, context));
   }
 
-  ~state_in_room() { dispatcher_.unregister_handler(MessageType::kResLogout); }
+  ~state_in_room() {
+    stop_ = true;
+    reader_->join();
+    dispatcher_.unregister_handler(MessageType::kResLogout);
+  }
 
   void init() override {
     // TODO(@nolleh) does dispatcher really need a ability
@@ -43,7 +47,7 @@ class state_in_room : public base_state {
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
     //
-    prompt_ << "possible command \n1) logout 2) read message\n 3) send message";
+    prompt_ << "possible command \n1) logout 2) send message";
     std::cout << "> ";
     std::string command;
     std::cin >> command;
@@ -53,14 +57,14 @@ class state_in_room : public base_state {
         case 1:
           send_message(MessageType::kReqLogout, ReqLogout{});
           break;
+        // case 2:
+        //   std::cout << "read message.." << std::endl;
+        //   // read_with_timeout(socket_, boost::posix_time::seconds(3));
+        //   read_message();
+        //   std::this_thread::sleep_for(std::chrono::seconds(1));
+        //   init();
+        //   break;
         case 2:
-          std::cout << "read message.." << std::endl;
-          // read_with_timeout(socket_, boost::posix_time::seconds(3));
-          read_message();
-          std::this_thread::sleep_for(std::chrono::seconds(1));
-          init();
-          break;
-        case 3:
           prompt_ << "type message to send";
           std::cout << "> ";
           std::string msg;
@@ -93,6 +97,7 @@ class state_in_room : public base_state {
         MessageType::kReqFwdClient,
         std::bind(&state_in_room::handle_req_fwd_cli, this,
                   std::placeholders::_1, std::placeholders::_2));
+    start_fwd_read();
   }
 
  private:
@@ -145,15 +150,27 @@ class state_in_room : public base_state {
     }
   }
 
+  void start_fwd_read() {
+    reader_ = std::make_unique<std::thread>([&]() {
+      while (!stop_) read_message();
+    });
+  }
+
   void read_message() {
     std::array<char, 128> buf;
     boost::system::error_code error;
     auto len = socket_->read_some(boost::asio::buffer(buf), error);
     if (error) {
+      if (boost::asio::error::eof == error) {
+        return;
+      }
       throw boost::system::system_error(error);
     }
     handle_buffer(buf, len);
   }
+
+  std::unique_ptr<std::thread> reader_;
+  std::atomic<bool> stop_;
 };
 
 }  // namespace state

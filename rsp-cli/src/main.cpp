@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
       if (error == boost::asio::error::eof) {
         logger.info() << "eof" << lg::L_endl;
-        client->close(error);
+        // client->close(error);
         break;
       } else if (error) {
         throw boost::system::system_error(error);
