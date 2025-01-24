@@ -131,8 +131,22 @@ class state_in_room : public base_state {
       logger_.error() << "failed to fwd room" << lg::L_endl;
       return;
     }
-    auto sender = fwd_client;
-    auto message = "room sent message: " + fwd_client.message();
+
+    std::string message;
+    switch (fwd_client.sender_type()) {
+      case SenderType::kContent:
+        message = "room sent message: " + fwd_client.message();
+        break;
+      case SenderType::kUser:
+        message = std::format("({0}):{1}", fwd_client.sender_uid(),
+                              fwd_client.message());
+        break;
+      default:
+        logger_.warn() << "room message was sent but unknown sender type"
+                       << lg::L_endl;
+        return;
+        break;
+    }
     std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m"
               << std::endl;
   }
