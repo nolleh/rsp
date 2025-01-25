@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
         // give a chance old state client to erase handler
         client = nullptr;
         client = rsp_cli::state::factory::create(curr, &socket, &context);
+        client->init();
       }
-      client->init();
       std::array<char, 128> buf;
       boost::system::error_code error;
       // rsp::libs::buffer::shared_mutable_buffer buffer(buf);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
       size_t len = socket.read_some(boost::asio::buffer(buf), error);
       logger.debug() << "finish read" << lg::L_endl;
 
-      if (error == boost::asio::error::eof) {
+      if (boost::asio::error::eof == error) {
         logger.info() << "eof" << lg::L_endl;
         // client->close(error);
         break;

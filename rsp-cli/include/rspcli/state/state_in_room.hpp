@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -48,36 +49,7 @@ class state_in_room : public base_state {
     // prompt_ << std::format("possible command \n{}\n", command_direction);
     //
     prompt_ << "possible command \n1) logout 2) send message";
-    std::cout << "> ";
-    std::string command;
-    std::cin >> command;
-
-    try {
-      switch (std::stoi(command)) {
-        case 1:
-          send_message(MessageType::kReqLogout, ReqLogout{});
-          break;
-        // case 2:
-        //   std::cout << "read message.." << std::endl;
-        //   // read_with_timeout(socket_, boost::posix_time::seconds(3));
-        //   read_message();
-        //   std::this_thread::sleep_for(std::chrono::seconds(1));
-        //   init();
-        //   break;
-        case 2:
-          prompt_ << "type message to send";
-          std::cout << "> ";
-          std::string msg;
-          std::getline(std::cin >> std::ws, msg);
-          ReqFwdRoom fwd;
-          fwd.set_message(msg);
-          send_message(MessageType::kReqFwdRoom, fwd);
-          break;
-      }
-    } catch (std::invalid_argument const& ex) {
-      prompt_ << "your command is incorrect";
-      init();
-    }
+    read_input();
   }
 
  protected:
@@ -101,6 +73,41 @@ class state_in_room : public base_state {
   }
 
  private:
+  void read_input() {
+    using namespace std::chrono_literals;  // NOLINT
+    std::this_thread::sleep_for(10ms);
+    std::cout << "command > ";
+    std::string command;
+    std::cin >> command;
+
+    try {
+      switch (std::stoi(command)) {
+        case 1:
+          send_message(MessageType::kReqLogout, ReqLogout{});
+          break;
+        // case 2:
+        //   std::cout << "read message.." << std::endl;
+        //   // read_with_timeout(socket_, boost::posix_time::seconds(3));
+        //   read_message();
+        //   std::this_thread::sleep_for(std::chrono::seconds(1));
+        //   init();
+        //   break;
+        case 2:
+          std::cout << "type message to send" << std::endl;
+          std::cout << "> ";
+          std::string msg;
+          std::getline(std::cin >> std::ws, msg);
+          ReqFwdRoom fwd;
+          fwd.set_message(msg);
+          send_message(MessageType::kReqFwdRoom, fwd);
+          break;
+      }
+    } catch (std::invalid_argument const& ex) {
+      prompt_ << "your command is incorrect";
+      read_input();
+    }
+  }
+
   void handle_res_logout(buffer_ptr buffer, link*) {
     ResLogout logout;
     if (!rsp::libs::message::serializer::deserialize(*buffer, &logout)) {
@@ -123,6 +130,7 @@ class state_in_room : public base_state {
 
     logger_.debug() << "successfully sent message: " << fwd_room.message()
                     << lg::L_endl;
+    read_input();
   }
 
   void handle_req_fwd_cli(buffer_ptr buffer, link*) {
