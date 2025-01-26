@@ -1,0 +1,5 @@
+/** Copyright (C) 2025  nolleh (nolleh7707@gmail.com) **/
+// TODO(@nolleh) improve
+#pragma once
+
+#define Room_CONTENTS_BIN "@Room_CONTENTS_BIN@"
