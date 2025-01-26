@@ -8,6 +8,21 @@ find_package(Boost)
 find_package(Protobuf)
 find_package(cppzmq)
 
+if(UNIX AND NOT APPLE)
+    set(EXTENSION ".so")
+elseif(APPLE)
+    set(EXTENSION ".dylib")
+elseif(WIN32)
+    set(EXTENSION ".dll")
+else()
+    message(SEND_ERROR "unsupported")
+endif()
+
+set(Room_CONTENTS_BIN
+    ${CMAKE_BINARY_DIR}/rsp-svr/room_contents/libRoomContents${EXTENSION}
+)
+configure_file(config.h.in ${PROJECT_SOURCE_DIR}/include/room/config.h)
+
 file(GLOB_RECURSE SRC src/*.cpp)
 if(NOT DEFINED PROTO)
     set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen_proto)
@@ -33,6 +48,7 @@ target_include_directories(
         ${Libs_DIR}/include
         ${Proto_DIR}
         ${PROJECT_SOURCE_DIR}/include
+        ${rsp-svr_SOURCE_DIR}/rci/include
 )
 
 target_link_libraries(
