@@ -10,8 +10,8 @@
 #include "boost/asio.hpp"
 #include "boost/bind.hpp"
 #include "proto/room/room.pb.h"
-#include "room/room/room_api_interface.hpp"
-#include "room/room/room_message_interface.hpp"
+#include "room/contents_interface/room_api_interface.hpp"
+#include "room/contents_interface/room_message_interface.hpp"
 #include "room/types.hpp"
 #include "rsplib/buffer/buffer.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -35,12 +35,15 @@ class room : public room_api_inteface,
              public room_message_interface,
              public std::enable_shared_from_this<room> {
  public:
-  room(RoomId room_id, user user, ba::io_context::strand* strand)
+  room(RoomId room_id, room_message_interface* contents, user user,
+       ba::io_context::strand* strand)
       : room_id_(room_id),
+        contents_(contents),
         owner_(user),
         users_{{user.uid, user}},
         strand_(strand),
-        logger_(lg::logger()) {}
+        logger_(lg::logger()) {
+  }
 
   ~room() {
     strand_->post(std::bind(&room::on_destroy_room, shared_from_this()));
@@ -48,7 +51,7 @@ class room : public room_api_inteface,
 
   void create_room() {
     strand_->post(
-        std::bind(&room::on_created_room, shared_from_this(), room_id_));
+        std::bind(&room::on_create_room, shared_from_this(), room_id_));
   }
 
   void join_room(const Uid& uid, const Address& addr) {
@@ -80,7 +83,9 @@ class room : public room_api_inteface,
 
   void kick_out_user(Uid uid) {}
 
-  void on_created_room(const RoomId room_id) {}
+  void on_create_room(const RoomId room_id) {
+    contents_->on_create_room(room_id);
+  }
 
   void on_user_enter(const Uid& uid, const Address& addr) {
     users_.insert({uid, user(uid, addr)});
@@ -154,6 +159,7 @@ class room : public room_api_inteface,
                          const lm::buffer_ptr buffer);
 
   RoomId room_id_;
+  std::unique_ptr<room_message_interface> contents_;
   user owner_;
   std::map<Uid, user> users_;
   ba::io_context::strand* strand_;

@@ -4,18 +4,19 @@
 #include <string>
 #include <vector>
 
-#include "room/contents_interface/types.hpp"
 #include "room/contents_interface/kick_out_reason.hpp"
+#include "room/contents_interface/types.hpp"
 
 namespace rsp {
 namespace room {
 
 class room_message_interface {
+ public:
   /**
    * room is created
    * this is first interface that always sent right after created the object
    * */
-  void on_created_room(const RoomId room_id);
+  void on_create_room(const RoomId room_id);
 
   /**
    * user entered to room

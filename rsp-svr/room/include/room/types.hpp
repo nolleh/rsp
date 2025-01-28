@@ -2,12 +2,11 @@
 #pragma once
 
 #include <string>
+#include "room/contents_interface/types.hpp"
 
 namespace rsp {
 namespace room {
 
-using RoomId = u_int64_t;
-using Uid = std::string;
 using Address = std::string;
 
 }  // namespace room
