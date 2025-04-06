@@ -46,7 +46,8 @@ class room_message_handler {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
     register_user_server(join_room);
 
-    auto room = room_manager_.join_room(join_room.uid(), join_room.room_id());
+    auto room = room_manager_.join_room(join_room.uid(), join_room.room_id(),
+                                        join_room.addr());
     if (!room) {
       User2RoomResJoinRoom res_join_room;
       res_join_room.set_request_id(join_room.request_id());

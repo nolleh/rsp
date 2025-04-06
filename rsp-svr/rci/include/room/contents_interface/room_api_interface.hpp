@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "room/contents_interface/types.hpp"
-namespace rsp {
-namespace room {
+// namespace rsp {
+// namespace room {
 
 class room_api_inteface {
   /***
@@ -23,5 +23,5 @@ class room_api_inteface {
   void kick_out_user(Uid uid);
 };
 
-}  // namespace room
-}  // namespace rsp
+// }  // namespace room
+// }  // namespace rsp

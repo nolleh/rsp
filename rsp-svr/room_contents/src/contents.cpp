@@ -25,7 +25,7 @@ void contents::on_recv_message(Uid from, const std::string msg) {
   std::cout << "[contents]" << "on_recv_message" << std::endl;
 }
 
-void on_kicked_out_user(Uid uid, KickOutReason reason) {
+void contents::on_kicked_out_user(Uid uid, KickOutReason reason) {
   std::cout << "[contents]" << "on_kicked_out_user" << std::endl;
 }
 

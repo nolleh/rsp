@@ -56,8 +56,8 @@ class room_manager {
     return room->second;
   }
 
-  std::shared_ptr<room> join_room(const std::string& uid,
-                                  const RoomId room_id) {
+  std::shared_ptr<room> join_room(const std::string& uid, const RoomId room_id,
+                                  const std::string& addr) {
     auto room = find_room(room_id);
     if (!room) {
       return nullptr;
@@ -65,6 +65,7 @@ class room_manager {
 
     rooms_[room_id] = room;
     user_rooms_[uid] = room_id;
+    room->join_room(uid, addr);
     return room;
   }
 

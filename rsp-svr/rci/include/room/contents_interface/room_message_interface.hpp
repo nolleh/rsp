@@ -7,8 +7,8 @@
 #include "room/contents_interface/kick_out_reason.hpp"
 #include "room/contents_interface/types.hpp"
 
-namespace rsp {
-namespace room {
+// namespace rsp {
+// namespace room {
 
 class room_message_interface {
  public:
@@ -16,31 +16,31 @@ class room_message_interface {
    * room is created
    * this is first interface that always sent right after created the object
    * */
-  void on_create_room(const RoomId room_id);
+  virtual void on_create_room(const RoomId room_id) = 0;
 
   /**
    * user entered to room
    * */
-  void on_user_enter(const Uid uid);
+  virtual void on_user_enter(const Uid uid) = 0;
 
   /**
    * about to destroyed room.
    * this is last interface that sent before destroy the object
    * */
-  void on_destroy_room();
+  virtual void on_destroy_room() = 0;
 
   /**
    * in room, message was received
    * */
-  void on_recv_message(Uid from, const std::string msg);
+  virtual void on_recv_message(Uid from, const std::string msg) = 0;
 
   /**
    * interface that called when user in room was kicked out.
    * e.g., by using api::kick_out_user, after process was done,
    * this callback will be popped up
    * */
-  void on_kicked_out_user(Uid uid, KickOutReason reason);
+  virtual void on_kicked_out_user(Uid uid, KickOutReason reason) = 0;
 };
 
-}  // namespace room
-}  // namespace rsp
+// }  // namespace room
+// }  // namespace rsp

@@ -9,6 +9,7 @@ class so : public so_interface {
   so() {}
   void on_load() override;
   void on_unload() override;
-  rsp::room::room_message_interface* on_create_room() override;
-  void on_destroy_room() override;
+  room_message_interface* create_room() override;
+  void destroy_room() override;
 };
+

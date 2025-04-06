@@ -31,9 +31,7 @@ struct user {
   const Address addr;
 };
 
-class room : public room_api_inteface,
-             public room_message_interface,
-             public std::enable_shared_from_this<room> {
+class room : public std::enable_shared_from_this<room> {
  public:
   room(RoomId room_id, room_message_interface* contents, user user,
        ba::io_context::strand* strand)
@@ -42,8 +40,7 @@ class room : public room_api_inteface,
         owner_(user),
         users_{{user.uid, user}},
         strand_(strand),
-        logger_(lg::logger()) {
-  }
+        logger_(lg::logger()) {}
 
   ~room() {
     strand_->post(std::bind(&room::on_destroy_room, shared_from_this()));
@@ -89,7 +86,8 @@ class room : public room_api_inteface,
 
   void on_user_enter(const Uid& uid, const Address& addr) {
     users_.insert({uid, user(uid, addr)});
-    send_to_all_user("uid:(" + uid + ") has entered room");
+    contents_->on_user_enter(uid);
+    // send_to_all_user("uid:(" + uid + ") has entered room");
   }
 
   void on_destroy_room() {}

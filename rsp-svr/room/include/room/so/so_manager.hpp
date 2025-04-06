@@ -27,7 +27,7 @@ class so_manager {
   void unload() { so_interface_->on_unload(); }
 
   room_message_interface* contents_interface() {
-    return so_interface_->on_create_room();
+    return so_interface_->create_room();
   }
 
  private:
