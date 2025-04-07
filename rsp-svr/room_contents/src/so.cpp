@@ -15,7 +15,7 @@ so_interface* create() {
 void so::on_load() { std::cout << "[room_contents] on_load" << std::endl; }
 void so::on_unload() { std::cout << "[room_contents] on_unload" << std::endl; }
 
-room_message_interface* so::create_room() {
+rsp::room::room_message_interface* so::create_room() {
   std::cout << "[room_contents] on_create_room" << std::endl;
   return new rsp::room::contents::contents{};
 }

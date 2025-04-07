@@ -13,7 +13,7 @@ class so_interface {
   virtual ~so_interface() {}
   virtual void on_load() = 0;
   virtual void on_unload() = 0;
-  virtual room_message_interface* create_room() = 0;
+  virtual rsp::room::room_message_interface* create_room() = 0;
   virtual void destroy_room() = 0;
 };
 

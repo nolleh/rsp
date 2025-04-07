@@ -7,8 +7,8 @@
 #include "room/contents_interface/kick_out_reason.hpp"
 #include "room/contents_interface/types.hpp"
 
-// namespace rsp {
-// namespace room {
+namespace rsp {
+namespace room {
 
 class room_message_interface {
  public:
@@ -42,5 +42,5 @@ class room_message_interface {
   virtual void on_kicked_out_user(Uid uid, KickOutReason reason) = 0;
 };
 
-// }  // namespace room
-// }  // namespace rsp
+}  // namespace room
+}  // namespace rsp

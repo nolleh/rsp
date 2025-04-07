@@ -3,15 +3,17 @@
 
 #include <string>
 
-#include "room/contents_interface/room_message_interface.hpp"
 #include "room/contents_interface/kick_out_reason.hpp"
+#include "room/contents_interface/room_api_interface.hpp"
+#include "room/contents_interface/room_message_interface.hpp"
 #include "room/contents_interface/types.hpp"
 
 namespace rsp {
 namespace room {
 namespace contents {
 
-class contents : public room_message_interface {
+class contents : public rsp::room::room_message_interface,
+                 public rsp::room::room_api_interface {
  public:
   /**
    * room is created

@@ -33,7 +33,7 @@ struct user {
 
 class room : public std::enable_shared_from_this<room> {
  public:
-  room(RoomId room_id, room_message_interface* contents, user user,
+  room(RoomId room_id, rsp::room::room_message_interface* contents, user user,
        ba::io_context::strand* strand)
       : room_id_(room_id),
         contents_(contents),
