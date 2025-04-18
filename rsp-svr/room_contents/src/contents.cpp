@@ -2,6 +2,7 @@
 
 #include "room_contents/contents.hpp"
 
+#include <format>
 #include <iostream>
 #include <string>
 
@@ -15,6 +16,7 @@ void contents::on_create_room(const RoomId room_id) {
 
 void contents::on_user_enter(const Uid uid) {
   std::cout << "[contents]" << "on_user_enter" << std::endl;
+  api_->send_to_user(api_->users(), std::format("({0}) has entered", uid));
 }
 
 void contents::on_destroy_room() {

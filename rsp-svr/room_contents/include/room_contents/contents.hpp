@@ -12,9 +12,10 @@ namespace rsp {
 namespace room {
 namespace contents {
 
-class contents : public rsp::room::room_message_interface,
-                 public rsp::room::room_api_interface {
+class contents : public rsp::room::room_message_interface {
  public:
+  explicit contents(rsp::room::room_api_interface* api) : api_(api) {}
+
   /**
    * room is created
    * this is first interface that always sent right after created the object
@@ -31,16 +32,21 @@ class contents : public rsp::room::room_message_interface,
    * this is last interface that sent before destroy the object
    * */
   void on_destroy_room() override;
+
   /**
    * in room, message was received
    * */
   void on_recv_message(Uid from, const std::string msg) override;
+
   /**
    * interface that called when user in room was kicked out.
    * e.g., by using api::kick_out_user, after process was done,
    * this callback will be popped up
    * */
   void on_kicked_out_user(Uid uid, KickOutReason reason) override;
+
+ private:
+  rsp::room::room_api_interface* api_;
 };
 
 }  // namespace contents

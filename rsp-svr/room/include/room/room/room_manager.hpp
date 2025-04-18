@@ -10,7 +10,6 @@
 
 #include "proto/room/room.pb.h"
 #include "room/room/room.hpp"
-#include "room/so/so_manager.hpp"
 #include "rsplib/thread/thread_pool.hpp"
 #include "rsplib/util/random.hpp"
 
@@ -33,12 +32,11 @@ class room_manager {
     // temporarily for test convenient
     RoomId room_id = rsp::libs::util::rng(10000, 100000);
     // auto room_id = (--rooms_.end())->first + 1;
-    auto created = std::make_shared<room>(
-        room_id, so_manager_.contents_interface(), user{uid, addr},
-        &strands_.at(rooms_.size() % strands_.size()));
-    // auto created = std::make_shared<room>(
-    //     room_id, nullptr, user{uid, addr},
-    //     &strands_.at(rooms_.size() % strands_.size()));
+    auto created =
+        std::make_shared<room>(room_id, user{uid, addr},
+                               &strands_.at(rooms_.size() % strands_.size()));
+
+    created->create_room();
 
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
@@ -86,8 +84,7 @@ class room_manager {
   room_manager()
       : workers_(30),
         strands_{workers_.size() / 10,
-                 ba::io_context::strand(*workers_.io_context())},
-        so_manager_(rsp::room::so_manager::instance()) {
+                 ba::io_context::strand(*workers_.io_context())} {
     workers_.start();
   }
 
@@ -100,7 +97,6 @@ class room_manager {
 
   rsp::libs::thread_pool workers_;
   std::vector<ba::io_context::strand> strands_;
-  rsp::room::so_manager& so_manager_;
 };
 
 }  // namespace room

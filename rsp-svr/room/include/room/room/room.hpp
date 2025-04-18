@@ -12,6 +12,7 @@
 #include "proto/room/room.pb.h"
 #include "room/contents_interface/room_api_interface.hpp"
 #include "room/contents_interface/room_message_interface.hpp"
+#include "room/so/so_manager.hpp"
 #include "room/types.hpp"
 #include "rsplib/buffer/buffer.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -31,22 +32,24 @@ struct user {
   const Address addr;
 };
 
-class room : public std::enable_shared_from_this<room> {
+class room : public room_api_interface,
+             public std::enable_shared_from_this<room> {
  public:
-  room(RoomId room_id, rsp::room::room_message_interface* contents, user user,
-       ba::io_context::strand* strand)
+  room(RoomId room_id, user user, ba::io_context::strand* strand)
       : room_id_(room_id),
-        contents_(contents),
         owner_(user),
         users_{{user.uid, user}},
         strand_(strand),
-        logger_(lg::logger()) {}
+        logger_(lg::logger()),
+        so_manager_(rsp::room::so_manager::instance()) {}
 
   ~room() {
     strand_->post(std::bind(&room::on_destroy_room, shared_from_this()));
   }
 
   void create_room() {
+    contents_ = std::unique_ptr<room_message_interface>(
+        so_manager_.contents_interface(this));
     strand_->post(
         std::bind(&room::on_create_room, shared_from_this(), room_id_));
   }
@@ -58,7 +61,15 @@ class room : public std::enable_shared_from_this<room> {
 
   RoomId room_id() { return room_id_; }
 
-  bool send_to_user(const std::vector<Uid> uids, const std::string& msg) {
+  std::vector<Uid> users() override {
+    std::vector<Uid> users;
+    std::transform(users_.cbegin(), users_.cend(), std::back_inserter(users),
+                   [](const auto& pair) { return pair.second.uid; });
+    return users;
+  }
+
+  bool send_to_user(const std::vector<Uid> uids,
+                    const std::string& msg) override {
     return send_to_user(SenderType::kContent, nullptr, uids, msg);
   }
 
@@ -78,7 +89,7 @@ class room : public std::enable_shared_from_this<room> {
                             msg);
   }
 
-  void kick_out_user(Uid uid) {}
+  void kick_out_user(Uid uid) override {}
 
   void on_create_room(const RoomId room_id) {
     contents_->on_create_room(room_id);
@@ -157,11 +168,12 @@ class room : public std::enable_shared_from_this<room> {
                          const lm::buffer_ptr buffer);
 
   RoomId room_id_;
-  std::unique_ptr<room_message_interface> contents_;
   user owner_;
   std::map<Uid, user> users_;
   ba::io_context::strand* strand_;
   lg::s_logger& logger_;
+  rsp::room::so_manager& so_manager_;
+  std::unique_ptr<room_message_interface> contents_;
 };
 
 }  // namespace room
