@@ -1,6 +1,6 @@
 # **** CMAKE *********
 CMakeFiles
-Makefile
+build/Makefile
 CMakeCache.txt
 build
 .ccls-cache
