@@ -5,6 +5,7 @@
 #include <source_location>
 
 #include <bitset>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -110,38 +111,90 @@ class s_logger {
 
   virtual s_logger &print_level() = 0;
 
-  s_logger &trace(std::source_location s = std::source_location::current()) {
+  // Log level methods that capture call-site file and line.
+  // Use compiler builtins to ensure evaluation at call site without macros.
+  s_logger &trace(
+#if defined(__clang__) || defined(__GNUC__)
+      const char *file = __builtin_FILE(), int line = __builtin_LINE()
+#else
+      const char *file = __FILE__, int line = __LINE__
+#endif
+  ) {
     std::lock_guard<std::mutex> l(m_);
+    const std::string filename = file ? file : "";
+    const auto name = filename.empty()
+                          ? filename
+                          : filename.substr(filename.find_last_of('/') + 1);
     *this << log_level::kTrace << L_time << L_space << executable_name_
-          << "::" << s << L_space << L_level;
+          << "::" << name << ":" << line << L_space << L_level;
     return *this;
   }
 
-  s_logger &debug(std::source_location s = std::source_location::current()) {
+  s_logger &debug(
+#if defined(__clang__) || defined(__GNUC__)
+      const char *file = __builtin_FILE(), int line = __builtin_LINE()
+#else
+      const char *file = __FILE__, int line = __LINE__
+#endif
+  ) {
     std::lock_guard<std::mutex> l(m_);
+    const std::string filename = file ? file : "";
+    const auto name = filename.empty()
+                          ? filename
+                          : filename.substr(filename.find_last_of('/') + 1);
     *this << log_level::kDebug << L_time << L_space << executable_name_
-          << "::" << s << L_space << L_level;
+          << "::" << name << ":" << line << L_space << L_level;
     return *this;
   }
 
-  s_logger &info(std::source_location s = std::source_location::current()) {
+  s_logger &info(
+#if defined(__clang__) || defined(__GNUC__)
+      const char *file = __builtin_FILE(), int line = __builtin_LINE()
+#else
+      const char *file = __FILE__, int line = __LINE__
+#endif
+  ) {
     std::lock_guard<std::mutex> l(m_);
+    const std::string filename = file ? file : "";
+    const auto name = filename.empty()
+                          ? filename
+                          : filename.substr(filename.find_last_of('/') + 1);
     *this << log_level::kInfo << L_time << L_space << executable_name_
-          << "::" << s << L_space << L_level;
+          << "::" << name << ":" << line << L_space << L_level;
     return *this;
   }
 
-  s_logger &warn(std::source_location s = std::source_location::current()) {
+  s_logger &warn(
+#if defined(__clang__) || defined(__GNUC__)
+      const char *file = __builtin_FILE(), int line = __builtin_LINE()
+#else
+      const char *file = __FILE__, int line = __LINE__
+#endif
+  ) {
     std::lock_guard<std::mutex> l(m_);
+    const std::string filename = file ? file : "";
+    const auto name = filename.empty()
+                          ? filename
+                          : filename.substr(filename.find_last_of('/') + 1);
     *this << log_level::kWarn << L_time << L_space << executable_name_
-          << "::" << s << L_space << L_level;
+          << "::" << name << ":" << line << L_space << L_level;
     return *this;
   }
 
-  s_logger &error(std::source_location s = std::source_location::current()) {
+  s_logger &error(
+#if defined(__clang__) || defined(__GNUC__)
+      const char *file = __builtin_FILE(), int line = __builtin_LINE()
+#else
+      const char *file = __FILE__, int line = __LINE__
+#endif
+  ) {
     std::lock_guard<std::mutex> l(m_);
+    const std::string filename = file ? file : "";
+    const auto name = filename.empty()
+                          ? filename
+                          : filename.substr(filename.find_last_of('/') + 1);
     *this << log_level::kError << L_time << L_space << executable_name_
-          << "::" << s << L_space << L_level;
+          << "::" << name << ":" << line << L_space << L_level;
     return *this;
   }
 

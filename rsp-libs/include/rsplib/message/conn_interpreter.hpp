@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "proto/common/message_type.pb.h"
-#include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/serializer.hpp"
