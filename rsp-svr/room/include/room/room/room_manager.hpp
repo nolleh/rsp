@@ -35,9 +35,6 @@ class room_manager {
     auto created =
         std::make_shared<room>(room_id, user{uid, addr},
                                &strands_.at(rooms_.size() % strands_.size()));
-
-    created->create_room();
-
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
     rooms_[room_id] = created;
@@ -63,7 +60,6 @@ class room_manager {
 
     rooms_[room_id] = room;
     user_rooms_[uid] = room_id;
-    room->join_room(uid, addr);
     return room;
   }
 

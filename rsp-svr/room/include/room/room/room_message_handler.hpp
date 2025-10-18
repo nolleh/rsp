@@ -34,6 +34,9 @@ class room_message_handler {
 
     auto room =
         room_manager_.create_room(create_room.uid(), create_room.addr());
+
+    room->create_room();
+
     User2RoomResCreateRoom res_create_room;
     res_create_room.set_success(true);
     res_create_room.set_request_id(create_room.request_id());
