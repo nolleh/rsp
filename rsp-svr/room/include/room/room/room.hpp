@@ -104,21 +104,23 @@ class room : public room_api_interface,
   void on_destroy_room() {}
 
   void on_recv_message(Uid from, const std::string& msg) {
-    logger_.debug() << "message from user(" << from << "): message: " << msg
-                    << lg::L_endl;
-    // echo
-    auto user = users_.find(from);
-    if (users_.end() == user) {
-      logger_.debug() << "unable to find out sender(" << from
-                      << "), message: " << msg << lg::L_endl;
+    // logger_.debug() << "message from user(" << from << "): message: " << msg
+    //                 << lg::L_endl;
+    // // echo
+    // auto user = users_.find(from);
+    // if (users_.end() == user) {
+    //   logger_.debug() << "unable to find out sender(" << from
+    //                   << "), message: " << msg << lg::L_endl;
+    //
+    //   strand_->post(
+    //       boost::bind(&room::send_to_all_user, shared_from_this(), msg));
+    //   return;
+    // }
+    //
+    // strand_->post(boost::bind(&room::send_to_all_user, shared_from_this(),
+    //                           user->second, msg));
 
-      strand_->post(
-          boost::bind(&room::send_to_all_user, shared_from_this(), msg));
-      return;
-    }
-
-    strand_->post(boost::bind(&room::send_to_all_user, shared_from_this(),
-                              user->second, msg));
+    contents_->on_recv_message(from, msg);
   }
 
   void on_kicked_out_user(Uid uid, KickOutReason reason) {}

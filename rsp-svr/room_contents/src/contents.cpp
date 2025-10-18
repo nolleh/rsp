@@ -25,6 +25,8 @@ void contents::on_destroy_room() {
 
 void contents::on_recv_message(Uid from, const std::string msg) {
   std::cout << "[contents]" << "on_recv_message" << std::endl;
+  // echo
+  api_->send_to_user(api_->users(), std::format("({0}):{1}", from, msg));
 }
 
 void contents::on_kicked_out_user(Uid uid, KickOutReason reason) {
