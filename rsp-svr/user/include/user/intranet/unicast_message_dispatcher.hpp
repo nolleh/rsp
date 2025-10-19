@@ -33,6 +33,8 @@ class unicast_message_dispatcher : public dispatcher_interface {
     // REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdClient,
                 handle_buffer<User2RoomReqFwdClient>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomNtfLeaveRoom,
+                handle_buffer<User2RoomNtfLeaveRoom>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&unicast_message_dispatcher::handle_unknown, this, ph::_1));
   }

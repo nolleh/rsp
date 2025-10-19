@@ -23,6 +23,7 @@ message ResFwdClient {
 }
 
 message NtfLeaveRoom {
-  LeaveRoomReason reason = 1;
-  optional uint32 kickoutReason = 2;
+  string uid = 1;
+  LeaveRoomReason reason = 2;
+  optional uint32 kickoutReason = 3;
 }

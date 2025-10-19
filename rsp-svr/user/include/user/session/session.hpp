@@ -174,6 +174,8 @@ void session::on_recv(const ReqFwdRoom& msg);
 template <>
 void session::on_recv(const User2RoomReqFwdClient& msg);
 
+template <>
+void session::on_recv(const User2RoomNtfLeaveRoom& msg);
 }  // namespace session
 }  // namespace user
 }  // namespace rsp

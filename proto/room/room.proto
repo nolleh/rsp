@@ -48,8 +48,10 @@ message User2RoomResFwdRoom {
 }
 
 message User2RoomNtfLeaveRoom {
-  LeaveRoomReason reason = 1;
-  optional uint32 kickout_reason = 2;
+  // specify recipient
+  string uid = 1;
+  LeaveRoomReason reason = 2;
+  optional uint32 kickout_reason = 3;
 }
 
 message User2RoomReqFwdClient {
