@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "proto/common/sender-type.proto";
+import "proto/common/leave_room_reason.proto";
 
 message ReqFwdClient {
   uint64 request_id = 1;
@@ -19,4 +20,9 @@ message ResFwdClient {
   string message = 5;
   // repeated string users = 3;
   bool success = 6;
+}
+
+message NtfLeaveRoom {
+  LeaveRoomReason reason = 1;
+  optional uint32 kickoutReason = 2;
 }

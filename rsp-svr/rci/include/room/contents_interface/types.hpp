@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "room/contents_interface/kickout_reason.hpp"
+
 namespace rsp {
 namespace room {
 

@@ -14,7 +14,7 @@ class room_api_interface {
   /***
    * in room, send message to user(s).
    * */
-  virtual bool send_to_user(const std::vector<Uid> uids,
+  virtual bool send_to_user(const std::vector<Uid>& uids,
                             const std::string& msg) = 0;
 
   /**
@@ -22,8 +22,7 @@ class room_api_interface {
    * by using send_to_user interface, communicate (vote) with
    * to determine kickout. the voting is content's role.
    * */
-  virtual void kick_out_user(Uid uid) = 0;
-
+  virtual void kick_out_user(const Uid& uid, const KickoutReason& reason) = 0;
   /**
    * get users in room
    * */

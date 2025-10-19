@@ -23,13 +23,13 @@ void contents::on_destroy_room() {
   std::cout << "[contents]" << "on_destroy_room" << std::endl;
 }
 
-void contents::on_recv_message(Uid from, const std::string msg) {
+void contents::on_recv_message(const Uid& from, const std::string& msg) {
   std::cout << "[contents]" << "on_recv_message" << std::endl;
   // echo
   api_->send_to_user(api_->users(), std::format("({0}):{1}", from, msg));
 }
 
-void contents::on_kicked_out_user(Uid uid, KickOutReason reason) {
+void contents::on_kicked_out_user(const Uid& uid, const KickoutReason& reason) {
   std::cout << "[contents]" << "on_kicked_out_user" << std::endl;
 }
 

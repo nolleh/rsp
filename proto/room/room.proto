@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "proto/common/sender-type.proto";
+import "proto/common/leave_room_reason.proto";
 
 message User2RoomReqCreateRoom {
   uint64 request_id = 1;
@@ -44,6 +45,11 @@ message User2RoomResFwdRoom {
   string uid = 3;
   string message = 4;
   bool success = 5;
+}
+
+message User2RoomNtfLeaveRoom {
+  LeaveRoomReason reason = 1;
+  optional uint32 kickout_reason = 2;
 }
 
 message User2RoomReqFwdClient {
