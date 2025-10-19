@@ -3,6 +3,7 @@
 #include "user/session/session.hpp"
 
 #include <iostream>
+#include <memory>
 
 #include "user/job/job_cli_forward_message.hpp"
 #include "user/job/job_create_room.hpp"
@@ -10,6 +11,7 @@
 #include "user/job/job_join_room.hpp"
 #include "user/job/job_login.hpp"
 #include "user/job/job_logout.hpp"
+#include "user/job/job_ntf_leave_room_message.hpp"
 #include "user/job/job_stop.hpp"
 
 namespace rsp {
@@ -78,6 +80,15 @@ void session::on_recv(const User2RoomReqFwdClient& request) {
   last_received_ = std::time(nullptr);
   namespace job = rsp::user::job;
   auto runner = std::make_shared<job::job_cli_forward_message>(
+      shared_from_this(), request);
+  enqueue_job(runner);
+}
+
+template <>
+void session::on_recv(const User2RoomNtfLeaveRoom& request) {
+  last_received_ = std::time(nullptr);
+  namespace job = rsp::user::job;
+  auto runner = std::make_shared<job::job_ntf_leave_room_message>(
       shared_from_this(), request);
   enqueue_job(runner);
 }

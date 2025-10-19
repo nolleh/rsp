@@ -17,6 +17,7 @@ enum MessageType {
   kResFwdRoom = 11;
   kReqFwdClient = 12;
   kResFwdClient = 13;
+  kNtfLeaveRoom = 23;
 
   //room
   kUser2RoomReqCreateRoom = 14;
@@ -27,4 +28,5 @@ enum MessageType {
   kUser2RoomResFwdRoom = 19;
   kUser2RoomReqFwdClient = 20;
   kUser2RoomResFwdClient = 21;
+  kUser2RoomNtfLeaveRoom = 22;
 }
