@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+enum LeaveRoomReason {
+  kInternal = 0;
+  kUserRequested = 1;
+  kKickedOut = 2;
+}

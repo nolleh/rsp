@@ -68,12 +68,12 @@ class room : public room_api_interface,
     return users;
   }
 
-  bool send_to_user(const std::vector<Uid> uids,
+  bool send_to_user(const std::vector<Uid>& uids,
                     const std::string& msg) override {
     return send_to_user(SenderType::kContent, nullptr, uids, msg);
   }
 
-  bool send_to_user(const user& sender, const std::vector<Uid> uids,
+  bool send_to_user(const user& sender, const std::vector<Uid>& uids,
                     const std::string& msg) {
     return send_to_user(SenderType::kUser, std::make_shared<user>(sender), uids,
                         msg);
@@ -89,7 +89,12 @@ class room : public room_api_interface,
                             msg);
   }
 
-  void kick_out_user(Uid uid) override {}
+  void kick_out_user(const Uid& uid, const KickoutReason& reason) override {
+    logger_.debug() << "kick out user(" << uid << ")";
+
+    strand_->post(
+        std::bind(&room::kick_out_user_impl, shared_from_this(), uid, reason));
+  }
 
   void on_create_room(const RoomId room_id) {
     contents_->on_create_room(room_id);
@@ -98,32 +103,15 @@ class room : public room_api_interface,
   void on_user_enter(const Uid& uid, const Address& addr) {
     users_.insert({uid, user(uid, addr)});
     contents_->on_user_enter(uid);
-    // send_to_all_user("uid:(" + uid + ") has entered room");
   }
 
   void on_destroy_room() {}
 
   void on_recv_message(Uid from, const std::string& msg) {
-    // logger_.debug() << "message from user(" << from << "): message: " << msg
-    //                 << lg::L_endl;
-    // // echo
-    // auto user = users_.find(from);
-    // if (users_.end() == user) {
-    //   logger_.debug() << "unable to find out sender(" << from
-    //                   << "), message: " << msg << lg::L_endl;
-    //
-    //   strand_->post(
-    //       boost::bind(&room::send_to_all_user, shared_from_this(), msg));
-    //   return;
-    // }
-    //
-    // strand_->post(boost::bind(&room::send_to_all_user, shared_from_this(),
-    //                           user->second, msg));
-
     contents_->on_recv_message(from, msg);
   }
 
-  void on_kicked_out_user(Uid uid, KickOutReason reason) {}
+  void on_kicked_out_user(const Uid& uid, const KickoutReason& reason) {}
 
  private:
   bool send_to_user(const SenderType sender_type,
@@ -158,16 +146,18 @@ class room : public room_api_interface,
                    [](const auto& pair) { return pair.second; });
     logger_.debug() << "send_to_all_user, # of users: " << users.size()
                     << lg::L_endl;
-    strand_->dispatch(std::bind(&room::send_to_user_impl, shared_from_this(),
-                                sender_type, sender,
-                                std::make_shared<std::vector<user>>(users),
-                                rsp::libs::buffer::make_buffer_ptr(msg)));
+    strand_->post(std::bind(&room::send_to_user_impl, shared_from_this(),
+                            sender_type, sender,
+                            std::make_shared<std::vector<user>>(users),
+                            rsp::libs::buffer::make_buffer_ptr(msg)));
   }
 
   void send_to_user_impl(const SenderType& sender_type,
                          const std::shared_ptr<user> sender,
                          const std::shared_ptr<std::vector<user>> users,
                          const lm::buffer_ptr buffer);
+
+  void kick_out_user_impl(const Uid& uid, const KickoutReason& reason);
 
   RoomId room_id_;
   user owner_;

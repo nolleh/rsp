@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "room/contents_interface/kick_out_reason.hpp"
+#include "room/contents_interface/kickout_reason.hpp"
 #include "room/contents_interface/types.hpp"
 
 namespace rsp {
@@ -32,14 +32,15 @@ class room_message_interface {
   /**
    * in room, message was received
    * */
-  virtual void on_recv_message(Uid from, const std::string msg) = 0;
+  virtual void on_recv_message(const Uid& from, const std::string& msg) = 0;
 
   /**
    * interface that called when user in room was kicked out.
    * e.g., by using api::kick_out_user, after process was done,
    * this callback will be popped up
    * */
-  virtual void on_kicked_out_user(Uid uid, KickOutReason reason) = 0;
+  virtual void on_kicked_out_user(const Uid& uid,
+                                  const KickoutReason& reason) = 0;
 };
 
 }  // namespace room

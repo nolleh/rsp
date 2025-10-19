@@ -12,7 +12,7 @@ repos:
   #     - id: shfmt
 
   - repo: https://github.com/cpplint/cpplint
-    rev: 2.0.0
+    rev: 2.0.2
     hooks:
       - id: cpplint
         exclude: cppzmq

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "room/contents_interface/kick_out_reason.hpp"
+#include "room/contents_interface/kickout_reason.hpp"
 #include "room/contents_interface/room_api_interface.hpp"
 #include "room/contents_interface/room_message_interface.hpp"
 #include "room/contents_interface/types.hpp"
@@ -36,14 +36,14 @@ class contents : public rsp::room::room_message_interface {
   /**
    * in room, message was received
    * */
-  void on_recv_message(Uid from, const std::string msg) override;
+  void on_recv_message(const Uid& from, const std::string& msg) override;
 
   /**
    * interface that called when user in room was kicked out.
    * e.g., by using api::kick_out_user, after process was done,
    * this callback will be popped up
    * */
-  void on_kicked_out_user(Uid uid, KickOutReason reason) override;
+  void on_kicked_out_user(const Uid& uid, const KickoutReason& reason) override;
 
  private:
   rsp::room::room_api_interface* api_;
