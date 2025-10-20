@@ -48,7 +48,7 @@ class state_in_room : public base_state {
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
     //
-    prompt_ << "possible command \n1) logout 2) send message";
+    prompt_ << "possible command \n1) logout 2) send message 3) kickout";
     read_input();
   }
 
@@ -68,6 +68,10 @@ class state_in_room : public base_state {
     dispatcher_.register_handler(
         MessageType::kReqFwdClient,
         std::bind(&state_in_room::handle_req_fwd_cli, this,
+                  std::placeholders::_1, std::placeholders::_2));
+    dispatcher_.register_handler(
+        MessageType::kNtfLeaveRoom,
+        std::bind(&state_in_room::handle_ntf_leave_room, this,
                   std::placeholders::_1, std::placeholders::_2));
     start_fwd_read();
   }
@@ -92,7 +96,7 @@ class state_in_room : public base_state {
         //   std::this_thread::sleep_for(std::chrono::seconds(1));
         //   init();
         //   break;
-        case 2:
+        case 2: {
           std::cout << "type message to send" << std::endl;
           std::cout << "> ";
           std::string msg;
@@ -100,7 +104,23 @@ class state_in_room : public base_state {
           ReqFwdRoom fwd;
           fwd.set_message(msg);
           send_message(MessageType::kReqFwdRoom, fwd);
+          read_input();
           break;
+        }
+        case 3: {
+          std::cout << "type user name to kickout" << std::endl;
+          std::cout << "> ";
+          std::string user;
+          std::getline(std::cin >> std::ws, user);
+          ReqFwdRoom fwd;
+          // TODO(@nolleh) content message definition
+          std::string kickout = "kickout:" + user;
+          fwd.set_message(kickout);
+          send_message(MessageType::kReqFwdRoom, fwd);
+          // TODO(@nolleh) interupt prompt when leaved room? hm
+          read_input();
+          break;
+        }
       }
     } catch (std::invalid_argument const& ex) {
       prompt_ << "your command is incorrect";
@@ -157,6 +177,26 @@ class state_in_room : public base_state {
     }
     std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m"
               << std::endl;
+  }
+
+  void handle_ntf_leave_room(buffer_ptr buffer, link*) {
+    NtfLeaveRoom ntf_leave_room;
+    if (!rsp::libs::message::serializer::deserialize(*buffer,
+                                                     &ntf_leave_room)) {
+      logger_.error() << "failed to deserialize ntf leave room" << lg::L_endl;
+      return;
+    }
+
+    const auto reason = ntf_leave_room.reason();
+    const auto kickout_reason = ntf_leave_room.kickoutreason();
+
+    logger_.info() << "ntf_leave_room received, reason:" << reason
+                   << ", kickout reason:" << kickout_reason << lg::L_endl;
+
+    // give opportunity to user read;
+    sleep(1);
+
+    next_ = State::kLoggedIn;
   }
 
   template <typename T>

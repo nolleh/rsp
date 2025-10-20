@@ -8,6 +8,8 @@ find_package(Boost)
 find_package(Protobuf)
 find_package(cppzmq)
 
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD)
+
 if(UNIX AND NOT APPLE)
     set(EXTENSION ".so")
 elseif(APPLE)

@@ -42,10 +42,12 @@ class job_forward_message
     request.set_uid(session_->uid());
     request.set_message(request_.message());
 
-    intranet_.room().send_request(
-        MessageType::kUser2RoomReqFwdRoom, request,
-        std::bind(&job_forward_message::handle_res_forward_message,
-                  shared_from_this(), ph::_1));
+    // intranet_.room().send_request(
+    //     MessageType::kUser2RoomReqFwdRoom, request,
+    //     std::bind(&job_forward_message::handle_res_forward_message,
+    //               shared_from_this(), ph::_1));
+    intranet_.room().send_notification(
+        MessageType::kUser2RoomReqFwdRoom, request);
   }
 
   void handle_res_forward_message(const std::shared_ptr<Message> msg) {
