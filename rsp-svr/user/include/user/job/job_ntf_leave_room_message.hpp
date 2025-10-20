@@ -42,6 +42,7 @@ class job_ntf_leave_room_message
     const auto buffer = message::serializer::serialize(
         MessageType::kNtfLeaveRoom, ntf_leave_room);
     session_->send(buffer);
+    session_->set_leave_room();
   }
 
  private:

@@ -33,6 +33,8 @@ class room_sender {
         /* the host will be substituted by room-managers response */
         br::broker::s_create_publisher(CastType::kAnyCast, "room", 1,
                                        "tcp://127.0.0.1:5559");
+    room_pub_sender_ = br::broker::s_create_publisher(CastType::kPub, "room", 1,
+                                                      "tcp://127.0.0.1:5561");
   }
 
   ~room_sender() { stop(); }
@@ -40,6 +42,7 @@ class room_sender {
   void start() {
     // sender live longer threads
     room_sender_->start();
+    room_pub_sender_->start();
     threads_.start();
 
     // co_spawn(
@@ -50,6 +53,7 @@ class room_sender {
   void stop() {
     stop_ = true;
     room_sender_->stop();
+    room_pub_sender_->stop();
     threads_.join();
   }
 
@@ -58,7 +62,7 @@ class room_sender {
     while (!stop_.load()) {
       // TODO(@nolleh) awaitable.
       // auto buffer = co_await room_sender_->recv("topic");
-      auto buffer = room_sender_->recv("topic").get();
+      auto buffer = room_pub_sender_->recv("topic").get();
 
       namespace msg = rsp::libs::message;
       auto destructed = msg::serializer::destruct_buffer(buffer);
@@ -105,7 +109,7 @@ class room_sender {
   void send_notification(MessageType type, const T& req) const {
     namespace msg = rsp::libs::message;
     auto buffer = msg::serializer::serialize(type, req);
-    room_sender_->send("topic", buffer);
+    room_pub_sender_->send("topic", buffer);
   }
 
   void on_recv(const Ping& ping) const {
@@ -140,6 +144,7 @@ class room_sender {
 
   message_dispatcher<room_sender> dispatcher_;
   std::shared_ptr<br::broker_interface> room_sender_;
+  std::shared_ptr<br::broker_interface> room_pub_sender_;
   std::atomic<bool> stop_;
 
   // TODO(@nolleh) timeout

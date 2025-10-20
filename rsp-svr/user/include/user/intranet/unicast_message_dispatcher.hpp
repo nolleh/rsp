@@ -41,6 +41,7 @@ class unicast_message_dispatcher : public dispatcher_interface {
 #undef REG_HANDLER
   void dispatch(MessageType type, const raw_buffer& buffer,
                 link* link) override {
+    lg::logger().debug() << "unicast_dispatch, type:" << type << lg::L_endl;
     dispatcher_.dispatch(type, buffer, link);
   }
 

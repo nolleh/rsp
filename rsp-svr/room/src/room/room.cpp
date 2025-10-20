@@ -39,6 +39,7 @@ void room::kick_out_user_impl(const Uid& uid, const KickoutReason& reason) {
   }
 
   User2RoomNtfLeaveRoom msg;
+  msg.set_uid(uid);
   msg.set_reason(LeaveRoomReason::kKickedOut);
   msg.set_kickout_reason(static_cast<int>(reason));
 

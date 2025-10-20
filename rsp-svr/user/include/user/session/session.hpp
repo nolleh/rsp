@@ -95,6 +95,7 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   void set_user(const std::string& uid) { uid_ = uid; }
   void set_enter_room(uint32_t room_id) { room_id_ = room_id; }
+  void set_leave_room() { room_id_ = 0; }
 
   std::string uid() const { return uid_; }
 
