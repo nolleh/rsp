@@ -29,7 +29,7 @@ class state_in_room : public base_state {
 
   ~state_in_room() {
     stop_ = true;
-    reader_->join();
+    // reader_->join();
     dispatcher_.unregister_handler(MessageType::kResLogout);
   }
 
@@ -117,8 +117,8 @@ class state_in_room : public base_state {
           std::string kickout = "kickout:" + user;
           fwd.set_message(kickout);
           send_message(MessageType::kReqFwdRoom, fwd);
-          // TODO(@nolleh) interupt prompt when leaved room? hm
-          read_input();
+          const auto context = get_context();
+          if (user != context->uid) read_input();
           break;
         }
       }
@@ -193,9 +193,11 @@ class state_in_room : public base_state {
     logger_.info() << "ntf_leave_room received, reason:" << reason
                    << ", kickout reason:" << kickout_reason << lg::L_endl;
 
-    // give opportunity to user read;
-    sleep(1);
+    // sleep(1);
 
+    std::cin.clear();
+    stop_ = true;
+    socket_->cancel();
     next_ = State::kLoggedIn;
   }
 
@@ -216,11 +218,13 @@ class state_in_room : public base_state {
     reader_ = std::make_unique<std::thread>([&]() {
       while (!stop_) read_message();
     });
+    reader_->detach();
   }
 
   void read_message() {
     std::array<char, 128> buf;
     boost::system::error_code error;
+    // TODO(@nolleh) check escaped after cancel
     auto len = socket_->read_some(boost::asio::buffer(buf), error);
     if (error) {
       if (boost::asio::error::eof == error) {

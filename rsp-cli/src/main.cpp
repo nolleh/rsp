@@ -12,12 +12,12 @@
 #include "rsplib/logger/logger.hpp"
 
 // #include <boost/array.hpp>
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   namespace lg = rsp::libs::logger;
 
   namespace ip = boost::asio::ip;
   namespace rsp_cli = rsp::cli;
-  auto &logger = lg::logger(lg::log_level::kInfo);
+  auto& logger = lg::logger(lg::log_level::kDebug);
 
   rsp::libs::tracer::install();
   try {
@@ -40,10 +40,15 @@ int main(int argc, char *argv[]) {
     bool create = true;
     std::shared_ptr<rsp_cli::state::base_state> client = nullptr;
     for (;;) {
+      logger.debug() << "initialize client.." << create << lg::L_endl;
       if (create) {
+        logger.debug() << "create" << static_cast<int>(curr) << lg::L_endl;
         // give a chance old state client to erase handler
         client = nullptr;
+        logger.debug() << "factory create" << static_cast<int>(curr)
+                       << lg::L_endl;
         client = rsp_cli::state::factory::create(curr, &socket, &context);
+        logger.debug() << "created client with" << client << lg::L_endl;
         client->init();
       }
       std::array<char, 128> buf;
@@ -67,7 +72,7 @@ int main(int argc, char *argv[]) {
                        << "need create for next state?" << create << lg::L_endl;
       }
     }
-  } catch (std::exception &e) {
+  } catch (std::exception& e) {
     logger.error() << e.what() << lg::L_endl;
   }
 }
