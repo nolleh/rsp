@@ -21,6 +21,11 @@ void contents::on_user_enter(const Uid uid) {
   api_->send_to_user(api_->users(), std::format("({0}) has entered", uid));
 }
 
+void contents::on_user_exit(const Uid uid) {
+  std::cout << "[contents]" << "on_user_exit" << std::endl;
+  api_->send_to_user(api_->users(), std::format("({0}) has exited", uid));
+}
+
 void contents::on_destroy_room() {
   std::cout << "[contents]" << "on_destroy_room" << std::endl;
 }

@@ -28,6 +28,11 @@ class contents : public rsp::room::room_message_interface {
   void on_user_enter(const Uid uid) override;
 
   /**
+   * user exited to room
+   * */
+  void on_user_exit(const Uid uid) override;
+
+  /**
    * about to destroyed room.
    * this is last interface that sent before destroy the object
    * */

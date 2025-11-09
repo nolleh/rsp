@@ -24,6 +24,11 @@ class room_message_interface {
   virtual void on_user_enter(const Uid uid) = 0;
 
   /**
+   * user exited to room
+   * */
+  virtual void on_user_exit(const Uid uid) = 0;
+
+  /**
    * about to destroyed room.
    * this is last interface that sent before destroy the object
    * */
