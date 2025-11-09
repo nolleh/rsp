@@ -47,6 +47,18 @@ message User2RoomResFwdRoom {
   bool success = 5;
 }
 
+message User2RoomReqLeaveRoom {
+  uint64 request_id = 1;
+  uint64 room_id = 2;
+  string uid = 3;
+}
+
+message User2RoomResLeaveRoom {
+  uint64 request_id = 1;
+  string uid = 2;
+  bool success = 3;
+}
+
 message User2RoomNtfLeaveRoom {
   // specify recipient
   string uid = 1;
@@ -74,3 +86,4 @@ message User2RoomResFwdClient {
   string message = 5;
   bool success = 6;
 }
+

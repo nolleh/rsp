@@ -33,3 +33,12 @@ message ResFwdRoom {
   // repeated string users = 3;
   bool success = 3;
 }
+
+message ReqLeaveRoom {
+  uint64 request_id = 1;
+}
+
+message ResLeaveRoom {
+  uint64 request_id = 1;
+  bool success = 2;
+}
