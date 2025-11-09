@@ -98,6 +98,18 @@ class room_message_handler {
     // room->on_recv_message(fwd_room.uid(), fwd_room.message());
   }
 
+  User2RoomResLeaveRoom handle(const User2RoomReqLeaveRoom& leave_room) {
+    logger_.trace() << "leave_room: " << leave_room.DebugString() << lg::L_endl;
+
+    const auto room = room_manager_.leave_room(leave_room.uid());
+    room->leave_room(leave_room.uid());
+
+    User2RoomResLeaveRoom res_leave_room;
+    res_leave_room.set_request_id(leave_room.request_id());
+    res_leave_room.set_success(true);
+    return res_leave_room;
+  }
+
  private:
   void register_user_server(const User2RoomReqCreateRoom& msg);
   void register_user_server(const User2RoomReqJoinRoom& msg);

@@ -59,6 +59,10 @@ class room : public room_api_interface,
         std::bind(&room::on_user_enter, shared_from_this(), uid, addr));
   }
 
+  void leave_room(const Uid& uid) {
+    strand_->post(std::bind(&room::on_user_exit, shared_from_this(), uid));
+  }
+
   RoomId room_id() { return room_id_; }
 
   std::vector<Uid> users() override {
@@ -103,6 +107,11 @@ class room : public room_api_interface,
   void on_user_enter(const Uid& uid, const Address& addr) {
     users_.insert({uid, user(uid, addr)});
     contents_->on_user_enter(uid);
+  }
+
+  void on_user_exit(const Uid& uid) {
+    users_.erase(uid);
+    contents_->on_user_exit(uid);
   }
 
   void on_destroy_room() {}

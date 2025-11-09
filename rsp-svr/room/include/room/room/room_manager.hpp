@@ -76,6 +76,19 @@ class room_manager {
     return find_room(room_id);
   }
 
+  std::shared_ptr<room> leave_room(Uid uid) {
+    {
+      std::lock_guard<std::mutex> l(m_);
+      auto room_iter = user_rooms_.find(uid);
+      if (user_rooms_.end() == room_iter) {
+        return nullptr;
+      }
+
+      user_rooms_.erase(uid);
+      return find_room(room_iter->second);
+    }
+  }
+
  private:
   room_manager()
       : workers_(30),

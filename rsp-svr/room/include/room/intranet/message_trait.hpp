@@ -28,6 +28,8 @@ MESSAGE_TRAIT(User2RoomReqCreateRoom, MessageType::kUser2RoomReqCreateRoom,
               MessageType::kUser2RoomResCreateRoom);
 MESSAGE_TRAIT(User2RoomReqJoinRoom, MessageType::kUser2RoomReqJoinRoom,
               MessageType::kUser2RoomResJoinRoom);
+MESSAGE_TRAIT(User2RoomReqLeaveRoom, MessageType::kUser2RoomReqLeaveRoom,
+              MessageType::kUser2RoomResLeaveRoom);
 MESSAGE_TRAIT(User2RoomReqFwdRoom, MessageType::kUser2RoomReqFwdRoom,
               MessageType::kUser2RoomResFwdRoom);
 MESSAGE_TRAIT(User2RoomReqFwdClient, MessageType::kUser2RoomReqFwdClient,
