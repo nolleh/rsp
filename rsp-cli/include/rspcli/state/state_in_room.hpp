@@ -48,7 +48,8 @@ class state_in_room : public base_state {
     // auto command_direction = join(',', commands);
     // prompt_ << std::format("possible command \n{}\n", command_direction);
     //
-    prompt_ << "possible command \n1) logout 2) send message 3) kickout";
+    prompt_ << "possible command \n1) logout 2) send message 3) leave room 4) "
+               "kickout";
     read_input();
   }
 
@@ -72,6 +73,10 @@ class state_in_room : public base_state {
     dispatcher_.register_handler(
         MessageType::kNtfLeaveRoom,
         std::bind(&state_in_room::handle_ntf_leave_room, this,
+                  std::placeholders::_1, std::placeholders::_2));
+    dispatcher_.register_handler(
+        MessageType::kNtfLeaveRoom,
+        std::bind(&state_in_room::handle_res_leave_room, this,
                   std::placeholders::_1, std::placeholders::_2));
     start_fwd_read();
   }
@@ -108,6 +113,11 @@ class state_in_room : public base_state {
           break;
         }
         case 3: {
+          ReqLeaveRoom leave_room;
+          send_message(MessageType::kReqLeaveRoom, leave_room);
+          break;
+        }
+        case 4: {
           std::cout << "type user name to kickout" << std::endl;
           std::cout << "> ";
           std::string user;
@@ -194,6 +204,27 @@ class state_in_room : public base_state {
                    << ", kickout reason:" << kickout_reason << lg::L_endl;
 
     // sleep(1);
+
+    std::cin.clear();
+    stop_ = true;
+    socket_->cancel();
+    next_ = State::kLoggedIn;
+  }
+
+  void handle_res_leave_room(buffer_ptr buffer, link*) {
+    ResLeaveRoom res_leave_room;
+    if (!rsp::libs::message::serializer::deserialize(*buffer,
+                                                     &res_leave_room)) {
+      logger_.error() << "failed to deserialize res leave room" << lg::L_endl;
+      return;
+    }
+
+    logger_.info() << "res_leave_room received: success?: "
+                   << res_leave_room.success() << lg::L_endl;
+
+    // sleep(1);
+
+    if (!res_leave_room.success()) return;
 
     std::cin.clear();
     stop_ = true;
