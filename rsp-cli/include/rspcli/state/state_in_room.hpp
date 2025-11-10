@@ -15,6 +15,7 @@
 #include "proto/user/to_client.pb.h"
 #include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
+#include "rsplib/thread/thread_pool.hpp"
 
 namespace rsp {
 namespace cli {
@@ -29,8 +30,10 @@ class state_in_room : public base_state {
 
   ~state_in_room() {
     stop_ = true;
-    // reader_->join();
+    // reader_.stop();
+    // reader_.join();
     dispatcher_.unregister_handler(MessageType::kResLogout);
+    dispatcher_.unregister_handler(MessageType::kResLeaveRoom);
   }
 
   void init() override {
@@ -50,6 +53,7 @@ class state_in_room : public base_state {
     //
     prompt_ << "possible command \n1) logout 2) send message 3) leave room 4) "
                "kickout";
+    // start_fwd_read();
     read_input();
   }
 
@@ -75,7 +79,7 @@ class state_in_room : public base_state {
         std::bind(&state_in_room::handle_ntf_leave_room, this,
                   std::placeholders::_1, std::placeholders::_2));
     dispatcher_.register_handler(
-        MessageType::kNtfLeaveRoom,
+        MessageType::kResLeaveRoom,
         std::bind(&state_in_room::handle_res_leave_room, this,
                   std::placeholders::_1, std::placeholders::_2));
     start_fwd_read();
@@ -250,24 +254,55 @@ class state_in_room : public base_state {
       while (!stop_) read_message();
     });
     reader_->detach();
+
+    // logger_.info() <<"start thread_pool" << lg::L_endl;
+    // reader_.start();
+    // read_message();
   }
 
   void read_message() {
     std::array<char, 128> buf;
     boost::system::error_code error;
-    // TODO(@nolleh) check escaped after cancel
-    auto len = socket_->read_some(boost::asio::buffer(buf), error);
+    const auto bytes = socket_->read_some(boost::asio::buffer(buf), error);
+
     if (error) {
       if (boost::asio::error::eof == error) {
         return;
       }
       throw boost::system::system_error(error);
     }
-    handle_buffer(buf, len);
+    handle_buffer(buf, bytes);
+
+    // TODO(@nolleh) check escaped after cancel
+    // logger_.debug() << "" << lg::L_endl;
+    // auto ptr =
+    //     std::shared_ptr<std::array<char, 128>>(new std::array<char, 128>);
+    // auto wrap = boost::asio::bind_executor(
+    //     reader_.get_executor(),
+    //     std::bind(&state_in_room::handle_read, this, ptr,
+    //     std::placeholders::_1,
+    //               std::placeholders::_2));
+    // socket_->async_read_some(boost::asio::buffer(*ptr), wrap);
   }
 
+  void handle_read(const std::shared_ptr<std::array<char, 128>>& buf,
+                   const boost::system::error_code& error, size_t bytes) {
+    logger_.debug() << "received message from async_read_some:" << bytes
+                    << lg::L_endl;
+    std::cin.clear();
+    if (error) {
+      if (boost::asio::error::eof == error) {
+        return;
+      }
+      throw boost::system::system_error(error);
+    }
+    handle_buffer(*buf, bytes);
+    read_message();
+  }
+
+  // rsp::libs::thread_pool reader_;
   std::unique_ptr<std::thread> reader_;
-  std::atomic<bool> stop_;
+  std::atomic<bool> stop_ = false;
 };
 
 }  // namespace state
