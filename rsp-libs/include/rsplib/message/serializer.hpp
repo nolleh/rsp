@@ -53,8 +53,8 @@ class serializer {
     const auto type = static_cast<MessageType>(type_parts);
 
     raw_buffer payload;
-    std::for_each(buffer.cbegin() + kContentLen + kType, buffer.cend(),
-                  [&payload](auto k) { payload.emplace_back(k); });
+    payload.insert(payload.end(), buffer.cbegin() + kContentLen + kType,
+                   buffer.cbegin() + message_len);
 
     // payload.insert(payload.end(), buffer.cbegin() + kContentLen + kType,
     //                buffer.cend());

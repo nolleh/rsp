@@ -45,16 +45,21 @@ class conn_interpreter {
     lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len)
                          << lg::L_endl;
 
-    buffer_.insert(buffer_.end(), buffer.begin(), buffer.begin() + len);
-
-    auto meta = serializer::destruct_buffer(buffer_);
-    if (!meta.size) {
+    if (len > buffer.size()) {
       return;
     }
+    buffer_.insert(buffer_.end(), buffer.begin(), buffer.begin() + len);
 
-    buffer_ = retrieve_v(buffer_, meta.size, buffer_.size());
-    lg::logger().trace() << "about to dispatch" << lg::L_endl;
-    dispatcher_->dispatch(meta.type, meta.payload, link_);
+    while (true) {
+      auto meta = serializer::destruct_buffer(buffer_);
+      if (!meta.size) {
+        return;
+      }
+
+      buffer_ = retrieve_v(buffer_, meta.size, buffer_.size());
+      lg::logger().trace() << "about to dispatch" << lg::L_endl;
+      dispatcher_->dispatch(meta.type, meta.payload, link_);
+    }
   }
 
   void attach_link(link* link) {

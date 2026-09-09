@@ -4,6 +4,7 @@
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h> // NOLINT
 #include <string>
+#include <vector>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
@@ -39,6 +40,30 @@ TEST(Message, Serialize) {
   EXPECT_EQ(login.uid(), login2.uid());
 }
 
+TEST(Message, PayloadDoesNotIncludeFollowingMessage) {
+  namespace message = rsp::libs::message;
+
+  ReqFwdClient first;
+  first.set_message("first");
+  ReqFwdClient second;
+  second.set_message("second");
+
+  auto first_buffer =
+      message::serializer::serialize(MessageType::kReqFwdClient, first);
+  auto second_buffer =
+      message::serializer::serialize(MessageType::kReqFwdClient, second);
+  first_buffer.insert(first_buffer.end(), second_buffer.begin(),
+                      second_buffer.end());
+
+  const auto meta = message::serializer::destruct_buffer(first_buffer);
+  ASSERT_NE(meta.size, 0u);
+
+  ReqFwdClient decoded;
+  ASSERT_TRUE(message::serializer::deserialize(meta.payload, &decoded));
+  EXPECT_EQ(decoded.message(), first.message());
+  EXPECT_EQ(meta.payload_size, first.ByteSizeLong());
+}
+
 TEST(Interpreter, QueuedMessage) {
   namespace message = rsp::libs::message;
   message::conn_interpreter interpreter;
@@ -63,21 +88,52 @@ TEST(Interpreter, QueuedMessage) {
 
   std::array<char, 128> stream;
   std::copy(buffer.begin(), buffer.end(), stream.begin());
+  std::vector<std::string> received;
   message::message_dispatcher::instance().register_handler(
       MessageType::kReqFwdClient,
-      [&](message::buffer_ptr buffer, rsp::libs::link::link* link) {
+      [&received](message::buffer_ptr buffer, rsp::libs::link::link* link) {
         ReqFwdClient fwd;
         auto deserialized = message::serializer::deserialize(*buffer, &fwd);
-        EXPECT_EQ(m, fwd.message());
+        ASSERT_TRUE(deserialized);
+        received.push_back(fwd.message());
       });
   interpreter.handle_buffer(stream, buffer.size());
 
+  EXPECT_EQ(received, (std::vector<std::string>{m, m2}));
+}
+
+TEST(Interpreter, DispatchesAllCompleteMessagesFromOneRead) {
+  namespace message = rsp::libs::message;
+
+  message::conn_interpreter interpreter;
+  std::vector<std::string> received;
+
+  ReqFwdClient first;
+  first.set_message("first");
+  ReqFwdClient second;
+  second.set_message("second");
+
+  auto first_buffer =
+      message::serializer::serialize(MessageType::kReqFwdClient, first);
+  auto second_buffer =
+      message::serializer::serialize(MessageType::kReqFwdClient, second);
+  first_buffer.insert(first_buffer.end(), second_buffer.begin(),
+                      second_buffer.end());
+
+  ASSERT_LE(first_buffer.size(), 128u);
+  std::array<char, 128> input{};
+  std::copy(first_buffer.begin(), first_buffer.end(), input.begin());
+
   message::message_dispatcher::instance().register_handler(
       MessageType::kReqFwdClient,
-      [&](message::buffer_ptr buffer, rsp::libs::link::link* link) {
-        ReqFwdClient fwd;
-        auto deserialized = message::serializer::deserialize(*buffer, &fwd);
-        EXPECT_EQ(m2, fwd.message());
+      [&received](message::buffer_ptr buffer,
+                  rsp::libs::link::link* link) {
+        ReqFwdClient decoded;
+        ASSERT_TRUE(message::serializer::deserialize(*buffer, &decoded));
+        received.push_back(decoded.message());
       });
-  interpreter.handle_buffer(std::array<char, 128>{}, 0);
+
+  interpreter.handle_buffer(input, first_buffer.size());
+
+  EXPECT_EQ(received, (std::vector<std::string>{"first", "second"}));
 }

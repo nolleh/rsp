@@ -37,8 +37,8 @@ run-svr:
 run-cli:
 	./run-cli.sh
 
-test:
-	./test.sh
+test: build
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 # Debug build target
 debug:
@@ -57,5 +57,4 @@ help:
 	@echo "  test       - Run tests"
 	@echo "  debug      - Build in debug mode"
 	@echo "  help       - Show this help message"
-
 

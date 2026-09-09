@@ -3,6 +3,7 @@
 #pragma once
 #include <algorithm>
 #include <bitset>
+#include <cstring>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -45,10 +46,8 @@ inline bool mget(const raw_buffer& src, T* dest, uint8_t offset) {
   if (src.size() < offset + sizeof(*dest)) {
     return false;
   }
-  // memcpy(reinterpret_cast<T*>(&src[0] + offset), dest, sizeof(dest));
-  const auto ptr = reinterpret_cast<const char*>(&src[0] + offset);
-  // byte array, so you can use like this.
-  std::copy_n(ptr, sizeof(*dest), dest);
+  const auto ptr = src.data() + offset;
+  std::memcpy(dest, ptr, sizeof(*dest));
   return true;
 }
 
