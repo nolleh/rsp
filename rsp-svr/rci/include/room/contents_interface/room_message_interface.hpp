@@ -12,6 +12,8 @@ namespace room {
 
 class room_message_interface {
  public:
+  virtual ~room_message_interface() = default;
+
   /**
    * room is created
    * this is first interface that always sent right after created the object
