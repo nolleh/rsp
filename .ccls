@@ -1,15 +1,4 @@
-%cpp -std=gnu++20 -arch arm64
+%compile_commands.json
 
--I./rsp-libs/include
--I./gen-proto
--I./rsp-svr/user/include
--I./rsp-svr/room/include
--I./rsp-svr/room_contents/include
--I./rsp-cli/include
--I/Users/nolleh/brew/include
-
--isystem/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1
--isystem/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-
--fPIC
--fno-strict-aliasing
+%cpp -std=gnu++20
+%c -std=gnu11
