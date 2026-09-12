@@ -10,3 +10,6 @@ gen-proto/proto
 config.h
 log
 dist
+
+# Local engineering notes
+/docs/.engineering-notes.md
