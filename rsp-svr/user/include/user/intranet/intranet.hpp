@@ -9,7 +9,7 @@
 // #include <google/protobuf/port_def.inc>
 
 #include "rsplib/logger/logger.hpp"
-#include "user/intranet/room_sender.hpp"
+#include "user/intranet/room_channel.hpp"
 
 namespace rsp {
 namespace user {
@@ -21,11 +21,11 @@ class intranet {
  public:
   static intranet& instance();
 
-  void start() { room_sender_.start(); }
+  void start() { room_channel_.start(); }
 
-  void stop() { room_sender_.stop(); }
+  void stop() { room_channel_.stop(); }
 
-  room_sender& room() const { return room_sender_; }
+  room_channel& room() const { return room_channel_; }
 
  private:
   intranet(const intranet&) = delete;
@@ -37,7 +37,7 @@ class intranet {
   intranet() : logger_(lg::logger()) {}
 
   lg::s_logger& logger_;
-  mutable room_sender room_sender_;
+  mutable room_channel room_channel_;
 };
 
 }  // namespace user

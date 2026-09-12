@@ -30,14 +30,14 @@ namespace lg = rsp::libs::logger;
 namespace libs = rsp::libs;
 namespace br = rsp::libs::broker;
 
-class room_sender {
+class room_channel {
  public:
-  room_sender()
+  room_channel()
       : logger_(lg::logger()),
         dispatcher_(this),
         channel_("tcp://127.0.0.1:5559", "user-server-1") {}
 
-  ~room_sender() { stop(); }
+  ~room_channel() { stop(); }
 
   void start() {
     channel_.start([this](libs::message::raw_buffer buffer) {
@@ -125,7 +125,7 @@ class room_sender {
   }
 
   lg::s_logger& logger_;
-  message_dispatcher<room_sender> dispatcher_;
+  message_dispatcher<room_channel> dispatcher_;
   br::dealer_channel channel_;
   std::mutex requests_mutex_;
   std::map<uint64_t, std::function<void(const std::shared_ptr<Message>)>>
