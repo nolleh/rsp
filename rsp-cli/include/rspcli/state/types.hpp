@@ -9,7 +9,7 @@ namespace cli {
 namespace state {
 
 using Uid = std::string;
-using RoomId = uint64_t;
+using RoomId = std::uint32_t;
 
 }  // namespace state
 }  // namespace cli
