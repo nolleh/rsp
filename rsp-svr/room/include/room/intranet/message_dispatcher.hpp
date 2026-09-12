@@ -36,8 +36,8 @@ class message_dispatcher : public dispatcher_interface {
                 handle_buffer<User2RoomReqJoinRoom>);
 
     // TODO(@nolleh) Move To toplogy dispatcher.
-    REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdRoom,
-                handle_buffer<User2RoomReqFwdRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomFwdRoom,
+                handle_buffer<User2RoomFwdRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqLeaveRoom,
                 handle_buffer<User2RoomReqLeaveRoom>);
     dispatcher_.register_unknown_message_handler(

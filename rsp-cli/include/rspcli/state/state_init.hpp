@@ -1,75 +1,57 @@
-
 /** Copyright (C) 2024  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
 
-#include <array>
-#include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 
+#include "proto/user/login.pb.h"
 #include "rspcli/state/state.hpp"
 
 namespace rsp {
 namespace cli {
 namespace state {
 
-// TODO(@nolleh) refactor
-// 1.separate client <-> state
-// 2.separate base <-> init
 class state_init : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket,
-                                            struct context* context) {
-    return std::shared_ptr<base_state>(new state_init(socket, context));
+  static std::unique_ptr<base_state> create(context* context,
+                                            message_sender sender) {
+    return std::unique_ptr<state_init>(
+        new state_init(context, std::move(sender)));
   }
 
-  ~state_init() {}
+  void enter() override { show_prompt("type user name to login"); }
 
-  void send_login(const std::string& uid) {
+  transition on_command(std::string_view command) override {
     ReqLogin login;
-    login.set_uid(uid);
-    auto message = rsp::libs::message::serializer::serialize(
-        MessageType::kReqLogin, login);
-    try {
-      socket_->send(boost::asio::buffer(message));
-    } catch (const std::exception& e) {
-      logger_.warn() << "send exception, possible: peer closed:" << e.what()
-                     << lg::L_endl;
-      close();
-      next_ = State::kExit;
-    }
+    login.set_request_id(get_request_id());
+    login.set_uid(std::string(command));
+    send_message(MessageType::kReqLogin, login);
+    return std::nullopt;
   }
 
-  void handle_res_login(buffer_ptr buffer, link*) {
+  transition on_message(MessageType type, buffer_ptr payload) override {
+    if (type != MessageType::kResLogin) {
+      return base_state::on_message(type, std::move(payload));
+    }
+
     ResLogin login;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &login)) {
+    if (!rsp::libs::message::serializer::deserialize(*payload, &login)) {
       logger_.error() << "failed to parse reslogin" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     logger_.info() << "success to login:" << login.uid() << lg::L_endl;
     context_->uid = login.uid();
-    next_ = State::kLoggedIn;
+    return State::kLoggedIn;
   }
 
-  virtual void init() {
-    std::string uid;
-    prompt_ << "type user name to login";
-    std::cout << "> ";
-    std::cin >> uid;
-    send_login(uid);
-  }
-
- protected:
-  explicit state_init(socket* socket, struct context* context)
-      : base_state(socket, context) {
+ private:
+  explicit state_init(context* context, message_sender sender)
+      : base_state(context, std::move(sender)) {
     state_ = State::kInit;
-    next_ = state_;
-    dispatcher_.register_handler(
-        MessageType::kResLogin,
-        std::bind(&state_init::handle_res_login, this, std::placeholders::_1,
-                  std::placeholders::_2));
   }
 };
 

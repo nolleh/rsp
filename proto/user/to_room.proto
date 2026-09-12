@@ -21,17 +21,10 @@ message ResJoinRoom {
   uint64 room_id = 3;
 }
 
-message ReqFwdRoom {
-  uint64 request_id = 1;
+message FwdRoom {
+  reserved 1;
   string message = 2;
   // repeated string users = 3;
-}
-
-message ResFwdRoom {
-  uint64 request_id = 1;
-  string message = 2;
-  // repeated string users = 3;
-  bool success = 3;
 }
 
 message ReqLeaveRoom {

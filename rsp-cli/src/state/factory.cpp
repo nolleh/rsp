@@ -3,20 +3,21 @@
 
 #include "rspcli/state/factory.hpp"
 
+#include <map>
+
+#include "rspcli/state/state_exit.hpp"
+#include "rspcli/state/state_in_room.hpp"
 #include "rspcli/state/state_init.hpp"
 #include "rspcli/state/state_login.hpp"
-#include "rspcli/state/state_in_room.hpp"
-#include "rspcli/state/state_exit.hpp"
 
 namespace rsp {
 namespace cli {
 namespace state {
 
 std::map<State, creator> factory::s_warehouse = {
-    {State::kInit, state_init::create},
-    {State::kLoggedIn, state_login::create},
+    {State::kInit, state_init::create}, {State::kLoggedIn, state_login::create},
     {State::kInRoom, state_in_room::create},
-    {State::kExit, state_exit::create}};
+    {State::kExit, state_exit::create}};  // NOLINT
 
 }  // namespace state
 }  // namespace cli

@@ -6,8 +6,8 @@
 
 #include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
-#include "proto/user/to_room.pb.h"
 #include "proto/user/to_client.pb.h"
+#include "proto/user/to_room.pb.h"
 #include "rsplib/job/job.hpp"
 #include "user/intranet/intranet.hpp"
 #include "user/session/session.hpp"
@@ -28,33 +28,29 @@ class job_cli_forward_message
       public std::enable_shared_from_this<job_cli_forward_message> {
  public:
   explicit job_cli_forward_message(const session_ptr& session,
-                                   const User2RoomReqFwdClient& fwd_room)
+                                   const User2RoomFwdClient& fwd_room)
       : intranet_(intranet::instance()),
         session_(session),
-        request_(fwd_room) {}
+        message_(fwd_room) {}
 
   void run() {
     lg::logger().debug() << "job_cli_forward_message: "
-                         << request_.DebugString() << lg::L_endl;
+                         << message_.DebugString() << lg::L_endl;
 
-    ReqFwdClient request;
-    // TODO(@nolleh) need to be changed
-    request.set_request_id(request_.request_id());
-    request.set_uid(request_.uid());
-    request.set_sender_type(request_.sender_type());
-    request.set_sender_uid(request_.sender_uid());
-    request.set_message(request_.message());
+    FwdClient forward;
+    forward.set_uid(message_.uid());
+    forward.set_sender_type(message_.sender_type());
+    forward.set_sender_uid(message_.sender_uid());
+    forward.set_message(message_.message());
     const auto buffer =
-        message::serializer::serialize(MessageType::kReqFwdClient, request);
+        message::serializer::serialize(MessageType::kFwdClient, forward);
     session_->send(buffer);
-
-    // TODO(@nolleh) send response to room server
   }
 
  private:
   const intranet& intranet_;
   const session_ptr session_;
-  const User2RoomReqFwdClient request_;
+  const User2RoomFwdClient message_;
 };
 
 }  // namespace job

@@ -6,7 +6,7 @@ namespace rsp {
 namespace room {
 
 template <>
-void room_receiver::handle(const User2RoomReqFwdRoom& msg) {
+void room_receiver::handle(const User2RoomFwdRoom& msg) {
   logger_.trace() << "on_recv: " << typeid(msg).name() << lg::L_endl;
   message_handler_.handle(msg);
 }

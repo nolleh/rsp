@@ -1,8 +1,10 @@
-
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
+
 #include <memory>
+#include <string_view>
+#include <utility>
 
 #include "rspcli/state/state.hpp"
 
@@ -12,21 +14,19 @@ namespace state {
 
 class state_exit : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket,
-                                            struct context* context) {
-    return std::shared_ptr<state_exit>(new state_exit(socket, context));
+  static std::unique_ptr<base_state> create(context* context,
+                                            message_sender sender) {
+    return std::unique_ptr<state_exit>(
+        new state_exit(context, std::move(sender)));
   }
 
-  void init() override {
-    prompt_ << "closing...";
-    return;
-  }
+  void enter() override { prompt_ << "closing..."; }
+  transition on_command(std::string_view) override { return std::nullopt; }
 
- protected:
-  explicit state_exit(socket* socket, struct context* context)
-      : base_state(socket, context) {
+ private:
+  explicit state_exit(context* context, message_sender sender)
+      : base_state(context, std::move(sender)) {
     state_ = State::kExit;
-    next_ = state_;
     context->clear();
   }
 };

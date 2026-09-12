@@ -170,13 +170,13 @@ template <>
 void session::on_recv(const ReqJoinRoom& msg);
 
 template <>
-void session::on_recv(const ReqFwdRoom& msg);
+void session::on_recv(const FwdRoom& msg);
 
 template <>
 void session::on_recv(const ReqLeaveRoom& msg);
 
 template <>
-void session::on_recv(const User2RoomReqFwdClient& msg);
+void session::on_recv(const User2RoomFwdClient& msg);
 
 template <>
 void session::on_recv(const User2RoomNtfLeaveRoom& msg);

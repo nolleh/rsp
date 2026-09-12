@@ -13,10 +13,8 @@ enum MessageType {
   kResCreateRoom = 7;
   kReqJoinRoom = 8;
   kResJoinRoom = 9;
-  kReqFwdRoom = 10;
-  kResFwdRoom = 11;
-  kReqFwdClient = 12;
-  kResFwdClient = 13;
+  kFwdRoom = 10;
+  kFwdClient = 12;
   kNtfLeaveRoom = 23;
   kReqLeaveRoom = 24;
   kResLeaveRoom = 25;
@@ -26,11 +24,11 @@ enum MessageType {
   kUser2RoomResCreateRoom = 15;
   kUser2RoomReqJoinRoom = 16;
   kUser2RoomResJoinRoom = 17;
-  kUser2RoomReqFwdRoom = 18;
-  kUser2RoomResFwdRoom = 19;
-  kUser2RoomReqFwdClient = 20;
-  kUser2RoomResFwdClient = 21;
+  kUser2RoomFwdRoom = 18;
+  kUser2RoomFwdClient = 20;
   kUser2RoomNtfLeaveRoom = 22;
   kUser2RoomReqLeaveRoom = 26;
   kUser2RoomResLeaveRoom = 27;
+
+  reserved 11, 13, 19, 21;
 }

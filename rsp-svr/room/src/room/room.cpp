@@ -15,7 +15,7 @@ void room::send_to_user_impl(const SenderType& sender_type,
                              const std::shared_ptr<user> sender,
                              const std::shared_ptr<std::vector<user>> users,
                              const lm::buffer_ptr buffer) {
-  User2RoomReqFwdClient msg;
+  User2RoomFwdClient msg;
   msg.set_sender_type(sender_type);
   if (SenderType::kUser == sender_type) {
     msg.set_sender_uid(sender->uid);
