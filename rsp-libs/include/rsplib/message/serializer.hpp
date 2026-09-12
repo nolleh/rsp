@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <stdexcept>
 #include <utility>
 
 #include "proto/common/message_type.pb.h"
@@ -13,22 +14,36 @@ namespace rsp {
 namespace libs {
 namespace message {
 
+enum class parse_status {
+  kIncomplete,
+  kComplete,
+  kInvalid,
+};
+
 struct meta {
-  size_t size;
-  size_t payload_size;
-  MessageType type;
+  parse_status status = parse_status::kIncomplete;
+  size_t size = 0;
+  size_t payload_size = 0;
+  MessageType type = MessageType{};
   raw_buffer payload;
 };
 
 class serializer {
-  static const size_t kContentLen = 8;
-  static const size_t kType = 4;
+  static constexpr size_t kContentLen = 8;
+  static constexpr size_t kType = 4;
 
  public:
+  static constexpr size_t kHeaderSize = kContentLen + kType;
+  static constexpr size_t kMaxPayloadSize = 64 * 1024;
+
   // TODO(@nolleh) make MessageTypeTraits to attach MessageType to Message
   template <typename Message>
   static raw_buffer serialize(const MessageType type, const Message& message) {
     auto content_len = message.ByteSizeLong();
+    if (content_len > kMaxPayloadSize) {
+      throw std::length_error("message payload exceeds the maximum size");
+    }
+
     raw_buffer buffer;
     mset(&buffer, content_len);
     mset(&buffer, static_cast<int>(type));
@@ -39,9 +54,12 @@ class serializer {
 
   static meta destruct_buffer(const raw_buffer& buffer) {
     size_t content_length;
-    // TODO(@nolleh)
     if (!mget(buffer, &content_length, 0)) return {};
-    const size_t message_len = kContentLen + kType + content_length;
+    if (content_length > kMaxPayloadSize) {
+      return {.status = parse_status::kInvalid};
+    }
+
+    const size_t message_len = kHeaderSize + content_length;
 
     if (buffer.size() < message_len) {
       return {};
@@ -58,7 +76,8 @@ class serializer {
 
     // payload.insert(payload.end(), buffer.cbegin() + kContentLen + kType,
     //                buffer.cend());
-    return {message_len, content_length, type, payload};
+    return {parse_status::kComplete, message_len, content_length, type,
+            payload};
   }
 
   template <typename Message>

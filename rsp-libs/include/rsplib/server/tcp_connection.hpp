@@ -210,7 +210,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
     lg::logger().trace() << "conn: read...message size(" << bytes << ")"
                          << lg::L_endl;
-    interpreter_.handle_buffer(*arr, bytes);
+    if (!interpreter_.handle_buffer(*arr, bytes)) {
+      lg::logger().warn() << "invalid message frame" << lg::L_endl;
+      stop(true);
+      return;
+    }
     start(kBufBytes);
   }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h> // NOLINT
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -62,6 +63,57 @@ TEST(Message, PayloadDoesNotIncludeFollowingMessage) {
   ASSERT_TRUE(message::serializer::deserialize(meta.payload, &decoded));
   EXPECT_EQ(decoded.message(), first.message());
   EXPECT_EQ(meta.payload_size, first.ByteSizeLong());
+}
+
+TEST(Message, AcceptsPayloadAtMaximumSize) {
+  namespace message = rsp::libs::message;
+
+  message::raw_buffer buffer;
+  const auto content_length = message::serializer::kMaxPayloadSize;
+  message::mset(&buffer, content_length);
+  message::mset(&buffer, static_cast<int>(MessageType::kReqFwdClient));
+  buffer.resize(message::serializer::kHeaderSize + content_length);
+
+  const auto meta = message::serializer::destruct_buffer(buffer);
+
+  EXPECT_EQ(meta.status, message::parse_status::kComplete);
+  EXPECT_EQ(meta.payload_size, content_length);
+}
+
+TEST(Message, RejectsPayloadLargerThanMaximumSize) {
+  namespace message = rsp::libs::message;
+
+  message::raw_buffer buffer;
+  const auto content_length = message::serializer::kMaxPayloadSize + 1;
+  message::mset(&buffer, content_length);
+
+  const auto meta = message::serializer::destruct_buffer(buffer);
+
+  EXPECT_EQ(meta.status, message::parse_status::kInvalid);
+}
+
+TEST(Message, WaitsForIncompletePayloadWithinLimit) {
+  namespace message = rsp::libs::message;
+
+  message::raw_buffer buffer;
+  const auto content_length = message::serializer::kMaxPayloadSize;
+  message::mset(&buffer, content_length);
+
+  const auto meta = message::serializer::destruct_buffer(buffer);
+
+  EXPECT_EQ(meta.status, message::parse_status::kIncomplete);
+}
+
+TEST(Message, RejectsOversizedPayloadOnSerialize) {
+  namespace message = rsp::libs::message;
+
+  ReqFwdClient oversized;
+  oversized.set_message(
+      std::string(message::serializer::kMaxPayloadSize + 1, 'x'));
+
+  EXPECT_THROW(
+      message::serializer::serialize(MessageType::kReqFwdClient, oversized),
+      std::length_error);
 }
 
 TEST(Interpreter, QueuedMessage) {
@@ -136,4 +188,18 @@ TEST(Interpreter, DispatchesAllCompleteMessagesFromOneRead) {
   interpreter.handle_buffer(input, first_buffer.size());
 
   EXPECT_EQ(received, (std::vector<std::string>{"first", "second"}));
+}
+
+TEST(Interpreter, RejectsOversizedFrame) {
+  namespace message = rsp::libs::message;
+
+  const auto content_length = message::serializer::kMaxPayloadSize + 1;
+  message::raw_buffer header;
+  message::mset(&header, content_length);
+
+  std::array<char, 128> input{};
+  std::copy(header.begin(), header.end(), input.begin());
+
+  message::conn_interpreter interpreter;
+  EXPECT_FALSE(interpreter.handle_buffer(input, header.size()));
 }
