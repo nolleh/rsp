@@ -102,10 +102,15 @@ class room_message_handler {
     logger_.trace() << "leave_room: " << leave_room.DebugString() << lg::L_endl;
 
     const auto room = room_manager_.leave_room(leave_room.uid());
-    room->leave_room(leave_room.uid());
 
     User2RoomResLeaveRoom res_leave_room;
     res_leave_room.set_request_id(leave_room.request_id());
+    if (!room) {
+      res_leave_room.set_success(false);
+      return res_leave_room;
+    }
+
+    room->leave_room(leave_room.uid());
     res_leave_room.set_success(true);
     return res_leave_room;
   }

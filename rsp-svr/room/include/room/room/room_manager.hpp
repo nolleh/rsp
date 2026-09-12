@@ -16,6 +16,8 @@
 namespace rsp {
 namespace room {
 
+class room_manager_test_peer;
+
 class room_manager {
  public:
   static room_manager& instance() {
@@ -84,14 +86,16 @@ class room_manager {
       if (user_rooms_.end() == room_iter) {
         return nullptr;
       }
-      user_rooms_.erase(uid);
       room_id = room_iter->second;
+      user_rooms_.erase(room_iter);
     }
 
     return find_room(room_id);
   }
 
  private:
+  friend class room_manager_test_peer;
+
   room_manager()
       : workers_(30),
         strands_{workers_.size() / 10,
