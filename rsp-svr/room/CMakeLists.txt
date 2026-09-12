@@ -61,3 +61,39 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     cppzmq
 )
+
+add_executable(
+    RoomTest
+    test/room_manager_test.cpp
+    src/room/room_manager.cpp
+)
+
+target_include_directories(
+    RoomTest
+    PRIVATE
+        ${Boost_INCLUDE_DIR}
+        ${Libs_DIR}/include
+        ${Proto_DIR}
+        ${PROJECT_SOURCE_DIR}/include
+        ${rsp-svr_SOURCE_DIR}/rci/include
+)
+
+target_link_libraries(
+    RoomTest
+    PRIVATE
+    GTest::gtest_main
+    Libs
+    Proto
+    ${Protobuf_LIBRARIES}
+    ${Boost_LIBRARIES}
+    cppzmq
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(RoomTest PRIVATE -fsanitize=address
+                                            -fno-omit-frame-pointer)
+    target_link_libraries(RoomTest PRIVATE -fsanitize=address)
+endif()
+
+include(GoogleTest)
+gtest_discover_tests(RoomTest)
