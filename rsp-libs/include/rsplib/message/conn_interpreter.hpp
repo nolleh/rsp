@@ -41,19 +41,23 @@ class conn_interpreter {
       : dispatcher_(dispatcher) {}
 
   // aggregate message until ready.
-  void handle_buffer(const std::array<char, 128>& buffer, size_t len) {
+  bool handle_buffer(const std::array<char, 128>& buffer, size_t len) {
     lg::logger().trace() << "handle_buffer, read size:" + std::to_string(len)
                          << lg::L_endl;
 
     if (len > buffer.size()) {
-      return;
+      return false;
     }
     buffer_.insert(buffer_.end(), buffer.begin(), buffer.begin() + len);
 
     while (true) {
       auto meta = serializer::destruct_buffer(buffer_);
-      if (!meta.size) {
-        return;
+      if (parse_status::kInvalid == meta.status) {
+        buffer_.clear();
+        return false;
+      }
+      if (parse_status::kIncomplete == meta.status) {
+        return true;
       }
 
       buffer_ = retrieve_v(buffer_, meta.size, buffer_.size());
