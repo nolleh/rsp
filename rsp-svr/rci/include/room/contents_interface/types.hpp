@@ -11,7 +11,6 @@ namespace room {
 
 using RoomId = std::uint32_t;
 using Uid = std::string;
-using Address = std::string;
 
 }  // namespace room
 }  // namespace rsp
