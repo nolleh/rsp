@@ -67,35 +67,18 @@ class room_message_handler {
     return res_join_room;
   }
 
-  User2RoomResFwdRoom handle(const User2RoomReqFwdRoom& fwd_room) {
+  void handle(const User2RoomFwdRoom& fwd_room) {
     logger_.trace() << "fwd_room: " << fwd_room.DebugString() << lg::L_endl;
     auto room = room_manager_.find_room(fwd_room.uid());
     if (!room) {
-      User2RoomResFwdRoom res_fwd_room;
-      res_fwd_room.set_request_id(fwd_room.request_id());
-      res_fwd_room.set_uid(fwd_room.uid());
-      res_fwd_room.set_success(false);
-      return res_fwd_room;
+      logger_.warn() << "unable to forward message from unknown user: "
+                     << fwd_room.uid() << lg::L_endl;
+      return;
     }
 
     logger_.trace() << "fwd_room, run room handler" << lg::L_endl;
     room->on_recv_message(fwd_room.uid(), fwd_room.message());
     logger_.trace() << "finished run room handler" << lg::L_endl;
-
-    User2RoomResFwdRoom res_fwd_room;
-    res_fwd_room.set_request_id(fwd_room.request_id());
-    res_fwd_room.set_uid(fwd_room.uid());
-    res_fwd_room.set_success(true);
-    return res_fwd_room;
-  }
-
-  void handle(const User2RoomResFwdClient& fwd_room) {
-    logger_.trace() << "fwd_client: " << fwd_room.DebugString() << lg::L_endl;
-    auto room = room_manager_.find_room(fwd_room.uid());
-    // if (!room) {
-    // }
-
-    // room->on_recv_message(fwd_room.uid(), fwd_room.message());
   }
 
   User2RoomResLeaveRoom handle(const User2RoomReqLeaveRoom& leave_room) {

@@ -30,21 +30,12 @@ message User2RoomResJoinRoom {
   bool success = 4;
 }
 
-message User2RoomReqFwdRoom {
-  uint64 request_id = 1;
+message User2RoomFwdRoom {
+  reserved 1;
   uint64 room_id = 2;
   // used to validate
   string uid = 3;
   string message = 4;
-}
-
-message User2RoomResFwdRoom {
-  uint64 request_id = 1;
-  uint64 room_id = 2;
-  // used to validate
-  string uid = 3;
-  string message = 4;
-  bool success = 5;
 }
 
 message User2RoomReqLeaveRoom {
@@ -66,8 +57,8 @@ message User2RoomNtfLeaveRoom {
   optional uint32 kickout_reason = 3;
 }
 
-message User2RoomReqFwdClient {
-  uint64 request_id = 1;
+message User2RoomFwdClient {
+  reserved 1;
   SenderType sender_type = 2;
   // only useful when sender type is user
   string sender_uid = 3;
@@ -75,15 +66,3 @@ message User2RoomReqFwdClient {
   string uid = 4;
   string message = 5;
 }
-
-message User2RoomResFwdClient {
-  uint64 request_id = 1;
-  SenderType sender_type = 2;
-  // only useful when sender type is user
-  string sender_uid = 3;
-  // specify recipient
-  string uid = 4;
-  string message = 5;
-  bool success = 6;
-}
-

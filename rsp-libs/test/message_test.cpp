@@ -2,7 +2,7 @@
 
 #include <algorithm>
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
-#include <gtest/gtest.h> // NOLINT
+#include <gtest/gtest.h>  // NOLINT
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -44,22 +44,22 @@ TEST(Message, Serialize) {
 TEST(Message, PayloadDoesNotIncludeFollowingMessage) {
   namespace message = rsp::libs::message;
 
-  ReqFwdClient first;
+  FwdClient first;
   first.set_message("first");
-  ReqFwdClient second;
+  FwdClient second;
   second.set_message("second");
 
   auto first_buffer =
-      message::serializer::serialize(MessageType::kReqFwdClient, first);
+      message::serializer::serialize(MessageType::kFwdClient, first);
   auto second_buffer =
-      message::serializer::serialize(MessageType::kReqFwdClient, second);
+      message::serializer::serialize(MessageType::kFwdClient, second);
   first_buffer.insert(first_buffer.end(), second_buffer.begin(),
                       second_buffer.end());
 
   const auto meta = message::serializer::destruct_buffer(first_buffer);
   ASSERT_NE(meta.size, 0u);
 
-  ReqFwdClient decoded;
+  FwdClient decoded;
   ASSERT_TRUE(message::serializer::deserialize(meta.payload, &decoded));
   EXPECT_EQ(decoded.message(), first.message());
   EXPECT_EQ(meta.payload_size, first.ByteSizeLong());
@@ -71,7 +71,7 @@ TEST(Message, AcceptsPayloadAtMaximumSize) {
   message::raw_buffer buffer;
   const auto content_length = message::serializer::kMaxPayloadSize;
   message::mset(&buffer, content_length);
-  message::mset(&buffer, static_cast<int>(MessageType::kReqFwdClient));
+  message::mset(&buffer, static_cast<int>(MessageType::kFwdClient));
   buffer.resize(message::serializer::kHeaderSize + content_length);
 
   const auto meta = message::serializer::destruct_buffer(buffer);
@@ -107,12 +107,12 @@ TEST(Message, WaitsForIncompletePayloadWithinLimit) {
 TEST(Message, RejectsOversizedPayloadOnSerialize) {
   namespace message = rsp::libs::message;
 
-  ReqFwdClient oversized;
+  FwdClient oversized;
   oversized.set_message(
       std::string(message::serializer::kMaxPayloadSize + 1, 'x'));
 
   EXPECT_THROW(
-      message::serializer::serialize(MessageType::kReqFwdClient, oversized),
+      message::serializer::serialize(MessageType::kFwdClient, oversized),
       std::length_error);
 }
 
@@ -123,14 +123,14 @@ TEST(Interpreter, QueuedMessage) {
   std::string m = "hello, world";
   std::string m2 = "hello, world2";
 
-  auto type = MessageType::kReqFwdClient;
+  auto type = MessageType::kFwdClient;
 
-  ReqFwdClient fwdClient;
+  FwdClient fwdClient;
   fwdClient.set_message("hello, world");
   auto buffer = message::serializer::serialize(type, fwdClient);
   auto bufSize = buffer.size();
 
-  ReqFwdClient fwdClient2;
+  FwdClient fwdClient2;
   fwdClient2.set_message("hello, world2");
   auto buffer2 = message::serializer::serialize(type, fwdClient2);
   auto buf2Size = buffer2.size();
@@ -142,9 +142,9 @@ TEST(Interpreter, QueuedMessage) {
   std::copy(buffer.begin(), buffer.end(), stream.begin());
   std::vector<std::string> received;
   message::message_dispatcher::instance().register_handler(
-      MessageType::kReqFwdClient,
+      MessageType::kFwdClient,
       [&received](message::buffer_ptr buffer, rsp::libs::link::link* link) {
-        ReqFwdClient fwd;
+        FwdClient fwd;
         auto deserialized = message::serializer::deserialize(*buffer, &fwd);
         ASSERT_TRUE(deserialized);
         received.push_back(fwd.message());
@@ -160,15 +160,15 @@ TEST(Interpreter, DispatchesAllCompleteMessagesFromOneRead) {
   message::conn_interpreter interpreter;
   std::vector<std::string> received;
 
-  ReqFwdClient first;
+  FwdClient first;
   first.set_message("first");
-  ReqFwdClient second;
+  FwdClient second;
   second.set_message("second");
 
   auto first_buffer =
-      message::serializer::serialize(MessageType::kReqFwdClient, first);
+      message::serializer::serialize(MessageType::kFwdClient, first);
   auto second_buffer =
-      message::serializer::serialize(MessageType::kReqFwdClient, second);
+      message::serializer::serialize(MessageType::kFwdClient, second);
   first_buffer.insert(first_buffer.end(), second_buffer.begin(),
                       second_buffer.end());
 
@@ -177,10 +177,9 @@ TEST(Interpreter, DispatchesAllCompleteMessagesFromOneRead) {
   std::copy(first_buffer.begin(), first_buffer.end(), input.begin());
 
   message::message_dispatcher::instance().register_handler(
-      MessageType::kReqFwdClient,
-      [&received](message::buffer_ptr buffer,
-                  rsp::libs::link::link* link) {
-        ReqFwdClient decoded;
+      MessageType::kFwdClient,
+      [&received](message::buffer_ptr buffer, rsp::libs::link::link* link) {
+        FwdClient decoded;
         ASSERT_TRUE(message::serializer::deserialize(*buffer, &decoded));
         received.push_back(decoded.message());
       });

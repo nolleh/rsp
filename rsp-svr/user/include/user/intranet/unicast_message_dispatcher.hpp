@@ -31,8 +31,8 @@ class unicast_message_dispatcher : public dispatcher_interface {
       : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
     // REG_HANDLER(dispatcher_, MessageType::kPing, handle_buffer<Ping>);
     // REG_HANDLER(dispatcher_, MessageType::kPong, handle_buffer<Pong>);
-    REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqFwdClient,
-                handle_buffer<User2RoomReqFwdClient>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomFwdClient,
+                handle_buffer<User2RoomFwdClient>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomNtfLeaveRoom,
                 handle_buffer<User2RoomNtfLeaveRoom>);
     dispatcher_.register_unknown_message_handler(

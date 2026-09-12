@@ -43,8 +43,7 @@ class message_dispatcher : public dispatcher_interface {
                 handle_buffer<ReqCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kReqJoinRoom,
                 handle_buffer<ReqJoinRoom>);
-    REG_HANDLER(dispatcher_, MessageType::kReqFwdRoom,
-                handle_buffer<ReqFwdRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kFwdRoom, handle_buffer<FwdRoom>);
     REG_HANDLER(dispatcher_, MessageType::kReqLeaveRoom,
                 handle_buffer<ReqLeaveRoom>);
 

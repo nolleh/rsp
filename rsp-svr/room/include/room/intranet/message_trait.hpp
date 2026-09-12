@@ -11,17 +11,17 @@ struct message_trait {
   static constexpr MessageType res_type = kPong;
 };
 
-#define MESSAGE_TRAIT(Msg, Type, ResType)         \
-  template <>                                     \
-  struct message_trait<Msg> {                     \
-    static constexpr MessageType type = Type;     \
+#define MESSAGE_TRAIT(Msg, Type, ResType)            \
+  template <>                                        \
+  struct message_trait<Msg> {                        \
+    static constexpr MessageType type = Type;        \
     static constexpr MessageType res_type = ResType; \
   };
 
-#define MESSAGE_TRAIT_NTF(Msg, Type)         \
-  template <>                                     \
-  struct message_trait<Msg> {                     \
-    static constexpr MessageType type = Type;     \
+#define MESSAGE_TRAIT_NTF(Msg, Type)          \
+  template <>                                 \
+  struct message_trait<Msg> {                 \
+    static constexpr MessageType type = Type; \
   };
 
 MESSAGE_TRAIT(User2RoomReqCreateRoom, MessageType::kUser2RoomReqCreateRoom,
@@ -30,8 +30,6 @@ MESSAGE_TRAIT(User2RoomReqJoinRoom, MessageType::kUser2RoomReqJoinRoom,
               MessageType::kUser2RoomResJoinRoom);
 MESSAGE_TRAIT(User2RoomReqLeaveRoom, MessageType::kUser2RoomReqLeaveRoom,
               MessageType::kUser2RoomResLeaveRoom);
-MESSAGE_TRAIT(User2RoomReqFwdRoom, MessageType::kUser2RoomReqFwdRoom,
-              MessageType::kUser2RoomResFwdRoom);
-MESSAGE_TRAIT(User2RoomReqFwdClient, MessageType::kUser2RoomReqFwdClient,
-              MessageType::kUser2RoomResFwdClient);
+MESSAGE_TRAIT_NTF(User2RoomFwdRoom, MessageType::kUser2RoomFwdRoom);
+MESSAGE_TRAIT_NTF(User2RoomFwdClient, MessageType::kUser2RoomFwdClient);
 MESSAGE_TRAIT_NTF(User2RoomNtfLeaveRoom, MessageType::kUser2RoomNtfLeaveRoom);

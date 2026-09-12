@@ -27,7 +27,6 @@ using link = rsp::libs::link::link;
   dispatcher.register_handler(                 \
       type, std::bind(&message_dispatcher::handler, this, ph::_1, ph::_2))
 
-
 template <typename Handler>
 class message_dispatcher : public dispatcher_interface {
  public:
@@ -40,8 +39,6 @@ class message_dispatcher : public dispatcher_interface {
                 handle_buffer<User2RoomResCreateRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResJoinRoom,
                 handle_buffer<User2RoomResJoinRoom>);
-    REG_HANDLER(dispatcher_, MessageType::kUser2RoomResFwdRoom,
-                handle_buffer<User2RoomResFwdRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomResLeaveRoom,
                 handle_buffer<User2RoomResLeaveRoom>);
 

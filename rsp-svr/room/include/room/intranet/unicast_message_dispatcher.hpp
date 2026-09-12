@@ -30,8 +30,6 @@ class unicast_message_dispatcher : public dispatcher_interface {
  public:
   explicit unicast_message_dispatcher(Handler* handler)
       : dispatcher_(lib_dispatcher::instance()), handler_(handler) {
-    REG_HANDLER(dispatcher_, MessageType::kUser2RoomResFwdClient,
-                handle_buffer<User2RoomResFwdClient>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&unicast_message_dispatcher::handle_unknown, this, ph::_1));
   }

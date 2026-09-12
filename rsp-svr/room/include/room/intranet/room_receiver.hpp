@@ -120,7 +120,7 @@ class room_receiver {
 // }
 
 template <>
-void room_receiver::handle(const User2RoomReqFwdRoom& msg);
+void room_receiver::handle(const User2RoomFwdRoom& msg);
 
 }  // namespace room
 }  // namespace rsp

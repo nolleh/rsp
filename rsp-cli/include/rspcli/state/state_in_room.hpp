@@ -1,21 +1,18 @@
-
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
 
+#include <format>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 
-#include <boost/asio/buffer.hpp>
-#include <boost/optional.hpp>
-
-#include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "proto/user/to_client.pb.h"
 #include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
-#include "rsplib/thread/thread_pool.hpp"
 
 namespace rsp {
 namespace cli {
@@ -23,286 +20,159 @@ namespace state {
 
 class state_in_room : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket,
-                                            struct context* context) {
-    return std::shared_ptr<state_in_room>(new state_in_room(socket, context));
+  static std::unique_ptr<base_state> create(context* context,
+                                            message_sender sender) {
+    return std::unique_ptr<state_in_room>(
+        new state_in_room(context, std::move(sender)));
   }
 
-  ~state_in_room() {
-    stop_ = true;
-    // reader_.stop();
-    // reader_.join();
-    dispatcher_.unregister_handler(MessageType::kResLogout);
-    dispatcher_.unregister_handler(MessageType::kResLeaveRoom);
+  void enter() override {
+    pending_input_ = pending_input::kCommand;
+    show_prompt(
+        "possible command \n1) logout 2) send message 3) leave room "
+        "4) kickout");
   }
 
-  void init() override {
-    // TODO(@nolleh) does dispatcher really need a ability
-    // register same message type with different instance? hum...
-    // client state is changed, and old state is erased after newer one,
-    // registered type is accidentally erased issue is there.
-    // so until mind is arranged, used redundant register
-    // dispatcher_.register_handler(
-    //     MessageType::kResLogout,
-    //     std::bind(&state_in_room::handle_res_logout, this,
-    //               std::placeholders::_1, std::placeholders::_2));
-    // std::string commands[]{"logout", "create_room", "join_room"};
-    //
-    // auto command_direction = join(',', commands);
-    // prompt_ << std::format("possible command \n{}\n", command_direction);
-    //
-    prompt_ << "possible command \n1) logout 2) send message 3) leave room 4) "
-               "kickout";
-    // start_fwd_read();
-    read_input();
+  transition on_command(std::string_view command) override {
+    if (pending_input_ == pending_input::kMessage) {
+      FwdRoom forward;
+      forward.set_message(std::string(command));
+      pending_input_ = pending_input::kCommand;
+      send_message(MessageType::kFwdRoom, forward);
+      show_command_prompt();
+      return std::nullopt;
+    }
+
+    if (pending_input_ == pending_input::kKickoutUser) {
+      FwdRoom forward;
+      forward.set_message("kickout:" + std::string(command));
+      pending_input_ = pending_input::kCommand;
+      send_message(MessageType::kFwdRoom, forward);
+      show_command_prompt();
+      return std::nullopt;
+    }
+
+    if (command == "1") {
+      ReqLogout logout;
+      logout.set_request_id(get_request_id());
+      send_message(MessageType::kReqLogout, logout);
+    } else if (command == "2") {
+      pending_input_ = pending_input::kMessage;
+      show_prompt("type message to send");
+    } else if (command == "3") {
+      ReqLeaveRoom leave_room;
+      leave_room.set_request_id(get_request_id());
+      send_message(MessageType::kReqLeaveRoom, leave_room);
+    } else if (command == "4") {
+      pending_input_ = pending_input::kKickoutUser;
+      show_prompt("type user name to kickout");
+    } else {
+      show_prompt("your command is incorrect");
+    }
+    return std::nullopt;
   }
 
- protected:
-  explicit state_in_room(socket* socket, struct context* context)
-      : base_state(socket, context) {
-    state_ = State::kInRoom;
-    next_ = state_;
-    dispatcher_.register_handler(
-        MessageType::kResLogout,
-        std::bind(&state_in_room::handle_res_logout, this,
-                  std::placeholders::_1, std::placeholders::_2));
-    dispatcher_.register_handler(
-        MessageType::kResFwdRoom,
-        std::bind(&state_in_room::handle_res_fwd_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-    dispatcher_.register_handler(
-        MessageType::kReqFwdClient,
-        std::bind(&state_in_room::handle_req_fwd_cli, this,
-                  std::placeholders::_1, std::placeholders::_2));
-    dispatcher_.register_handler(
-        MessageType::kNtfLeaveRoom,
-        std::bind(&state_in_room::handle_ntf_leave_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-    dispatcher_.register_handler(
-        MessageType::kResLeaveRoom,
-        std::bind(&state_in_room::handle_res_leave_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-    start_fwd_read();
-  }
-
- private:
-  void read_input() {
-    using namespace std::chrono_literals;  // NOLINT
-    std::this_thread::sleep_for(10ms);
-    std::cout << "command > ";
-    std::string command;
-    std::cin >> command;
-
-    try {
-      switch (std::stoi(command)) {
-        case 1:
-          send_message(MessageType::kReqLogout, ReqLogout{});
-          break;
-        // case 2:
-        //   std::cout << "read message.." << std::endl;
-        //   // read_with_timeout(socket_, boost::posix_time::seconds(3));
-        //   read_message();
-        //   std::this_thread::sleep_for(std::chrono::seconds(1));
-        //   init();
-        //   break;
-        case 2: {
-          std::cout << "type message to send" << std::endl;
-          std::cout << "> ";
-          std::string msg;
-          std::getline(std::cin >> std::ws, msg);
-          ReqFwdRoom fwd;
-          fwd.set_message(msg);
-          send_message(MessageType::kReqFwdRoom, fwd);
-          read_input();
-          break;
-        }
-        case 3: {
-          ReqLeaveRoom leave_room;
-          send_message(MessageType::kReqLeaveRoom, leave_room);
-          break;
-        }
-        case 4: {
-          std::cout << "type user name to kickout" << std::endl;
-          std::cout << "> ";
-          std::string user;
-          std::getline(std::cin >> std::ws, user);
-          ReqFwdRoom fwd;
-          // TODO(@nolleh) content message definition
-          std::string kickout = "kickout:" + user;
-          fwd.set_message(kickout);
-          send_message(MessageType::kReqFwdRoom, fwd);
-          const auto context = get_context();
-          if (user != context->uid) read_input();
-          break;
-        }
-      }
-    } catch (std::invalid_argument const& ex) {
-      prompt_ << "your command is incorrect";
-      read_input();
+  transition on_message(MessageType type, buffer_ptr payload) override {
+    switch (type) {
+      case MessageType::kResLogout:
+        return handle_res_logout(*payload);
+      case MessageType::kFwdClient:
+        return handle_fwd_client(*payload);
+      case MessageType::kNtfLeaveRoom:
+        return handle_ntf_leave_room(*payload);
+      case MessageType::kResLeaveRoom:
+        return handle_res_leave_room(*payload);
+      default:
+        return base_state::on_message(type, std::move(payload));
     }
   }
 
-  void handle_res_logout(buffer_ptr buffer, link*) {
+ private:
+  enum class pending_input { kCommand, kMessage, kKickoutUser };
+
+  explicit state_in_room(context* context, message_sender sender)
+      : base_state(context, std::move(sender)) {
+    state_ = State::kInRoom;
+  }
+
+  void show_command_prompt() {
+    show_prompt(
+        "possible command \n1) logout 2) send message 3) leave room "
+        "4) kickout");
+  }
+
+  transition handle_res_logout(const raw_buffer& payload) {
     ResLogout logout;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &logout)) {
+    if (!rsp::libs::message::serializer::deserialize(payload, &logout)) {
       logger_.error() << "failed to parse logout" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     logger_.info() << "success to logout, bye bye:" << logout.uid()
                    << lg::L_endl;
-    close();
-    next_ = State::kExit;
+    return State::kExit;
   }
 
-  void handle_res_fwd_room(buffer_ptr buffer, link*) {
-    ResFwdRoom fwd_room;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &fwd_room)) {
+  transition handle_fwd_client(const raw_buffer& payload) {
+    FwdClient forward;
+    if (!rsp::libs::message::serializer::deserialize(payload, &forward)) {
       logger_.error() << "failed to fwd room" << lg::L_endl;
-      return;
-    }
-
-    logger_.debug() << "successfully sent message: " << fwd_room.message()
-                    << lg::L_endl;
-    read_input();
-  }
-
-  void handle_req_fwd_cli(buffer_ptr buffer, link*) {
-    ReqFwdClient fwd_client;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &fwd_client)) {
-      logger_.error() << "failed to fwd room" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     std::string message;
-    switch (fwd_client.sender_type()) {
+    switch (forward.sender_type()) {
       case SenderType::kContent:
-        message = "room sent message: " + fwd_client.message();
+        message = "room sent message: " + forward.message();
         break;
       case SenderType::kUser:
-        message = std::format("({0}):{1}", fwd_client.sender_uid(),
-                              fwd_client.message());
+        message =
+            std::format("({0}):{1}", forward.sender_uid(), forward.message());
         break;
       default:
         logger_.warn() << "room message was sent but unknown sender type"
                        << lg::L_endl;
-        return;
-        break;
+        return std::nullopt;
     }
-    std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m"
-              << std::endl;
+    std::cout << "\x1b[" << color::kBlue << "m" << message << "\x1b[0m\n"
+              << "command > " << std::flush;
+    return std::nullopt;
   }
 
-  void handle_ntf_leave_room(buffer_ptr buffer, link*) {
-    NtfLeaveRoom ntf_leave_room;
-    if (!rsp::libs::message::serializer::deserialize(*buffer,
-                                                     &ntf_leave_room)) {
+  transition handle_ntf_leave_room(const raw_buffer& payload) {
+    NtfLeaveRoom notification;
+    if (!rsp::libs::message::serializer::deserialize(payload, &notification)) {
       logger_.error() << "failed to deserialize ntf leave room" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
-    const auto reason = ntf_leave_room.reason();
-    const auto kickout_reason = ntf_leave_room.kickoutreason();
-
-    logger_.info() << "ntf_leave_room received, reason:" << reason
-                   << ", kickout reason:" << kickout_reason << lg::L_endl;
-
-    // sleep(1);
-
-    std::cin.clear();
-    stop_ = true;
-    socket_->cancel();
-    next_ = State::kLoggedIn;
+    logger_.info() << "ntf_leave_room received, reason:"
+                   << notification.reason()
+                   << ", kickout reason:" << notification.kickoutreason()
+                   << lg::L_endl;
+    context_->room_id = 0;
+    return State::kLoggedIn;
   }
 
-  void handle_res_leave_room(buffer_ptr buffer, link*) {
-    ResLeaveRoom res_leave_room;
-    if (!rsp::libs::message::serializer::deserialize(*buffer,
-                                                     &res_leave_room)) {
+  transition handle_res_leave_room(const raw_buffer& payload) {
+    ResLeaveRoom response;
+    if (!rsp::libs::message::serializer::deserialize(payload, &response)) {
       logger_.error() << "failed to deserialize res leave room" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     logger_.info() << "res_leave_room received: success?: "
-                   << res_leave_room.success() << lg::L_endl;
-
-    // sleep(1);
-
-    if (!res_leave_room.success()) return;
-
-    std::cin.clear();
-    stop_ = true;
-    socket_->cancel();
-    next_ = State::kLoggedIn;
-  }
-
-  template <typename T>
-  void send_message(MessageType type, T&& msg) {
-    auto message = rsp::libs::message::serializer::serialize(type, msg);
-    try {
-      socket_->send(boost::asio::buffer(message));
-    } catch (const std::exception& e) {
-      logger_.warn() << "send exception, possible: peer closed:" << e.what()
-                     << lg::L_endl;
-      close();
-      next_ = State::kExit;
+                   << response.success() << lg::L_endl;
+    if (!response.success()) {
+      show_prompt("unable to leave room");
+      return std::nullopt;
     }
+
+    context_->room_id = 0;
+    return State::kLoggedIn;
   }
 
-  void start_fwd_read() {
-    reader_ = std::make_unique<std::thread>([&]() {
-      while (!stop_) read_message();
-    });
-    reader_->detach();
-
-    // logger_.info() <<"start thread_pool" << lg::L_endl;
-    // reader_.start();
-    // read_message();
-  }
-
-  void read_message() {
-    std::array<char, 128> buf;
-    boost::system::error_code error;
-    const auto bytes = socket_->read_some(boost::asio::buffer(buf), error);
-
-    if (error) {
-      if (boost::asio::error::eof == error) {
-        return;
-      }
-      throw boost::system::system_error(error);
-    }
-    handle_buffer(buf, bytes);
-
-    // TODO(@nolleh) check escaped after cancel
-    // logger_.debug() << "" << lg::L_endl;
-    // auto ptr =
-    //     std::shared_ptr<std::array<char, 128>>(new std::array<char, 128>);
-    // auto wrap = boost::asio::bind_executor(
-    //     reader_.get_executor(),
-    //     std::bind(&state_in_room::handle_read, this, ptr,
-    //     std::placeholders::_1,
-    //               std::placeholders::_2));
-    // socket_->async_read_some(boost::asio::buffer(*ptr), wrap);
-  }
-
-  void handle_read(const std::shared_ptr<std::array<char, 128>>& buf,
-                   const boost::system::error_code& error, size_t bytes) {
-    logger_.debug() << "received message from async_read_some:" << bytes
-                    << lg::L_endl;
-    std::cin.clear();
-    if (error) {
-      if (boost::asio::error::eof == error) {
-        return;
-      }
-      throw boost::system::system_error(error);
-    }
-    handle_buffer(*buf, bytes);
-    read_message();
-  }
-
-  // rsp::libs::thread_pool reader_;
-  std::unique_ptr<std::thread> reader_;
-  std::atomic<bool> stop_ = false;
+  pending_input pending_input_ = pending_input::kCommand;
 };
 
 }  // namespace state

@@ -2,12 +2,13 @@
 
 #pragma once
 
-// #include <format>
+#include <charconv>
 #include <memory>
-#include <numeric>
 #include <string>
+#include <string_view>
+#include <system_error>
+#include <utility>
 
-#include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
 #include "proto/user/to_room.pb.h"
 #include "rspcli/state/state.hpp"
@@ -16,148 +17,117 @@ namespace rsp {
 namespace cli {
 namespace state {
 
-template <typename... Args>
-inline std::string join(char delimiter, Args&&... args) {
-  auto range = {args...};
-  auto result = std::accumulate(
-      range.begin(), range.end(), "",
-      [&delimiter](auto& acc, auto& val) { return acc + delimiter + val; });
-  return result;
-}
-
 class state_login : public base_state {
  public:
-  static std::shared_ptr<base_state> create(socket* socket,
-                                            struct context* context) {
-    return std::shared_ptr<state_login>(new state_login(socket, context));
+  static std::unique_ptr<base_state> create(context* context,
+                                            message_sender sender) {
+    return std::unique_ptr<state_login>(
+        new state_login(context, std::move(sender)));
   }
 
-  ~state_login() {
-    dispatcher_.unregister_handler(MessageType::kResLogout);
-    dispatcher_.unregister_handler(MessageType::kResCreateRoom);
-    dispatcher_.unregister_handler(MessageType::kResJoinRoom);
+  void enter() override {
+    awaiting_room_id_ = false;
+    show_prompt("possible command \n1) logout, 2) create_room, 3) join_room");
   }
 
-  void init() override {
-    // std::string commands[]{"logout", "create_room", "join_room"};
-    //
-    // auto command_direction = join(',', commands);
-    // prompt_ << std::format("possible command \n{}\n", command_direction);
-    prompt_ << "possible command \n1) logout, 2) create_room, 3) join_room\n";
-    std::cout << "> ";
-    std::string command;
-    std::cin >> command;
+  transition on_command(std::string_view command) override {
+    if (awaiting_room_id_) {
+      uint64_t room_id = 0;
+      const auto [end, error] = std::from_chars(
+          command.data(), command.data() + command.size(), room_id);
+      if (error != std::errc() || end != command.data() + command.size()) {
+        show_prompt("room id must be a number");
+        return std::nullopt;
+      }
+
+      awaiting_room_id_ = false;
+      ReqJoinRoom join_room;
+      join_room.set_room_id(room_id);
+      join_room.set_request_id(get_request_id());
+      send_message(MessageType::kReqJoinRoom, join_room);
+      return std::nullopt;
+    }
 
     if (command == "1") {
-      send_message<ReqLogout>(MessageType::kReqLogout);
+      ReqLogout logout;
+      logout.set_request_id(get_request_id());
+      send_message(MessageType::kReqLogout, logout);
     } else if (command == "2") {
-      send_message<ReqCreateRoom>(MessageType::kReqCreateRoom);
+      ReqCreateRoom create_room;
+      create_room.set_request_id(get_request_id());
+      send_message(MessageType::kReqCreateRoom, create_room);
     } else if (command == "3") {
-      prompt_ << "put room id that you want to enter\n";
-      std::cout << "> ";
-      uint64_t room_id;
-      std::cin >> room_id;
-      send_join_room_message(room_id);
+      awaiting_room_id_ = true;
+      show_prompt("put room id that you want to enter");
+    } else {
+      show_prompt("your command is incorrect");
+    }
+    return std::nullopt;
+  }
+
+  transition on_message(MessageType type, buffer_ptr payload) override {
+    switch (type) {
+      case MessageType::kResLogout:
+        return handle_res_logout(*payload);
+      case MessageType::kResCreateRoom:
+        return handle_res_create_room(*payload);
+      case MessageType::kResJoinRoom:
+        return handle_res_join_room(*payload);
+      default:
+        return base_state::on_message(type, std::move(payload));
     }
   }
 
- protected:
-  explicit state_login(socket* socket, struct context* context)
-      : base_state(socket, context) {
+ private:
+  explicit state_login(context* context, message_sender sender)
+      : base_state(context, std::move(sender)) {
     state_ = State::kLoggedIn;
-    next_ = state_;
-    dispatcher_.register_handler(
-        MessageType::kResLogout,
-        std::bind(&state_login::handle_res_logout, this, std::placeholders::_1,
-                  std::placeholders::_2));
-
-    dispatcher_.register_handler(
-        MessageType::kResCreateRoom,
-        std::bind(&state_login::handle_res_create_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
-
-    dispatcher_.register_handler(
-        MessageType::kResJoinRoom,
-        std::bind(&state_login::handle_res_join_room, this,
-                  std::placeholders::_1, std::placeholders::_2));
   }
 
- private:
-  void handle_res_logout(buffer_ptr buffer, link*) {
+  transition handle_res_logout(const raw_buffer& payload) {
     ResLogout logout;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &logout)) {
+    if (!rsp::libs::message::serializer::deserialize(payload, &logout)) {
       logger_.error() << "failed to parse logout" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     logger_.info() << "success to logout, bye bye:" << logout.uid()
                    << lg::L_endl;
-    close();
-    next_ = State::kExit;
+    return State::kExit;
   }
 
-  void handle_res_create_room(buffer_ptr buffer, link*) {
+  transition handle_res_create_room(const raw_buffer& payload) {
     ResCreateRoom create_room;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &create_room)) {
+    if (!rsp::libs::message::serializer::deserialize(payload, &create_room)) {
       logger_.error() << "failed to parse created room" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
-    RoomId room_id = create_room.room_id();
-    context_->room_id = room_id;
-    logger_.info() << "created room #" << room_id << ", and joined"
+    context_->room_id = create_room.room_id();
+    logger_.info() << "created room #" << context_->room_id << ", and joined"
                    << lg::L_endl;
-    next_ = State::kInRoom;
+    return State::kInRoom;
   }
 
-  void handle_res_join_room(buffer_ptr buffer, link*) {
+  transition handle_res_join_room(const raw_buffer& payload) {
     ResJoinRoom join_room;
-    if (!rsp::libs::message::serializer::deserialize(*buffer, &join_room)) {
+    if (!rsp::libs::message::serializer::deserialize(payload, &join_room)) {
       logger_.error() << "failed to parse join room" << lg::L_endl;
-      return;
+      return std::nullopt;
     }
 
     if (!join_room.success()) {
-      logger_.info() << "unable to join room";
-      init();
-      return;
+      logger_.info() << "unable to join room" << lg::L_endl;
+      enter();
+      return std::nullopt;
     }
 
-    logger_.info() << "joined room #" << join_room.room_id() << lg::L_endl;
     context_->room_id = join_room.room_id();
-    next_ = State::kInRoom;
+    logger_.info() << "joined room #" << context_->room_id << lg::L_endl;
+    return State::kInRoom;
   }
 
-  template <typename T>
-  void send_message(MessageType type) {
-    T msg;
-    msg.set_request_id(get_request_id());
-    auto message = rsp::libs::message::serializer::serialize(type, msg);
-    try {
-      socket_->send(boost::asio::buffer(message));
-    } catch (const std::exception& e) {
-      logger_.warn() << "send exception, possible: peer closed:" << e.what()
-                     << lg::L_endl;
-      close();
-      next_ = State::kExit;
-    }
-  }
-
-  void send_join_room_message(uint64_t room_id) {
-    ReqJoinRoom join_room;
-    join_room.set_room_id(room_id);
-    join_room.set_request_id(get_request_id());
-    auto message = rsp::libs::message::serializer::serialize(
-        MessageType::kReqJoinRoom, join_room);
-    try {
-      socket_->send(boost::asio::buffer(message));
-    } catch (const std::exception& e) {
-      logger_.warn() << "send exception, possible: peer closed:" << e.what()
-                     << lg::L_endl;
-      close();
-      next_ = State::kExit;
-    }
-  }
+  bool awaiting_room_id_ = false;
 };
 
 }  // namespace state

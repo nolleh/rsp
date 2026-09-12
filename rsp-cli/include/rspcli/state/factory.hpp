@@ -2,8 +2,10 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <memory>
+#include <utility>
 
 #include "rspcli/state/state.hpp"
 
@@ -11,12 +13,14 @@ namespace rsp {
 namespace cli {
 namespace state {
 
-using creator = std::function<std::shared_ptr<base_state>(socket*, context*)>;
+using state_ptr = std::unique_ptr<base_state>;
+using creator = std::function<state_ptr(context*, message_sender)>;
+
 class factory {
  public:
-  static std::shared_ptr<base_state> create(State state, socket* socket,
-                                            context* context) {
-    return s_warehouse[state](socket, context);
+  static std::unique_ptr<base_state> create(State state, context* context,
+                                            message_sender sender) {
+    return s_warehouse.at(state)(context, std::move(sender));
   }
 
  private:
