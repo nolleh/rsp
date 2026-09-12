@@ -39,8 +39,6 @@ class job_leave_room : public job,
                          << lg::L_endl;
 
     User2RoomReqLeaveRoom request;
-    // TODO(@nolleh) modify
-    request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
 
     intranet_.room().send_request(

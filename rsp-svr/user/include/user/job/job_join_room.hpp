@@ -39,8 +39,6 @@ class job_join_room : public job,
                          << lg::L_endl;
 
     User2RoomReqJoinRoom request;
-    // TODO(@nolleh) modify
-    request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
     intranet_.room().send_request(
