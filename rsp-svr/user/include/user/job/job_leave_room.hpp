@@ -56,7 +56,7 @@ class job_leave_room : public job,
     session_->set_leave_room();
 
     ResLeaveRoom response;
-    response.set_request_id(room_response->request_id());
+    response.set_request_id(request_.request_id());
     response.set_success(room_response->success());
 
     const auto buffer =

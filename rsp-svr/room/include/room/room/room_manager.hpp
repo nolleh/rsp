@@ -30,12 +30,12 @@ class room_manager {
   ~room_manager() { workers_.stop(); }
 
   std::shared_ptr<room> create_room(const std::string& uid,
-                                    const std::string& addr) {
+                                    const RoutingId& route) {
     // temporarily for test convenient
     RoomId room_id = rsp::libs::util::rng(10000, 100000);
     // auto room_id = (--rooms_.end())->first + 1;
     auto created =
-        std::make_shared<room>(room_id, user{uid, addr},
+        std::make_shared<room>(room_id, user{uid, route},
                                &strands_.at(rooms_.size() % strands_.size()));
     std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
@@ -53,8 +53,8 @@ class room_manager {
     return room->second;
   }
 
-  std::shared_ptr<room> join_room(const std::string& uid, const RoomId room_id,
-                                  const std::string& addr) {
+  std::shared_ptr<room> join_room(const std::string& uid,
+                                  const RoomId room_id) {
     auto room = find_room(room_id);
     if (!room) {
       return nullptr;

@@ -6,7 +6,6 @@
 
 #include "proto/room/room.pb.h"
 #include "room/intranet/intranet.hpp"
-#include "room/intranet/user_topology.hpp"
 
 namespace rsp {
 namespace room {
@@ -22,12 +21,12 @@ void room::send_to_user_impl(const SenderType& sender_type,
   }
   msg.set_message(std::string{buffer->cbegin(), buffer->cend()});
 
-  auto& user_servers = intranet::instance().user();
+  auto& channel = intranet::instance().channel();
 
   std::for_each(users->cbegin(), users->cend(),
-                [&user_servers, &msg](const auto& user) {
+                [&channel, &msg](const auto& user) {
                   msg.set_uid(user.uid);
-                  user_servers.send_message(user.addr, msg);
+                  channel.send_notification(user.route, msg);
                 });
 }
 
@@ -43,8 +42,8 @@ void room::kick_out_user_impl(const Uid& uid, const KickoutReason& reason) {
   msg.set_reason(LeaveRoomReason::kKickedOut);
   msg.set_kickout_reason(static_cast<int>(reason));
 
-  auto& user_servers = intranet::instance().user();
-  user_servers.send_message(user->second.addr, msg);
+  auto& channel = intranet::instance().channel();
+  channel.send_notification(user->second.route, msg);
 
   contents_->on_kicked_out_user(uid, reason);
   users_.erase(uid);
