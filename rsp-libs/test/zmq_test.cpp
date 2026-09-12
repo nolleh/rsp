@@ -2,8 +2,19 @@
 
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h>
+
+#include <chrono>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
+
+#include "rsplib/broker/zeromq/routed_channel.hpp"
 
 TEST(ZMQ_REQREP, ReqSocketSend) {
   zmq::context_t ctx{};
@@ -268,4 +279,121 @@ TEST(ZMQ_PUBSUB, TopicFiltered) {
   EXPECT_TRUE(!result2);
   // it was garbage value
   // EXPECT_EQ(0, *result2);
+}
+
+TEST(ZMQ_ROUTERDEALER, RoutesResponseAndNotificationInSendOrder) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::router_channel router{"inproc://router-dealer-order", context};
+  br::dealer_channel dealer{"inproc://router-dealer-order", "user-server-1",
+                            context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::vector<std::string> messages;
+
+  router.start([&router](br::routing_id source, msg::raw_buffer) {
+    router.send(source, {'r', 'e', 's'});
+    router.send(source, {'n', 't', 'f'});
+  });
+  dealer.start([&](msg::raw_buffer message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    messages.emplace_back(message.begin(), message.end());
+    received.notify_one();
+  });
+
+  dealer.send({'r', 'e', 'q'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(
+        lock, std::chrono::seconds(2),
+        [&messages] { return messages.size() == 2; }));
+  }
+
+  EXPECT_EQ((std::vector<std::string>{"res", "ntf"}), messages);
+  dealer.stop();
+  router.stop();
+}
+
+TEST(ZMQ_ROUTERDEALER, DealerPipelinesRequestsBeforeReceivingResponses) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::router_channel router{"inproc://router-dealer-pipeline", context};
+  br::dealer_channel dealer{"inproc://router-dealer-pipeline", "user-server-1",
+                            context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::vector<std::string> requests;
+  std::vector<std::string> responses;
+
+  router.start([&](br::routing_id source, msg::raw_buffer message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    requests.emplace_back(message.begin(), message.end());
+    if (requests.size() != 2) return;
+
+    router.send(source, {'r', 'e', 's', '2'});
+    router.send(source, {'r', 'e', 's', '1'});
+  });
+  dealer.start([&](msg::raw_buffer message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    responses.emplace_back(message.begin(), message.end());
+    received.notify_one();
+  });
+
+  dealer.send({'r', 'e', 'q', '1'});
+  dealer.send({'r', 'e', 'q', '2'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(
+        lock, std::chrono::seconds(2),
+        [&responses] { return responses.size() == 2; }));
+  }
+
+  EXPECT_EQ((std::vector<std::string>{"req1", "req2"}), requests);
+  EXPECT_EQ((std::vector<std::string>{"res2", "res1"}), responses);
+  dealer.stop();
+  router.stop();
+}
+
+TEST(ZMQ_ROUTERDEALER, MissingRouteDoesNotStopChannel) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::router_channel router{"inproc://router-dealer-missing-route", context};
+  br::dealer_channel dealer{"inproc://router-dealer-missing-route",
+                            "connected-server", context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::string response;
+
+  router.start([&router](br::routing_id source, msg::raw_buffer) {
+    router.send(source, {'o', 'k'});
+  });
+  router.send("missing-server", {'l', 'o', 's', 't'});
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  dealer.start([&](msg::raw_buffer message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    response.assign(message.begin(), message.end());
+    received.notify_one();
+  });
+  dealer.send({'r', 'e', 'q'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(lock, std::chrono::seconds(2),
+                                  [&response] { return response == "ok"; }));
+  }
+
+  dealer.stop();
+  router.stop();
 }
