@@ -55,8 +55,8 @@ target_include_directories(
 
 target_link_libraries(
     Room
-    ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
-    ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
+    Libs
+    Proto
     ${Protobuf_LIBRARIES}
     ${Boost_LIBRARIES}
     cppzmq

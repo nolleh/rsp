@@ -19,8 +19,8 @@ all: build
 clean:
 	rm -rf $(BUILD_DIR)
 
-protoc:
-	./protoc.sh
+protoc: configure
+	cmake --build $(BUILD_DIR) --target Proto
 
 configure:
 	mkdir -p $(BUILD_DIR)
@@ -29,7 +29,7 @@ configure:
 build: configure
 	cmake --build $(BUILD_DIR)
 
-rebuild: clean protoc build
+rebuild: clean build
 
 run-svr:
 	./run-svr.sh
@@ -57,4 +57,3 @@ help:
 	@echo "  test       - Run tests"
 	@echo "  debug      - Build in debug mode"
 	@echo "  help       - Show this help message"
-

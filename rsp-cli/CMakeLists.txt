@@ -31,7 +31,7 @@ target_include_directories(Client PRIVATE
 
 target_link_libraries(Client PRIVATE
   ${Boost_LIBRARY_DIRS}
-  ${CMAKE_BINARY_DIR}/rsp-libs/libLibs.a
-  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
+  Libs
+  Proto
   ${Protobuf_LIBRARIES}
 )
