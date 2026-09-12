@@ -34,10 +34,10 @@ class room_manager {
     // temporarily for test convenient
     RoomId room_id = rsp::libs::util::rng(10000, 100000);
     // auto room_id = (--rooms_.end())->first + 1;
+    std::lock_guard<std::mutex> l(m_);
     auto created =
         std::make_shared<room>(room_id, user{uid, route},
                                &strands_.at(rooms_.size() % strands_.size()));
-    std::lock_guard<std::mutex> l(m_);
     // TODO(@nolleh) change
     rooms_[room_id] = created;
     user_rooms_[uid] = room_id;
@@ -55,14 +55,14 @@ class room_manager {
 
   std::shared_ptr<room> join_room(const std::string& uid,
                                   const RoomId room_id) {
-    auto room = find_room(room_id);
-    if (!room) {
+    std::lock_guard<std::mutex> l(m_);
+    auto room = rooms_.find(room_id);
+    if (rooms_.end() == room) {
       return nullptr;
     }
 
-    rooms_[room_id] = room;
     user_rooms_[uid] = room_id;
-    return room;
+    return room->second;
   }
 
   std::shared_ptr<room> find_room(Uid uid) {
