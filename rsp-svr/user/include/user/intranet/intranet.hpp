@@ -10,7 +10,6 @@
 
 #include "rsplib/logger/logger.hpp"
 #include "user/intranet/room_sender.hpp"
-#include "user/intranet/user_receiver.hpp"
 
 namespace rsp {
 namespace user {
@@ -22,17 +21,10 @@ class intranet {
  public:
   static intranet& instance();
 
-  void start() {
-    room_sender_.start();
-    user_receiver_.start();
-  }
+  void start() { room_sender_.start(); }
 
-  void stop() {
-    user_receiver_.stop();
-    room_sender_.stop();
-  }
+  void stop() { room_sender_.stop(); }
 
-  user_receiver& me() const { return user_receiver_; }
   room_sender& room() const { return room_sender_; }
 
  private:
@@ -45,7 +37,6 @@ class intranet {
   intranet() : logger_(lg::logger()) {}
 
   lg::s_logger& logger_;
-  mutable user_receiver user_receiver_;
   mutable room_sender room_sender_;
 };
 

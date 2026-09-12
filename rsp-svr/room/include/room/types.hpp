@@ -7,7 +7,7 @@
 namespace rsp {
 namespace room {
 
-using Address = std::string;
+using RoutingId = std::string;
 
 }  // namespace room
 }  // namespace rsp

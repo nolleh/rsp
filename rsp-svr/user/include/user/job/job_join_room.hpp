@@ -43,8 +43,6 @@ class job_join_room : public job,
     request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
-    request.set_addr(intranet_.me().addr());
-
     intranet_.room().send_request(
         MessageType::kUser2RoomReqJoinRoom, request,
         std::bind(&job_join_room::handle_res_join_room, shared_from_this(),
@@ -59,7 +57,7 @@ class job_join_room : public job,
 
     ResJoinRoom response;
     response.set_room_id(room_response->room_id());
-    response.set_request_id(room_response->request_id());
+    response.set_request_id(request_.request_id());
     response.set_success(room_response->success());
 
     const auto buffer =

@@ -1,155 +1,136 @@
 /** Copyright (C) 2024  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
+#include <atomic>
+#include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <typeinfo>
+#include <utility>
 
-#include <boost/asio.hpp>
-// #include <google/protobuf/port_def.inc>
 #include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
-#include "rsplib/broker/broker.hpp"
+#include "rsplib/broker/zeromq/routed_channel.hpp"
+#include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
-#include "rsplib/thread/thread_pool.hpp"
 #include "user/intranet/message_dispatcher.hpp"
+#include "user/session/session_manager.hpp"
 
 namespace rsp {
 namespace user {
 
-// TODO(@nolleh)
 #define PROTOBUF_NAMESPACE_ID google::protobuf
 using Message = PROTOBUF_NAMESPACE_ID::Message;
 
 namespace lg = rsp::libs::logger;
 namespace libs = rsp::libs;
 namespace br = rsp::libs::broker;
-namespace ba = boost::asio;
 
 class room_sender {
  public:
-  room_sender() : logger_(lg::logger()), threads_(1), dispatcher_(this) {
-    room_sender_ =
-        /* the host will be substituted by room-managers response */
-        br::broker::s_create_publisher(CastType::kAnyCast, "room", 1,
-                                       "tcp://127.0.0.1:5559");
-    room_pub_sender_ = br::broker::s_create_publisher(CastType::kPub, "room", 1,
-                                                      "tcp://127.0.0.1:5561");
-  }
+  room_sender()
+      : logger_(lg::logger()),
+        dispatcher_(this),
+        channel_("tcp://127.0.0.1:5559", "user-server-1") {}
 
   ~room_sender() { stop(); }
 
   void start() {
-    // sender live longer threads
-    room_sender_->start();
-    room_pub_sender_->start();
-    threads_.start();
-
-    // co_spawn(
-    //     threads_.get_executor(), [self = this] { return self->start_recv();
-    //     }, ba::detached);
+    channel_.start([this](libs::message::raw_buffer buffer) {
+      auto destructed = libs::message::serializer::destruct_buffer(buffer);
+      dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+    });
   }
 
   void stop() {
-    stop_ = true;
-    room_sender_->stop();
-    room_pub_sender_->stop();
-    threads_.join();
-  }
-
-  ba::awaitable<void> start_recv() {
-    logger_.info() << "start room receiving" << lg::L_endl;
-    while (!stop_.load()) {
-      // TODO(@nolleh) awaitable.
-      // auto buffer = co_await room_sender_->recv("topic");
-      auto buffer = room_pub_sender_->recv("topic").get();
-
-      namespace msg = rsp::libs::message;
-      auto destructed = msg::serializer::destruct_buffer(buffer);
-      dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    }
-    logger_.info() << "stop room receiving" << lg::L_endl;
-    co_return;
-  }
-
-  ba::awaitable<void> recv() {
-    // TODO(@nolleh) improve with executors
-    // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
-    auto buffer = room_sender_->recv("topic").get();
-
-    namespace msg = rsp::libs::message;
-    auto destructed = msg::serializer::destruct_buffer(buffer);
-    dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
-    co_return;
+    channel_.stop();
+    std::lock_guard<std::mutex> lock(requests_mutex_);
+    requests_.clear();
   }
 
   template <typename T>
   void send_request(
-      MessageType type, const T& req,
+      MessageType type, T request,
       std::function<void(const std::shared_ptr<Message>)> handler) {
-    requests_[req.request_id()] =
-        std::function<void(const std::shared_ptr<Message>)>(handler);
-    namespace msg = rsp::libs::message;
-    auto buffer = msg::serializer::serialize(type, req);
-    room_sender_->send("topic", buffer);
+    const auto request_id = next_request_id_.fetch_add(1);
+    request.set_request_id(request_id);
+    {
+      std::lock_guard<std::mutex> lock(requests_mutex_);
+      requests_[request_id] = std::move(handler);
+    }
 
-    logger_.trace() << "send 2 room, requestId:" << req.request_id()
-                    << ", type: " << typeid(req).name() << lg::L_endl;
-
-    // hum......
-    // TODO(@nolleh) improve with executors
-    // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r14.html
-    // https://stackoverflow.com/questions/63360248/where-is-stdfuturethen-and-the-concurrency-ts
-    co_spawn(
-        threads_.get_executor(), [self = this] { return self->recv(); },
-        ba::detached);
+    channel_.send(libs::message::serializer::serialize(type, request));
+    logger_.trace() << "send to room, requestId:" << request_id
+                    << ", type: " << typeid(request).name() << lg::L_endl;
   }
 
   template <typename T>
-  void send_notification(MessageType type, const T& req) const {
-    namespace msg = rsp::libs::message;
-    auto buffer = msg::serializer::serialize(type, req);
-    room_pub_sender_->send("topic", buffer);
+  void send_notification(MessageType type, const T& notification) {
+    channel_.send(libs::message::serializer::serialize(type, notification));
   }
 
-  void on_recv(const Ping& ping) const {
+  void on_recv(const Ping&) {
     logger_.debug() << "received ping" << lg::L_endl;
   }
-  void on_recv(const Pong& pong) const {
+
+  void on_recv(const Pong&) {
     logger_.debug() << "received pong" << lg::L_endl;
   }
 
+  void on_recv(const User2RoomFwdClient& message) {
+    pass_to_session(message);
+  }
+
+  void on_recv(const User2RoomNtfLeaveRoom& message) {
+    pass_to_session(message);
+  }
+
   template <typename T>
-  void on_recv(const T& msg) const {
-    logger_.trace() << "received message requestId: " << msg.request_id() << ","
-                    << typeid(msg).name() << lg::L_endl;
-    send_to_waiter(msg);
+  void on_recv(const T& response) {
+    logger_.trace() << "received message requestId: "
+                    << response.request_id() << "," << typeid(response).name()
+                    << lg::L_endl;
+    send_to_waiter(response);
   }
 
  private:
   template <typename T>
-  void send_to_waiter(const T& t) const {
-    auto iter = requests_.find(t.request_id());
-    if (requests_.end() == iter) {
+  void send_to_waiter(const T& response) {
+    std::function<void(const std::shared_ptr<Message>)> handler;
+    {
+      std::lock_guard<std::mutex> lock(requests_mutex_);
+      auto iter = requests_.find(response.request_id());
+      if (requests_.end() == iter) return;
+
+      handler = std::move(iter->second);
+      requests_.erase(iter);
+    }
+    handler(std::make_shared<T>(response));
+  }
+
+  template <typename T>
+  void pass_to_session(const T& message) {
+    auto session =
+        session::session_manager::instance().find_session(message.uid());
+    if (!session) {
+      logger_.debug() << "failed to find session for uid(" << message.uid()
+                      << ")" << lg::L_endl;
       return;
     }
-
-    auto handler = iter->second;
-    handler(std::make_shared<T>(t));
-    requests_.erase(iter);
+    session->on_recv(message);
   }
 
   lg::s_logger& logger_;
-  libs::thread_pool threads_;
-
   message_dispatcher<room_sender> dispatcher_;
-  std::shared_ptr<br::broker_interface> room_sender_;
-  std::shared_ptr<br::broker_interface> room_pub_sender_;
-  std::atomic<bool> stop_;
-
-  // TODO(@nolleh) timeout
-  mutable std::map<int32_t, std::function<void(const std::shared_ptr<Message>)>>
+  br::dealer_channel channel_;
+  std::mutex requests_mutex_;
+  std::map<uint64_t, std::function<void(const std::shared_ptr<Message>)>>
       requests_;
+  std::atomic<uint64_t> next_request_id_{1};
 };
 
 }  // namespace user

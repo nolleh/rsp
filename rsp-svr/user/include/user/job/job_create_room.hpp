@@ -43,8 +43,6 @@ class job_create_room : public job,
     // TODO(@nolleh) need to be changed
     request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
-    request.set_addr(intranet_.me().addr());
-
     intranet_.room().send_request(
         MessageType::kUser2RoomReqCreateRoom, request,
         std::bind(&job_create_room::handle_res_create_room, shared_from_this(),
@@ -58,7 +56,7 @@ class job_create_room : public job,
     session_->set_enter_room(room_response->room_id());
 
     ResCreateRoom response;
-    response.set_request_id(room_response->request_id());
+    response.set_request_id(request_.request_id());
     response.set_room_id(room_response->room_id());
     response.set_success(room_response->success());
 
