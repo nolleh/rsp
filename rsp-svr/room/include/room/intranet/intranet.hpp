@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "proto/common/ping.pb.h"
-#include "room/intranet/room_receiver.hpp"
+#include "room/intranet/user_channel.hpp"
 #include "rsplib/link/link.hpp"
 
 namespace rsp {
@@ -21,22 +21,22 @@ class intranet {
   }
 
   // TODO(@nolleh) check
-  room_receiver& channel() { return room_receiver_; }
+  user_channel& channel() { return user_channel_; }
 
-  void start() { room_receiver_.start(); }
-  void stop() { room_receiver_.stop(); }
+  void start() { user_channel_.start(); }
+  void stop() { user_channel_.stop(); }
 
  private:
   static std::once_flag s_flag;
   static std::unique_ptr<intranet> s_instance;
-  intranet() : logger_(lg::logger()), room_receiver_() {}
+  intranet() : logger_(lg::logger()), user_channel_() {}
 
   intranet(const intranet&) = delete;
   intranet& operator=(const intranet&) = delete;
 
 
   lg::s_logger& logger_;
-  room_receiver room_receiver_;
+  user_channel user_channel_;
 };
 
 }  // namespace room

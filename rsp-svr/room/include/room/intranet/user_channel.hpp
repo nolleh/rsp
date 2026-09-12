@@ -18,9 +18,9 @@ namespace lg = rsp::libs::logger;
 namespace br = rsp::libs::broker;
 namespace msg = rsp::libs::message;
 
-class room_receiver {
+class user_channel {
  public:
-  room_receiver()
+  user_channel()
       : logger_(lg::logger()),
         dispatcher_(this),
         message_handler_(),
@@ -86,7 +86,7 @@ class room_receiver {
   }
 
   lg::s_logger& logger_;
-  message_dispatcher<room_receiver> dispatcher_;
+  message_dispatcher<user_channel> dispatcher_;
   room_message_handler message_handler_;
   br::router_channel channel_;
   RoutingId current_route_;
