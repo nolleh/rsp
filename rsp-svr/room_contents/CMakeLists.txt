@@ -32,6 +32,7 @@ target_include_directories(
 
 target_link_libraries(
   RoomContents
+  Proto
   ${Protobuf_LIBRARIES}
   ${Boost_LIBRARIES}
 )

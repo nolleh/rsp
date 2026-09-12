@@ -9,9 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(Libs_DIR ${CMAKE_SOURCE_DIR}/rsp-libs)
-set(Proto_DIR ${CMAKE_SOURCE_DIR}/gen-proto)
-
-file(GLOB_RECURSE PROTO ${CMAKE_SOURCE_DIR}/gen_proto/*.cc)
+set(Proto_DIR ${CMAKE_BINARY_DIR}/gen-proto)
 
 add_subdirectory(gen-proto)
 add_subdirectory(rsp-libs)

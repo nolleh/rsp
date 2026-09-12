@@ -38,6 +38,8 @@ add_library(Libs
   ${SRC}
 )
 
+target_link_libraries(Libs PUBLIC Proto)
+
 target_include_directories(Libs PUBLIC
   # ${Boost_DIR}/include
   ${Boost_INCLUDE_DIR}
@@ -73,9 +75,7 @@ target_link_directories(LibsTest PRIVATE
 target_link_libraries(LibsTest PRIVATE
   GTest::gtest_main
   Libs
-  ## added because link fail
   ${Protobuf_LIBRARIES}
-  ${CMAKE_BINARY_DIR}/gen-proto/libProto.a
   cppzmq
 )
 
