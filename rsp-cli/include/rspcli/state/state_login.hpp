@@ -32,7 +32,7 @@ class state_login : public base_state {
 
   transition on_command(std::string_view command) override {
     if (awaiting_room_id_) {
-      uint64_t room_id = 0;
+      RoomId room_id = 0;
       const auto [end, error] = std::from_chars(
           command.data(), command.data() + command.size(), room_id);
       if (error != std::errc() || end != command.data() + command.size()) {

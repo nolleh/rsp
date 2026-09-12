@@ -2,6 +2,7 @@
 
 #pragma once
 // logged in users
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -94,12 +95,12 @@ class session : public link, public std::enable_shared_from_this<session> {
   void enqueue_stop(bool force);
 
   void set_user(const std::string& uid) { uid_ = uid; }
-  void set_enter_room(uint32_t room_id) { room_id_ = room_id; }
+  void set_enter_room(std::uint32_t room_id) { room_id_ = room_id; }
   void set_leave_room() { room_id_ = 0; }
 
   std::string uid() const { return uid_; }
 
-  uint16_t room_id() const { return room_id_; }
+  std::uint32_t room_id() const { return room_id_; }
 
  private:
   void enqueue_job(libs::job::job_ptr job) {
@@ -151,7 +152,7 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   std::atomic<time_t> last_received_;
   std::atomic<bool> stop_;
-  uint16_t room_id_;
+  std::uint32_t room_id_{0};
 };
 
 template <>

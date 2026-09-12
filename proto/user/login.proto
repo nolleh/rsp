@@ -11,7 +11,7 @@ message ResLogin {
 
   bool success = 3;
   bool is_attached = 4;
-  int64 room_id = 5;
+  uint32 room_id = 5;
 }
 
 message ReqLogout {

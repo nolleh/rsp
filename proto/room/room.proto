@@ -14,7 +14,7 @@ message User2RoomResCreateRoom {
   uint64 request_id = 1;
   string uid = 2;
   bool success = 3;
-  uint64 room_id = 4;
+  uint32 room_id = 4;
 }
 
 message User2RoomReqJoinRoom {
@@ -22,19 +22,19 @@ message User2RoomReqJoinRoom {
   reserved 2;
   reserved "addr";
   string uid = 3;
-  uint64 room_id = 4;
+  uint32 room_id = 4;
 }
 
 message User2RoomResJoinRoom {
   uint64 request_id = 1;
   string uid = 2;
-  uint64 room_id = 3;
+  uint32 room_id = 3;
   bool success = 4;
 }
 
 message User2RoomFwdRoom {
   reserved 1;
-  uint64 room_id = 2;
+  uint32 room_id = 2;
   // used to validate
   string uid = 3;
   string message = 4;
@@ -42,7 +42,7 @@ message User2RoomFwdRoom {
 
 message User2RoomReqLeaveRoom {
   uint64 request_id = 1;
-  uint64 room_id = 2;
+  uint32 room_id = 2;
   string uid = 3;
 }
 
