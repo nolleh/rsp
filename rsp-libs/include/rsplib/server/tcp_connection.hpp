@@ -2,8 +2,10 @@
 
 #pragma once
 
+#include <deque>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -155,32 +157,44 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void send_impl(shared_const_buffer buffer) {
     if (!socket_.is_open()) return;
+    const bool write_in_progress = !write_queue_.empty();
+    write_queue_.push_back(std::move(buffer));
+    if (write_in_progress) return;
+
+    write_next();
+  }
+
+  void write_next() {
     namespace asio = boost::asio;
     auto handler = asio::bind_executor(
         strand_, std::bind(&tcp_connection::handle_write, shared_from_this(),
-                           buffer, ph::_1, ph::_2));
-    asio::async_write(socket_, buffer, handler);
+                           ph::_1, ph::_2));
+    asio::async_write(socket_, write_queue_.front(), handler);
   }
 
-  void handle_write(shared_const_buffer buffer,
-                    const boost::system::error_code& error, size_t bytes) {
+  void handle_write(const boost::system::error_code& error, size_t bytes) {
     if (sent_shutdown_) {
+      write_queue_.clear();
       return;
     }
 
     if (boost::asio::error::broken_pipe == error) {
       lg::logger().debug() << "sent or peer recv shutdowned";
+      write_queue_.clear();
       return;
     }
 
     if (error) {
       lg::logger().error() << "failed to async_write: " + error.message()
                            << lg::L_endl;
+      write_queue_.clear();
       return;
     }
     lg::logger().trace() << "conn: write message size(" +
                                 std::to_string(bytes) + ")"
                          << lg::L_endl;
+    write_queue_.pop_front();
+    if (!write_queue_.empty()) write_next();
   }
 
   void handle_read(
@@ -223,7 +237,8 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   conn_interpreter interpreter_;
   std::mutex m_;
   link* link_;
-  bool sent_shutdown_;
+  std::deque<shared_const_buffer> write_queue_;
+  bool sent_shutdown_{false};
 };
 
 }  // namespace server
