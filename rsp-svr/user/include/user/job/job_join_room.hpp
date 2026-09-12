@@ -51,7 +51,9 @@ class job_join_room : public job,
     auto room_response = std::dynamic_pointer_cast<User2RoomResJoinRoom>(msg);
     lg::logger().trace() << "handle_res_join_room: "
                          << room_response->DebugString() << lg::L_endl;
-    session_->set_enter_room(room_response->room_id());
+    if (room_response->success()) {
+      session_->set_enter_room(room_response->room_id());
+    }
 
     ResJoinRoom response;
     response.set_room_id(room_response->room_id());
