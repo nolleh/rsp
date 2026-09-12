@@ -40,8 +40,6 @@ class job_create_room : public job,
                          << lg::L_endl;
 
     User2RoomReqCreateRoom request;
-    // TODO(@nolleh) need to be changed
-    request.set_request_id(request_.request_id());
     request.set_uid(session_->uid());
     intranet_.room().send_request(
         MessageType::kUser2RoomReqCreateRoom, request,
