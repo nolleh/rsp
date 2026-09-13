@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <future>
 #include <utility>
 #include <vector>
 
@@ -27,7 +28,29 @@ class room_manager {
     return *room_manager::s_instance;
   }
 
-  ~room_manager() { workers_.stop(); }
+  ~room_manager() {
+    std::vector<std::shared_ptr<room>> rooms;
+    {
+      std::lock_guard<std::mutex> lock(m_);
+      for (auto& [room_id, instance] : rooms_) {
+        rooms.push_back(std::move(instance));
+      }
+      rooms_.clear();
+      user_rooms_.clear();
+    }
+
+    std::vector<std::future<void>> closed;
+    closed.reserve(rooms.size());
+    for (const auto& instance : rooms) {
+      closed.push_back(instance->close());
+    }
+    for (auto& result : closed) {
+      result.get();
+    }
+
+    rooms.clear();
+    workers_.stop();
+  }
 
   std::shared_ptr<room> create_room(const std::string& uid,
                                     const RoutingId& route) {
@@ -53,16 +76,13 @@ class room_manager {
     return room->second;
   }
 
-  std::shared_ptr<room> join_room(const std::string& uid,
-                                  const RoomId room_id) {
+  bool joined_room(const Uid& uid, const std::shared_ptr<room>& instance) {
     std::lock_guard<std::mutex> l(m_);
-    auto room = rooms_.find(room_id);
-    if (rooms_.end() == room) {
-      return nullptr;
-    }
+    auto found = rooms_.find(instance->room_id());
+    if (rooms_.end() == found || found->second != instance) return false;
 
-    user_rooms_[uid] = room_id;
-    return room->second;
+    user_rooms_[uid] = instance->room_id();
+    return true;
   }
 
   std::shared_ptr<room> find_room(Uid uid) {
@@ -91,6 +111,30 @@ class room_manager {
     }
 
     return find_room(room_id);
+  }
+
+  std::future<void> close_room(const std::shared_ptr<room>& instance) {
+    {
+      std::lock_guard<std::mutex> lock(m_);
+      auto found = rooms_.find(instance->room_id());
+      if (rooms_.end() == found || found->second != instance) {
+        std::promise<void> completed;
+        completed.set_value();
+        return completed.get_future();
+      }
+
+      rooms_.erase(found);
+      for (auto user_room = user_rooms_.begin();
+           user_room != user_rooms_.end();) {
+        if (user_room->second == instance->room_id()) {
+          user_room = user_rooms_.erase(user_room);
+        } else {
+          ++user_room;
+        }
+      }
+    }
+
+    return instance->close();
   }
 
  private:

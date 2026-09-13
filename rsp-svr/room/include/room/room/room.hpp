@@ -2,7 +2,9 @@
 #pragma once
 
 #include <algorithm>
+#include <exception>
 #include <functional>
+#include <future>
 #include <map>
 #include <memory>
 #include <string>
@@ -38,45 +40,75 @@ struct user {
 class room : public room_api_interface,
              public std::enable_shared_from_this<room> {
  public:
-  room(RoomId room_id, user user, ba::io_context::strand* strand)
+  room(RoomId room_id, user owner, ba::io_context::strand* strand)
+      : room(room_id, std::move(owner), strand, nullptr) {}
+
+  room(RoomId room_id, user owner, ba::io_context::strand* strand,
+       std::unique_ptr<room_message_interface> contents)
       : room_id_(room_id),
-        owner_(user),
-        users_{{user.uid, user}},
+        owner_(std::move(owner)),
+        users_{{owner_.uid, owner_}},
         strand_(strand),
         logger_(lg::logger()),
-        so_manager_(rsp::room::so_manager::instance()) {}
+        contents_(std::move(contents)) {}
 
-  ~room() {
-    strand_->post(std::bind(&room::on_destroy_room, shared_from_this()));
-  }
+  ~room() = default;
 
   void create_room() {
     contents_ = std::unique_ptr<room_message_interface>(
-        so_manager_.contents_interface(this));
+        rsp::room::so_manager::instance().contents_interface(this));
     strand_->post(
         std::bind(&room::on_create_room, shared_from_this(), room_id_));
   }
 
   void join_room(const Uid& uid, const RoutingId& route,
-                 std::function<void()> before_notify) {
+                 std::function<void(bool)> before_notify) {
     strand_->post([self = shared_from_this(), uid, route,
                    before_notify = std::move(before_notify)] {
+      if (self->lifecycle_ != lifecycle::kOpen) {
+        before_notify(false);
+        return;
+      }
+
       self->users_.insert({uid, user(uid, route)});
-      before_notify();
+      before_notify(true);
       self->contents_->on_user_enter(uid);
     });
   }
 
-  void leave_room(const Uid& uid, std::function<void()> before_notify) {
+  void leave_room(const Uid& uid, std::function<void(bool)> before_notify,
+                  std::function<void()> on_empty) {
     strand_->post([self = shared_from_this(), uid,
-                   before_notify = std::move(before_notify)] {
-      self->users_.erase(uid);
-      before_notify();
+                   before_notify = std::move(before_notify),
+                   on_empty = std::move(on_empty)] {
+      if (self->lifecycle_ != lifecycle::kOpen ||
+          self->users_.erase(uid) == 0) {
+        before_notify(false);
+        return;
+      }
+
+      const bool empty = self->users_.empty();
+      before_notify(true);
       self->contents_->on_user_exit(uid);
+      if (empty) on_empty();
     });
   }
 
-  RoomId room_id() { return room_id_; }
+  std::future<void> close() {
+    auto completed = std::make_shared<std::promise<void>>();
+    auto result = completed->get_future();
+    strand_->dispatch([self = shared_from_this(), completed] {
+      try {
+        self->close_impl();
+        completed->set_value();
+      } catch (...) {
+        completed->set_exception(std::current_exception());
+      }
+    });
+    return result;
+  }
+
+  RoomId room_id() const { return room_id_; }
 
   std::vector<Uid> users() override {
     std::vector<Uid> users;
@@ -117,8 +149,6 @@ class room : public room_api_interface,
     contents_->on_create_room(room_id);
   }
 
-  void on_destroy_room() {}
-
   void on_recv_message(Uid from, const std::string& msg) {
     contents_->on_recv_message(from, msg);
   }
@@ -126,6 +156,26 @@ class room : public room_api_interface,
   void on_kicked_out_user(const Uid& uid, const KickoutReason& reason) {}
 
  private:
+  enum class lifecycle { kOpen, kClosing, kClosed };
+
+  void close_impl() {
+    if (lifecycle_ != lifecycle::kOpen) return;
+
+    lifecycle_ = lifecycle::kClosing;
+    if (contents_) {
+      try {
+        contents_->on_destroy_room();
+      } catch (const std::exception& exception) {
+        logger_.error() << "room contents failed to close: "
+                        << exception.what() << lg::L_endl;
+      } catch (...) {
+        logger_.error() << "room contents failed to close" << lg::L_endl;
+      }
+      contents_.reset();
+    }
+    lifecycle_ = lifecycle::kClosed;
+  }
+
   bool send_to_user(const SenderType sender_type,
                     const std::shared_ptr<user>& sender,
                     const std::vector<Uid>& uids, const std::string& msg) {
@@ -176,8 +226,8 @@ class room : public room_api_interface,
   std::map<Uid, user> users_;
   ba::io_context::strand* strand_;
   lg::s_logger& logger_;
-  rsp::room::so_manager& so_manager_;
   std::unique_ptr<room_message_interface> contents_;
+  lifecycle lifecycle_{lifecycle::kOpen};
 };
 
 }  // namespace room

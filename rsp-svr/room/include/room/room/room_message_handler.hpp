@@ -50,7 +50,7 @@ class room_message_handler {
       std::function<void(User2RoomResJoinRoom)> complete) {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
 
-    auto room = room_manager_.join_room(join_room.uid(), join_room.room_id());
+    auto room = room_manager_.find_room(join_room.room_id());
     User2RoomResJoinRoom res_join_room;
     res_join_room.set_request_id(join_room.request_id());
     res_join_room.set_room_id(join_room.room_id());
@@ -60,10 +60,12 @@ class room_message_handler {
       return;
     }
 
-    res_join_room.set_success(true);
     room->join_room(join_room.uid(), source,
-                    [complete = std::move(complete),
-                     response = std::move(res_join_room)]() mutable {
+                    [this, room, uid = join_room.uid(),
+                     complete = std::move(complete),
+                     response = std::move(res_join_room)](bool joined) mutable {
+                      response.set_success(
+                          joined && room_manager_.joined_room(uid, room));
                       complete(std::move(response));
                     });
   }
@@ -97,11 +99,14 @@ class room_message_handler {
       return;
     }
 
-    res_leave_room.set_success(true);
     room->leave_room(leave_room.uid(),
                      [complete = std::move(complete),
-                      response = std::move(res_leave_room)]() mutable {
+                      response = std::move(res_leave_room)](bool left) mutable {
+                       response.set_success(left);
                        complete(std::move(response));
+                     },
+                     [this, room] {
+                       room_manager_.close_room(room);
                      });
   }
 

@@ -65,7 +65,10 @@ target_link_libraries(
 add_executable(
     RoomTest
     test/room_manager_test.cpp
+    src/intranet/intranet.cpp
+    src/room/room.cpp
     src/room/room_manager.cpp
+    src/room/so_manager.cpp
 )
 
 target_include_directories(
