@@ -4,7 +4,6 @@
 
 #include "proto/common/ping.pb.h"
 #include "room/intranet/intranet.hpp"
-#include "rsplib/broker/broker.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
