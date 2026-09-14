@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(Client)
 
-find_package(Boost CONFIG REQUIRED)
+find_package(Boost CONFIG QUIET)
+if(NOT Boost_FOUND)
+  if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+  endif()
+  find_package(Boost REQUIRED)
+endif()
 find_package(Protobuf)
 
 set(CMAKE_CXX_STANDARD 20)

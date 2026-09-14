@@ -3,7 +3,13 @@ project(User VERSION 1.0)
 
 cmake_policy(SET CMP0048 NEW)
 
-find_package(Boost CONFIG REQUIRED)
+find_package(Boost CONFIG QUIET)
+if(NOT Boost_FOUND)
+  if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+  endif()
+  find_package(Boost REQUIRED)
+endif()
 find_package(Protobuf)
 find_package(cppzmq)
 

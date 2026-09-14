@@ -59,10 +59,12 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Install Boost
-      uses: MarkusJx/install-boost@v2.0.0
+      uses: MarkusJx/install-boost@v2.6.0
       id: install-boost
       with:
         boost_version: 1.83.0
+        platform_version: 22.04
+        toolset: gcc
 
     - name: Install Dependencies
       run: |
@@ -101,6 +103,8 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DBoost_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }}
+        -DBoost_DIR=${{ steps.install-boost.outputs.BOOST_ROOT }}/lib/cmake/Boost-1.83.0
         -DBoost_INCLUDE_DIR=${{ steps.install-boost.outputs.BOOST_ROOT }}/include
         -DBoost_LIBRARY_DIRS=${{ steps.install-boost.outputs.BOOST_ROOT }}/lib
         -S ${{ github.workspace }}
