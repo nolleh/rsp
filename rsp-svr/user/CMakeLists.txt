@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(User VERSION 1.0)
 
 cmake_policy(SET CMP0048 NEW)
 
-find_package(Boost)
+find_package(Boost CONFIG REQUIRED)
 find_package(Protobuf)
 find_package(cppzmq)
 

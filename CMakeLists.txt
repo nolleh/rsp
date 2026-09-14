@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
+
+# Apply the project's supported policy baseline to FetchContent dependencies.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
 
 project(Rsp VERSION 1.0)
 

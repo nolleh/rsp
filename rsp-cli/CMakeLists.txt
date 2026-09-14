@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(Client)
 
-find_package(Boost)
+find_package(Boost CONFIG REQUIRED)
 find_package(Protobuf)
 
 set(CMAKE_CXX_STANDARD 20)
