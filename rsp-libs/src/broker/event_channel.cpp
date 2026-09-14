@@ -201,6 +201,75 @@ void event_subscriber::apply_subscription_changes(zmq::socket_t* socket) {
   }
 }
 
+event_broker::event_broker(std::string ingress_address,
+                           std::string egress_address,
+                           event_zmq_context context)
+    : ingress_address_(std::move(ingress_address)),
+      egress_address_(std::move(egress_address)),
+      context_(std::move(context)) {}  // NOLINT(whitespace/indent_namespace)
+
+event_broker::~event_broker() { stop(); }
+
+void event_broker::start() {
+  if (running_.exchange(true)) return;
+
+  std::promise<void> ready;
+  auto started = ready.get_future();
+  thread_ = std::thread(&event_broker::run, this, std::move(ready));
+  try {
+    started.get();
+  } catch (...) {
+    running_ = false;
+    if (thread_.joinable()) thread_.join();
+    throw;
+  }
+}
+
+void event_broker::stop() {
+  running_ = false;
+  if (thread_.joinable()) thread_.join();
+}
+
+void event_broker::run(std::promise<void> ready) {
+  try {
+    zmq::socket_t xsub{*context_, zmq::socket_type::xsub};
+    zmq::socket_t xpub{*context_, zmq::socket_type::xpub};
+    xsub.set(zmq::sockopt::linger, 0);
+    xpub.set(zmq::sockopt::linger, 0);
+    xsub.bind(ingress_address_);
+    xpub.bind(egress_address_);
+    ready.set_value();
+
+    while (running_) {
+      zmq::pollitem_t items[] = {
+          {xsub.handle(), 0, ZMQ_POLLIN, 0},
+          {xpub.handle(), 0, ZMQ_POLLIN, 0},
+      };
+      zmq::poll(items, 2, kPollInterval);
+      if (items[0].revents & ZMQ_POLLIN) forward(&xsub, &xpub);
+      if (items[1].revents & ZMQ_POLLIN) forward(&xpub, &xsub);
+    }
+  } catch (const std::exception& exception) {
+    try {
+      ready.set_exception(std::current_exception());
+    } catch (const std::future_error&) {
+      log_event_channel_error("event broker", exception);
+    }
+    running_ = false;
+  }
+}
+
+void event_broker::forward(zmq::socket_t* source, zmq::socket_t* destination) {
+  while (true) {
+    zmq::message_t frame;
+    if (!source->recv(frame, zmq::recv_flags::none)) return;
+    const auto flags = frame.more() ? zmq::send_flags::sndmore
+                                    : zmq::send_flags::none;
+    destination->send(frame, flags);
+    if (flags == zmq::send_flags::none) return;
+  }
+}
+
 }  // namespace broker
 }  // namespace libs
 }  // namespace rsp

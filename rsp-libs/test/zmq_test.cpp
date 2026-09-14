@@ -359,6 +359,46 @@ TEST(ZMQ_EVENT, AppliesSubscriptionsAddedAfterStart) {
   subscriber.stop();
 }
 
+TEST(ZMQ_EVENT, BrokerRoutesMatchingTopics) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::event_broker broker{"inproc://event-broker-ingress",
+                          "inproc://event-broker-egress", context};
+  br::event_publisher publisher{"inproc://event-broker-ingress",
+                                br::endpoint_mode::kConnect, context};
+  br::event_subscriber subscriber{"inproc://event-broker-egress",
+                                  br::endpoint_mode::kConnect, context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::string payload;
+
+  broker.start();
+  subscriber.subscribe("jackpot.");
+  subscriber.start([&](br::event_topic, msg::raw_buffer message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    payload.assign(message.begin(), message.end());
+    received.notify_one();
+  });
+  publisher.start();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  publisher.publish("jackpot.won", {'w', 'o', 'n'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(lock, std::chrono::seconds(2), [&payload] {
+      return payload == "won";
+    }));
+  }
+
+  publisher.stop();
+  subscriber.stop();
+  broker.stop();
+}
+
 TEST(ZMQ_ROUTERDEALER, RoutesResponseAndNotificationInSendOrder) {
   namespace br = rsp::libs::broker;
   namespace msg = rsp::libs::message;

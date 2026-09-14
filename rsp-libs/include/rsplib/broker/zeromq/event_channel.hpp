@@ -91,6 +91,30 @@ class event_subscriber {
   std::atomic<bool> running_{false};
 };
 
+class event_broker {
+ public:
+  event_broker(
+      std::string ingress_address, std::string egress_address,
+      event_zmq_context context = std::make_shared<zmq::context_t>(1));
+  ~event_broker();
+
+  event_broker(const event_broker&) = delete;
+  event_broker& operator=(const event_broker&) = delete;
+
+  void start();
+  void stop();
+
+ private:
+  void run(std::promise<void> ready);
+  void forward(zmq::socket_t* source, zmq::socket_t* destination);
+
+  const std::string ingress_address_;
+  const std::string egress_address_;
+  const event_zmq_context context_;
+  std::thread thread_;
+  std::atomic<bool> running_{false};
+};
+
 }  // namespace broker
 }  // namespace libs
 }  // namespace rsp
