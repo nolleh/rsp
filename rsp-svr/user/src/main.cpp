@@ -5,7 +5,6 @@
 #include <boost/asio.hpp>
 
 #include "proto/common/ping.pb.h"
-#include "rsplib/broker/broker.hpp"
 #include "rsplib/debug/tracer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/serializer.hpp"
