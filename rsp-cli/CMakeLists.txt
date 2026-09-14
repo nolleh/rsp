@@ -7,7 +7,6 @@ find_package(Protobuf)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS -rdynamic)
 
 if(NOT DEFINED PROTO)
   set(Proto_DIR ${CMAKE_SOURCE_DIR}/../gen-proto)
@@ -58,6 +57,10 @@ target_link_libraries(ClientTest PRIVATE
   Libs
   Proto
   ${Protobuf_LIBRARIES}
+)
+
+set_property(
+  TARGET Client ClientTest APPEND_STRING PROPERTY LINK_FLAGS " -rdynamic"
 )
 
 include(GoogleTest)
