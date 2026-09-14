@@ -9,11 +9,13 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 
+#include "rsplib/broker/zeromq/event_channel.hpp"
 #include "rsplib/broker/zeromq/routed_channel.hpp"
 
 TEST(ZMQ_REQREP, ReqSocketSend) {
@@ -279,6 +281,82 @@ TEST(ZMQ_PUBSUB, TopicFiltered) {
   EXPECT_TRUE(!result2);
   // it was garbage value
   // EXPECT_EQ(0, *result2);
+}
+
+TEST(ZMQ_EVENT, DeliversOnlyMatchingTopics) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::event_publisher publisher{"inproc://event-topics",
+                                br::endpoint_mode::kBind, context};
+  br::event_subscriber subscriber{"inproc://event-topics",
+                                  br::endpoint_mode::kConnect, context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::vector<std::pair<std::string, std::string>> events;
+
+  subscriber.subscribe("jackpot.");
+  subscriber.start([&](br::event_topic topic, msg::raw_buffer payload) {
+    std::lock_guard<std::mutex> lock(mutex);
+    events.emplace_back(std::move(topic),
+                        std::string(payload.begin(), payload.end()));
+    received.notify_one();
+  });
+  publisher.start();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  publisher.publish("room.42.event", {'i', 'g', 'n', 'o', 'r', 'e', 'd'});
+  publisher.publish("jackpot.won", {'w', 'o', 'n'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(lock, std::chrono::seconds(2), [&events] {
+      return events.size() == 1;
+    }));
+  }
+
+  EXPECT_EQ((std::pair<std::string, std::string>{"jackpot.won", "won"}),
+            events.front());
+  publisher.stop();
+  subscriber.stop();
+}
+
+TEST(ZMQ_EVENT, AppliesSubscriptionsAddedAfterStart) {
+  namespace br = rsp::libs::broker;
+  namespace msg = rsp::libs::message;
+
+  auto context = std::make_shared<zmq::context_t>(1);
+  br::event_publisher publisher{"inproc://event-dynamic-subscription",
+                                br::endpoint_mode::kBind, context};
+  br::event_subscriber subscriber{"inproc://event-dynamic-subscription",
+                                  br::endpoint_mode::kConnect, context};
+
+  std::mutex mutex;
+  std::condition_variable received;
+  std::string topic;
+
+  subscriber.start([&](br::event_topic received_topic, msg::raw_buffer) {
+    std::lock_guard<std::mutex> lock(mutex);
+    topic = std::move(received_topic);
+    received.notify_one();
+  });
+  publisher.start();
+  subscriber.subscribe("system.");
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  publisher.publish("system.announcement", {'h', 'i'});
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(received.wait_for(lock, std::chrono::seconds(2), [&topic] {
+      return topic == "system.announcement";
+    }));
+  }
+
+  publisher.stop();
+  subscriber.stop();
 }
 
 TEST(ZMQ_ROUTERDEALER, RoutesResponseAndNotificationInSendOrder) {
