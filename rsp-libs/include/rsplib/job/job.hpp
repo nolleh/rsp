@@ -1,6 +1,8 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #pragma once
+#include <chrono>
+#include <functional>
 #include <memory>
 
 #include "rsplib/link/types.hpp"
@@ -14,8 +16,14 @@ using job_ptr = std::shared_ptr<job>;
 
 class job {
  public:
-  // virtual void operator()(link::link_ptr link) = 0;
-  virtual void run() = 0;
+  using completion = std::function<void()>;
+
+  virtual ~job() = default;
+  virtual void run(completion done) = 0;
+  virtual bool expired(std::chrono::steady_clock::time_point) const {
+    return false;
+  }
+  virtual void cancel() {}
 };
 
 }  // namespace job

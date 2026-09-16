@@ -49,6 +49,8 @@ class worker {
     return threads_.get_executor();
   }
 
+  boost::asio::io_context& io_context() { return *threads_.io_context(); }
+
  private:
   // REMARK(@nolleh) not productional #. this is for conv dev
   // TODO(@nolleh) configuration feature

@@ -30,7 +30,7 @@ class job_forward_message : public job {
         session_(session),
         message_(fwd_room) {}
 
-  void run() {
+  void run(completion done) override {
     lg::logger().debug() << "job_forward_message: " << message_.DebugString()
                          << lg::L_endl;
 
@@ -39,6 +39,7 @@ class job_forward_message : public job {
     message.set_message(message_.message());
 
     intranet_.room().send_notification(MessageType::kUser2RoomFwdRoom, message);
+    done();
   }
 
  private:

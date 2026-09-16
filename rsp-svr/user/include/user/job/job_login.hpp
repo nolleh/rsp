@@ -29,7 +29,7 @@ class job_login : public job {
   explicit job_login(const session_ptr& session, const ReqLogin& login)
       : session_(session), request_(login) {}
 
-  void run() {
+  void run(completion done) override {
     lg::logger().debug() << "job_login: " << request_.DebugString()
                          << lg::L_endl;
     // TODO(@nolleh) signup / login process.
@@ -37,6 +37,7 @@ class job_login : public job {
     send_res_login(request_.uid(), session_);
     session_->set_user(request_.uid());
     session::session_manager::instance().add_session(session_);
+    done();
   }
 
   void send_res_login(std::string uid, const session_ptr& session) const {

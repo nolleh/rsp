@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
@@ -40,7 +41,10 @@ namespace ba = boost::asio;
 class session : public link, public std::enable_shared_from_this<session> {
  public:
   explicit session(server::connection_ptr conn)
-      : worker_(worker::instance()), link(conn), state_(UserState::kLogouted) {
+      : worker_(worker::instance()),
+        strand_(worker_.io_context()),
+        link(conn),
+        state_(UserState::kLogouted) {
     conn->attach_link(this);
   }
 
@@ -94,6 +98,11 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   void enqueue_stop(bool force);
 
+  template <typename Func>
+  void post_to_serial_context(Func&& func) {
+    strand_.post(std::forward<Func>(func));
+  }
+
   void set_user(const std::string& uid) { uid_ = uid; }
   void set_enter_room(std::uint32_t room_id) { room_id_ = room_id; }
   void set_leave_room() { room_id_ = 0; }
@@ -104,7 +113,10 @@ class session : public link, public std::enable_shared_from_this<session> {
 
  private:
   void enqueue_job(libs::job::job_ptr job) {
-    worker_.post(std::bind(&job_scheduler::push_and_run, &scheduler_, job));
+    auto self = shared_from_this();
+    strand_.post([self, job = std::move(job)]() mutable {
+      self->scheduler_.push_and_run(std::move(job));
+    });
     lg::logger().trace() << "enqueue finished" << lg::L_endl;
   }
 
@@ -146,6 +158,7 @@ class session : public link, public std::enable_shared_from_this<session> {
   }
 
   worker& worker_;
+  ba::io_context::strand strand_;
   job_scheduler scheduler_;
   UserState state_;
   std::string uid_;

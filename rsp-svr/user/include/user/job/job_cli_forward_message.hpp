@@ -33,7 +33,7 @@ class job_cli_forward_message
         session_(session),
         message_(fwd_room) {}
 
-  void run() {
+  void run(completion done) override {
     lg::logger().debug() << "job_cli_forward_message: "
                          << message_.DebugString() << lg::L_endl;
 
@@ -45,6 +45,7 @@ class job_cli_forward_message
     const auto buffer =
         message::serializer::serialize(MessageType::kFwdClient, forward);
     session_->send(buffer);
+    done();
   }
 
  private:

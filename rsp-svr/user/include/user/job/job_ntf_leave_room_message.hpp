@@ -33,7 +33,7 @@ class job_ntf_leave_room_message
         session_(session),
         notification_(notification) {}
 
-  void run() {
+  void run(completion done) override {
     lg::logger().debug() << "ntf_leave_room message received: "
                          << notification_.DebugString() << lg::L_endl;
 
@@ -43,6 +43,7 @@ class job_ntf_leave_room_message
         MessageType::kNtfLeaveRoom, ntf_leave_room);
     session_->send(buffer);
     session_->set_leave_room();
+    done();
   }
 
  private:

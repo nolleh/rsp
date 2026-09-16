@@ -21,10 +21,11 @@ class job_stop : public rsp::libs::job::job {
   explicit job_stop(const session_ptr& session, const bool force_close)
       : session_(session), force_close_(force_close) {}
 
-  void run() {
+  void run(completion done) override {
     namespace lg = rsp::libs::logger;
     lg::logger().debug() << "job_stop" << lg::L_endl;
     stop(session_);
+    done();
   }
 
   void stop(const session_ptr& session) {

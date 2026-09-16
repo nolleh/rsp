@@ -1,8 +1,10 @@
 /** Copyright (C) 2024  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/room/room.pb.h"
@@ -34,20 +36,36 @@ class job_join_room : public job,
         session_(session),
         request_(join_room) {}
 
-  void run() {
+  void run(completion done) override {
     lg::logger().debug() << "job_join_room: " << request_.DebugString()
                          << lg::L_endl;
 
     User2RoomReqJoinRoom request;
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
-    intranet_.room().send_request(
+    done_ = std::move(done);
+    deadline_ = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    room_request_id_ = intranet_.room().send_request(
         MessageType::kUser2RoomReqJoinRoom, request,
-        std::bind(&job_join_room::handle_res_join_room, shared_from_this(),
-                  ph::_1));
+        [self = shared_from_this(), session = session_](
+            const std::shared_ptr<Message>& response) {
+          session->post_to_serial_context(
+              [self, response] { self->handle_res_join_room(response); });
+        });
+  }
+
+  bool expired(std::chrono::steady_clock::time_point now) const override {
+    return room_request_id_ != 0 && now >= deadline_;
+  }
+
+  void cancel() override {
+    intranet_.room().cancel_request(room_request_id_);
+    send_timeout_response();
+    finish();
   }
 
   void handle_res_join_room(const std::shared_ptr<Message> msg) {
+    if (finished_) return;
     auto room_response = std::dynamic_pointer_cast<User2RoomResJoinRoom>(msg);
     lg::logger().trace() << "handle_res_join_room: "
                          << room_response->DebugString() << lg::L_endl;
@@ -63,12 +81,33 @@ class job_join_room : public job,
     const auto buffer =
         message::serializer::serialize(MessageType::kResJoinRoom, response);
     session_->send(buffer);
+    finish();
   }
 
  private:
+  void send_timeout_response() {
+    ResJoinRoom response;
+    response.set_room_id(request_.room_id());
+    response.set_request_id(request_.request_id());
+    response.set_success(false);
+    session_->send(
+        message::serializer::serialize(MessageType::kResJoinRoom, response));
+  }
+
+  void finish() {
+    if (finished_) return;
+    finished_ = true;
+    auto done = std::move(done_);
+    if (done) done();
+  }
+
   const intranet& intranet_;
   const ReqJoinRoom request_;
   const session_ptr session_;
+  completion done_;
+  uint64_t room_request_id_{0};
+  std::chrono::steady_clock::time_point deadline_;
+  bool finished_{false};
 };
 
 }  // namespace job

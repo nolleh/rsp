@@ -36,49 +36,58 @@ class job_scheduler {
     std::swap(q_, empty);
   }
 
-  void run() {
-    auto& logger = logger::logger();
-
-    job_ptr job = nullptr;
-    {
-      std::lock_guard<std::mutex> lock(m_);
-      if (q_.empty()) {
-        return;
-      }
-      // the handler (has message, and context)
-      job = q_.front();
-    }
-
-    logger.trace() << "start run job" << logger::L_endl;
-    job->run();
-    {
-      std::lock_guard<std::mutex> lock(m_);
-      q_.pop();
-    }
-    logger.trace() << "end run job" << logger::L_endl;
-    run();
-  }
-
-  void push(job_ptr j) {
-    std::lock_guard<std::mutex> lock(m_);
-    q_.push(j);
-  }
-
   void push_and_run(job_ptr j) {
-    push(j);
-
+    job_ptr expired;
+    job_ptr next;
     {
       std::lock_guard<std::mutex> lock(m_);
-      if (1 != q_.size()) {
-        return;
+      q_.push(std::move(j));
+      if (running_) {
+        if (q_.front()->expired(std::chrono::steady_clock::now())) {
+          expired = q_.front();
+        }
+      } else {
+        running_ = true;
+        next = q_.front();
       }
     }
-    run();
+    if (expired) {
+      expired->cancel();
+    } else if (next) {
+      run(next);
+    }
   }
 
  private:
+  void run(const job_ptr& current) {
+    logger::logger().trace() << "start run job" << logger::L_endl;
+    auto completed = std::make_shared<bool>(false);
+    current->run([this, completed] {
+      if (*completed) return;
+      *completed = true;
+      complete_current();
+    });
+  }
+
+  void complete_current() {
+    job_ptr next;
+    {
+      std::lock_guard<std::mutex> lock(m_);
+      if (q_.empty()) return;
+      q_.pop();
+      if (q_.empty()) {
+        running_ = false;
+        return;
+      }
+      next = q_.front();
+    }
+    logger::logger().trace() << "end run job" << logger::L_endl;
+    run(next);
+  }
+
   std::queue<job_ptr> q_;
   std::mutex m_;
+  bool running_{false};
 };
 
 }  // namespace job

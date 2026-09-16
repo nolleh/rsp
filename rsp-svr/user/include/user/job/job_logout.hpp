@@ -21,11 +21,12 @@ class job_logout : public rsp::libs::job::job {
   explicit job_logout(const session_ptr session, const ReqLogout& logout)
       : session_(session), request_(logout) {}
 
-  void run() {
+  void run(completion done) override {
     namespace lg = rsp::libs::logger;
     lg::logger().debug() << "job_logout: " << session_->uid() << lg::L_endl;
     send_res_logout(session_);
     session_->enqueue_stop(false);
+    done();
   }
 
   void send_res_logout(const session_ptr& session) {

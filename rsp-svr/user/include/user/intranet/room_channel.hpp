@@ -53,7 +53,7 @@ class room_channel {
   }
 
   template <typename T>
-  void send_request(
+  uint64_t send_request(
       MessageType type, T request,
       std::function<void(const std::shared_ptr<Message>)> handler) {
     const auto request_id = next_request_id_.fetch_add(1);
@@ -66,6 +66,12 @@ class room_channel {
     channel_.send(libs::message::serializer::serialize(type, request));
     logger_.trace() << "send to room, requestId:" << request_id
                     << ", type: " << typeid(request).name() << lg::L_endl;
+    return request_id;
+  }
+
+  void cancel_request(uint64_t request_id) {
+    std::lock_guard<std::mutex> lock(requests_mutex_);
+    requests_.erase(request_id);
   }
 
   template <typename T>
