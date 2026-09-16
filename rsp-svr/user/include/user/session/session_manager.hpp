@@ -4,6 +4,7 @@
 #include <bitset>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -31,11 +32,14 @@ class session_manager {
   }
 
   void add_session(const session_ptr& s_ptr) {
+    std::lock_guard<std::mutex> lock(m_);
     sessions_[s_ptr->conn_ptr()] = s_ptr;
-    uid_sessions_[s_ptr->uid()] = s_ptr;
+    const auto uid = s_ptr->uid();
+    if (!uid.empty()) uid_sessions_[uid] = s_ptr;
   }
 
   void add_session(const server::connection_ptr& conn) {
+    std::lock_guard<std::mutex> lock(m_);
     auto iter = sessions_.find(conn);
     if (sessions_.end() != iter) {
       return;
@@ -51,10 +55,20 @@ class session_manager {
   }
 
   void remove_session(const server::connection_ptr& conn) {
-    sessions_.erase(conn);
+    std::lock_guard<std::mutex> lock(m_);
+    auto iter = sessions_.find(conn);
+    if (iter == sessions_.end()) return;
+    const auto uid = iter->second->uid();
+    if (!uid.empty()) {
+      auto uid_iter = uid_sessions_.find(uid);
+      if (uid_iter != uid_sessions_.end() && uid_iter->second == iter->second)
+        uid_sessions_.erase(uid_iter);
+    }
+    sessions_.erase(iter);
   }
 
   std::shared_ptr<session> find_session(const std::string& uid) {
+    std::lock_guard<std::mutex> lock(m_);
     auto iter = uid_sessions_.find(uid);
     if (uid_sessions_.end() == iter) {
       return nullptr;
@@ -68,6 +82,7 @@ class session_manager {
   static std::once_flag s_flag;
   static std::unique_ptr<session_manager> s_instance;
 
+  std::mutex m_;
   std::map<server::connection_ptr, session_ptr> sessions_;
   std::map<std::string, session_ptr> uid_sessions_;
 };
