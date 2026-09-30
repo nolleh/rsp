@@ -3,6 +3,7 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -36,6 +37,7 @@ using raw_buffer = message::raw_buffer;
 
 class tcp_connection;
 using connection_ptr = std::shared_ptr<tcp_connection>;
+using close_handler = std::function<void(const connection_ptr&)>;
 using dispatcher = message::message_dispatcher_interface;
 
 // https://www.boost.org/doc/libs/1_83_0/doc/html/boost_asio/net_ts.html
@@ -45,9 +47,10 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
   static constexpr int kBufBytes = 128;
   static connection_ptr create(boost::asio::io_context* io_context,
-                               dispatcher* dispatcher) {
+                               dispatcher* dispatcher,
+                               close_handler on_closed = {}) {
     return std::shared_ptr<tcp_connection>(
-        new tcp_connection(io_context, dispatcher));
+        new tcp_connection(io_context, dispatcher, std::move(on_closed)));
   }
 
   tcp::socket& socket() { return socket_; }
@@ -96,8 +99,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  private:
   // TODO(@nolleh) consider options for linger / nagle
   explicit tcp_connection(boost::asio::io_context* io_context,
-                          dispatcher* dispatcher)
-      : strand_(*io_context), socket_(*io_context), interpreter_(dispatcher) {}
+                          dispatcher* dispatcher, close_handler on_closed)
+      : strand_(*io_context),
+        socket_(*io_context),
+        interpreter_(dispatcher),
+        on_closed_(std::move(on_closed)) {}
 
   void start_impl(size_t len) {
     if (!socket_.is_open()) return;
@@ -116,15 +122,18 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     // https://stackoverflow.com/questions/12794107/why-do-i-need-strand-per-connection-when-using-boostasio/12801042#12801042
     namespace asio = boost::asio::ip;
     // for now, allow serverside close without restriction.
-    if ((!force && sent_shutdown_) || !socket_.is_open()) {
+    if (closed_ || (!force && sent_shutdown_)) {
+      return;
+    }
+
+    if (!socket_.is_open() || force) {
+      finish_close();
       return;
     }
 
     lg::logger().trace() << "run" << lg::L_endl;
     boost::system::error_code shutdown_ec;
-    socket_.shutdown(force ? asio::tcp::socket::shutdown_both
-                           : asio::tcp::socket::shutdown_send,
-                     shutdown_ec);
+    socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
     // if (shutdown_ec)
     //   lg::logger().debug() << "shutdown error" << shutdown_ec
     //                        << shutdown_ec.message() << lg::L_endl;
@@ -132,31 +141,31 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
                          << "), shutdown_ec:" << shutdown_ec.message()
                          << ", open:" << socket_.is_open() << lg::L_endl;
     sent_shutdown_ = true;
-    if (force) socket_.close();
+    if (shutdown_ec) finish_close();
   }
 
   void stop_impl(const boost::system::error_code& ec) {
-    if (!socket_.is_open()) return;
-
     lg::logger().trace() << "run:" << ec.message() << lg::L_endl;
-    auto& logger = lg::logger();
-    namespace asio = boost::asio::ip;
-    if (sent_shutdown_) {
-      logger.debug() << "client also shutdowned" << lg::L_endl;
-      socket_.close();
-      return;
+    finish_close();
+  }
+
+  void finish_close() {
+    if (closed_) return;
+    closed_ = true;
+
+    boost::system::error_code ignored;
+    if (socket_.is_open()) {
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
+      socket_.close(ignored);
     }
-    logger.debug() << "ec" << ec.message() << ", shutdown" << lg::L_endl;
-    boost::system::error_code shutdown_ec;
-    socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
-    if (shutdown_ec)
-      logger.error() << "shutdown error" << shutdown_ec << lg::L_endl;
-    sent_shutdown_ = true;
-    socket_.close();
+    write_queue_.clear();
+
+    auto on_closed = std::move(on_closed_);
+    if (on_closed) on_closed(shared_from_this());
   }
 
   void send_impl(shared_const_buffer buffer) {
-    if (!socket_.is_open()) return;
+    if (closed_ || !socket_.is_open()) return;
     const bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
     if (write_in_progress) return;
@@ -173,21 +182,18 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   void handle_write(const boost::system::error_code& error, size_t bytes) {
-    if (sent_shutdown_) {
-      write_queue_.clear();
-      return;
-    }
+    if (closed_) return;
 
     if (boost::asio::error::broken_pipe == error) {
       lg::logger().debug() << "sent or peer recv shutdowned";
-      write_queue_.clear();
+      finish_close();
       return;
     }
 
     if (error) {
       lg::logger().error() << "failed to async_write: " + error.message()
                            << lg::L_endl;
-      write_queue_.clear();
+      finish_close();
       return;
     }
     lg::logger().trace() << "conn: write message size(" +
@@ -212,13 +218,14 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
           << "conn: canceld operation (aborted conn) socket is opend?:" +
                  std::to_string(socket_.is_open())
           << lg::L_endl;
+      if (!closed_) finish_close();
       return;
     }
 
     if (error) {
       lg::logger().error() << "failed to async_read: " + error.message()
                            << lg::L_endl;
-      // start(1);
+      stop(error);
       return;
     }
 
@@ -238,7 +245,9 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   std::mutex m_;
   link* link_;
   std::deque<shared_const_buffer> write_queue_;
+  close_handler on_closed_;
   bool sent_shutdown_{false};
+  bool closed_{false};
 };
 
 }  // namespace server

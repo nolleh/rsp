@@ -44,6 +44,11 @@ class tcp_server {
       s->on_conn_created(conn);
     }
   }
+  void notify_on_closed(const std::shared_ptr<tcp_connection>& conn) {
+    for (auto s : event_subscribers_) {
+      s->on_conn_closed(conn);
+    }
+  }
   void unsubscribe(server_event* event) { event_subscribers_.erase(event); }
 
   void start() {
@@ -62,7 +67,9 @@ class tcp_server {
 
   void start_accept() {
     std::shared_ptr<tcp_connection> new_connection =
-        tcp_connection::create(io_threads_.io_context(), dispatcher_);
+        tcp_connection::create(
+            io_threads_.io_context(), dispatcher_,
+            [this](const connection_ptr& conn) { notify_on_closed(conn); });
 
     lg::logger().info() << "start accepting" << lg::L_endl;
     acceptor_.async_accept(new_connection->socket(),
