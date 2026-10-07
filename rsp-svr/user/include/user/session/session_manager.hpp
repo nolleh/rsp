@@ -50,21 +50,24 @@ class session_manager {
     sessions_[conn] = s;
   }
 
-  void remove_session(const session& session) {
-    remove_session(session.conn_ptr());
+  session_ptr remove_session(const session& session) {
+    return remove_session(session.conn_ptr());
   }
 
-  void remove_session(const server::connection_ptr& conn) {
+  session_ptr remove_session(const server::connection_ptr& conn) {
     std::lock_guard<std::mutex> lock(m_);
     auto iter = sessions_.find(conn);
-    if (iter == sessions_.end()) return;
-    const auto uid = iter->second->uid();
+    if (iter == sessions_.end()) return nullptr;
+
+    auto removed = iter->second;
+    const auto uid = removed->uid();
     if (!uid.empty()) {
       auto uid_iter = uid_sessions_.find(uid);
-      if (uid_iter != uid_sessions_.end() && uid_iter->second == iter->second)
+      if (uid_iter != uid_sessions_.end() && uid_iter->second == removed)
         uid_sessions_.erase(uid_iter);
     }
     sessions_.erase(iter);
+    return removed;
   }
 
   std::shared_ptr<session> find_session(const std::string& uid) {

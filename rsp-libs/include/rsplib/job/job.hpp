@@ -17,13 +17,17 @@ using job_ptr = std::shared_ptr<job>;
 class job {
  public:
   using completion = std::function<void()>;
+  enum class cancel_reason {
+    kTimeout,
+    kShutdown,
+  };
 
   virtual ~job() = default;
   virtual void run(completion done) = 0;
   virtual bool expired(std::chrono::steady_clock::time_point) const {
     return false;
   }
-  virtual void cancel() {}
+  virtual void cancel(cancel_reason) {}
 };
 
 }  // namespace job

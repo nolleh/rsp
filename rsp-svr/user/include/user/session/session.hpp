@@ -74,7 +74,11 @@ class session : public link, public std::enable_shared_from_this<session> {
 
   // unexpected discon
   void on_disconnected() override {
-    // TODO(@nolleh) notify to other servers that user detached
+    auto self = shared_from_this();
+    strand_.post([self] {
+      self->stop_ = true;
+      self->scheduler_.shutdown();
+    });
   }
 
   // by client/server, requested closed was done
@@ -164,7 +168,7 @@ class session : public link, public std::enable_shared_from_this<session> {
   std::string uid_;
 
   std::atomic<time_t> last_received_;
-  std::atomic<bool> stop_;
+  std::atomic<bool> stop_{false};
   std::uint32_t room_id_{0};
 };
 

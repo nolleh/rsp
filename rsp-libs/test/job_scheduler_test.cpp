@@ -27,9 +27,11 @@ class manual_job : public rsp::libs::job::job {
     return expires_;
   }
 
-  void cancel() override {
-    events_->push_back("cancel " + name_);
-    done_();
+  void cancel(cancel_reason reason) override {
+    events_->push_back("cancel " + name_ +
+                       (reason == cancel_reason::kTimeout ? " timeout"
+                                                          : " shutdown"));
+    if (done_) done_();
   }
 
   void complete() { done_(); }
@@ -66,9 +68,35 @@ TEST(JobScheduler, CancelsExpiredCurrentJobBeforeNextJob) {
   scheduler.push_and_run(first);
   scheduler.push_and_run(second);
 
-  EXPECT_EQ((std::vector<std::string>{"run first", "cancel first",
+  EXPECT_EQ((std::vector<std::string>{"run first", "cancel first timeout",
                                        "run second"}),
             events);
+}
+
+TEST(JobScheduler, ShutdownCancelsActiveAndQueuedJobsWithoutRunningNext) {
+  rsp::libs::job::job_scheduler scheduler;
+  std::vector<std::string> events;
+  auto first = std::make_shared<manual_job>("first", &events);
+  auto second = std::make_shared<manual_job>("second", &events);
+
+  scheduler.push_and_run(first);
+  scheduler.push_and_run(second);
+  scheduler.shutdown();
+
+  EXPECT_EQ((std::vector<std::string>{"run first", "cancel first shutdown",
+                                      "cancel second shutdown"}),
+            events);
+}
+
+TEST(JobScheduler, RejectsJobsAfterShutdown) {
+  rsp::libs::job::job_scheduler scheduler;
+  std::vector<std::string> events;
+  auto rejected = std::make_shared<manual_job>("rejected", &events);
+
+  scheduler.shutdown();
+  scheduler.push_and_run(rejected);
+
+  EXPECT_EQ((std::vector<std::string>{"cancel rejected shutdown"}), events);
 }
 
 }  // namespace

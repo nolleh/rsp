@@ -37,24 +37,49 @@ class job_scheduler {
   }
 
   void push_and_run(job_ptr j) {
+    job_ptr rejected;
     job_ptr expired;
     job_ptr next;
     {
       std::lock_guard<std::mutex> lock(m_);
-      q_.push(std::move(j));
-      if (running_) {
-        if (q_.front()->expired(std::chrono::steady_clock::now())) {
-          expired = q_.front();
-        }
+      if (stopped_) {
+        rejected = std::move(j);
       } else {
-        running_ = true;
-        next = q_.front();
+        q_.push(std::move(j));
+        if (running_) {
+          if (q_.front()->expired(std::chrono::steady_clock::now())) {
+            expired = q_.front();
+          }
+        } else {
+          running_ = true;
+          next = q_.front();
+        }
       }
     }
-    if (expired) {
-      expired->cancel();
+    if (rejected) {
+      rejected->cancel(job::cancel_reason::kShutdown);
+    } else if (expired) {
+      expired->cancel(job::cancel_reason::kTimeout);
     } else if (next) {
       run(next);
+    }
+  }
+
+  void shutdown() {
+    std::queue<job_ptr> cancelled;
+    {
+      std::lock_guard<std::mutex> lock(m_);
+      if (stopped_) return;
+
+      stopped_ = true;
+      running_ = false;
+      std::swap(q_, cancelled);
+    }
+
+    while (!cancelled.empty()) {
+      auto current = std::move(cancelled.front());
+      cancelled.pop();
+      current->cancel(job::cancel_reason::kShutdown);
     }
   }
 
@@ -88,6 +113,7 @@ class job_scheduler {
   std::queue<job_ptr> q_;
   std::mutex m_;
   bool running_{false};
+  bool stopped_{false};
 };
 
 }  // namespace job

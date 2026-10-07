@@ -58,9 +58,9 @@ class job_create_room : public job,
     return room_request_id_ != 0 && now >= deadline_;
   }
 
-  void cancel() override {
+  void cancel(cancel_reason reason) override {
     intranet_.room().cancel_request(room_request_id_);
-    send_timeout_response();
+    if (reason == cancel_reason::kTimeout) send_timeout_response();
     finish();
   }
 

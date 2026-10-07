@@ -17,7 +17,8 @@ class acceptor : public event::server_event {
     manager_.add_session(conn);
   }
   void on_conn_closed(const event::connection_ptr& conn) {
-    manager_.remove_session(conn);
+    auto removed = manager_.remove_session(conn);
+    if (removed) removed->on_disconnected();
   }
 
  private:
