@@ -59,7 +59,7 @@ class Process:
                 match = re.search(pattern, output[start:])
                 if match:
                     return match
-                if self.process.poll() is not None:
+                if self.process.poll() is not None and not self.reader.is_alive():
                     raise RuntimeError(
                         f"{self.name} exited before {pattern!r}:\n{output}")
                 remaining = deadline - time.monotonic()
@@ -98,7 +98,7 @@ def main():
         client = launch(name, build / "rsp-cli/Client", "127.0.0.1")
         client.expect("type user name to login")
         mark = client.send(name)
-        client.expect("success to login:" + re.escape(name), mark)
+        client.expect(r"success to login:\s*" + re.escape(name), mark)
         client.expect("create_room", mark)
         print(f"PASS: {name} logged in", flush=True)
         return client
@@ -135,7 +135,7 @@ def main():
 
         alice = login("e2e_alice")
         mark = alice.send("2")
-        created = alice.expect(r"created room #(\d+), and joined", mark)
+        created = alice.expect(r"created room #\s*(\d+)\s*, and joined", mark)
         room_id = created.group(1)
         alice.expect("send message", mark)
         print(f"PASS: alice created and joined room {room_id}", flush=True)
@@ -144,7 +144,7 @@ def main():
         mark = bob.send("3")
         bob.expect("put room id", mark)
         mark = bob.send(room_id)
-        bob.expect("joined room #" + room_id, mark)
+        bob.expect(r"joined room #\s*" + room_id, mark)
         bob.expect("send message", mark)
         print(f"PASS: bob joined room {room_id}", flush=True)
 
@@ -153,13 +153,13 @@ def main():
 
         for client in (bob, alice):
             mark = client.send("3")
-            client.expect(r"res_leave_room received: success\?: (1|true)", mark)
+            client.expect(r"res_leave_room received: success\?:\s*(1|true)", mark)
             client.expect("create_room", mark)
             print(f"PASS: {client.name} left room and returned to lobby", flush=True)
 
         for client in (bob, alice):
             mark = client.send("1")
-            client.expect("success to logout, bye bye:" + client.name, mark)
+            client.expect(r"success to logout, bye bye:\s*" + client.name, mark)
             if client.process.wait(timeout=TIMEOUT) != 0:
                 raise RuntimeError(f"{client.name} exited with an error")
             client.reader.join(timeout=5)
