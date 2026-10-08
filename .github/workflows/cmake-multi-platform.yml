@@ -121,3 +121,15 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       # run: ctest --build-config ${{ matrix.build_type }}
       run: ./test.sh
+
+    - name: Two-client chat and leave-room E2E
+      timeout-minutes: 3
+      run: python3 tests/e2e_chat.py --build-dir build --log-dir build/e2e-logs
+
+    - name: Upload E2E process logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-chat-logs
+        path: build/e2e-logs/
+        if-no-files-found: ignore

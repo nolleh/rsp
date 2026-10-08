@@ -1,6 +1,8 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 
 #include <algorithm>
+#include <cstdint>
+#include <limits>
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h>  // NOLINT
 #include <stdexcept>
@@ -70,8 +72,8 @@ TEST(Message, AcceptsPayloadAtMaximumSize) {
 
   message::raw_buffer buffer;
   const auto content_length = message::serializer::kMaxPayloadSize;
-  message::mset(&buffer, content_length);
-  message::mset(&buffer, static_cast<int>(MessageType::kFwdClient));
+  message::mset_be(&buffer, static_cast<uint64_t>(content_length));
+  message::mset_be(&buffer, static_cast<uint32_t>(MessageType::kFwdClient));
   buffer.resize(message::serializer::kHeaderSize + content_length);
 
   const auto meta = message::serializer::destruct_buffer(buffer);
@@ -85,7 +87,7 @@ TEST(Message, RejectsPayloadLargerThanMaximumSize) {
 
   message::raw_buffer buffer;
   const auto content_length = message::serializer::kMaxPayloadSize + 1;
-  message::mset(&buffer, content_length);
+  message::mset_be(&buffer, static_cast<uint64_t>(content_length));
 
   const auto meta = message::serializer::destruct_buffer(buffer);
 
@@ -97,7 +99,7 @@ TEST(Message, WaitsForIncompletePayloadWithinLimit) {
 
   message::raw_buffer buffer;
   const auto content_length = message::serializer::kMaxPayloadSize;
-  message::mset(&buffer, content_length);
+  message::mset_be(&buffer, static_cast<uint64_t>(content_length));
 
   const auto meta = message::serializer::destruct_buffer(buffer);
 
@@ -194,11 +196,87 @@ TEST(Interpreter, RejectsOversizedFrame) {
 
   const auto content_length = message::serializer::kMaxPayloadSize + 1;
   message::raw_buffer header;
-  message::mset(&header, content_length);
+  message::mset_be(&header, static_cast<uint64_t>(content_length));
 
   std::array<char, 128> input{};
   std::copy(header.begin(), header.end(), input.begin());
 
   message::conn_interpreter interpreter;
   EXPECT_FALSE(interpreter.handle_buffer(input, header.size()));
+}
+
+TEST(Message, SerializesFixedWidthNetworkOrderHeader) {
+  namespace message = rsp::libs::message;
+  static_assert(message::serializer::kHeaderSize == 12);
+
+  ReqLogin login;
+  login.set_uid("a");
+  const auto buffer =
+      message::serializer::serialize(MessageType::kReqLogin, login);
+  const message::raw_buffer expected{
+      0, 0, 0, 0, 0, 0, 0, 3,  // uint64_t payload length
+      0, 0, 0, 2,              // uint32_t message type
+      0x12, 1, 'a'};          // protobuf payload
+  EXPECT_EQ(buffer, expected);
+}
+
+TEST(Message, ParsesFixedWidthNetworkOrderHeader) {
+  namespace message = rsp::libs::message;
+  const message::raw_buffer buffer{
+      0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 0x12, 1, 'a'};
+  const auto meta = message::serializer::destruct_buffer(buffer);
+  ASSERT_EQ(meta.status, message::parse_status::kComplete);
+  EXPECT_EQ(meta.size, 15u);
+  EXPECT_EQ(meta.payload_size, 3u);
+  EXPECT_EQ(meta.type, MessageType::kReqLogin);
+  EXPECT_EQ(meta.payload, (message::raw_buffer{0x12, 1, 'a'}));
+}
+
+TEST(Message, WaitsForEveryPartialHeader) {
+  namespace message = rsp::libs::message;
+  const message::raw_buffer header{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2};
+  for (size_t length = 0; length < header.size(); ++length) {
+    const message::raw_buffer partial(header.begin(), header.begin() + length);
+    EXPECT_EQ(message::serializer::destruct_buffer(partial).status,
+              message::parse_status::kIncomplete);
+  }
+  EXPECT_EQ(message::serializer::destruct_buffer(header).status,
+            message::parse_status::kComplete);
+}
+
+TEST(Message, RejectsWireLengthBeforeNarrowingToSizeT) {
+  namespace message = rsp::libs::message;
+  message::raw_buffer buffer;
+  message::mset_be(&buffer, uint64_t{1} << 32);
+  EXPECT_EQ(message::serializer::destruct_buffer(buffer).status,
+            message::parse_status::kInvalid);
+
+  buffer.clear();
+  message::mset_be(&buffer, std::numeric_limits<uint64_t>::max());
+  EXPECT_EQ(message::serializer::destruct_buffer(buffer).status,
+            message::parse_status::kInvalid);
+}
+
+TEST(Message, NetworkOrderHelpersPreserveEveryByte) {
+  namespace message = rsp::libs::message;
+  message::raw_buffer buffer;
+  message::mset_be(&buffer, uint64_t{0x0123456789abcdef});
+  message::mset_be(&buffer, uint32_t{0x89abcdef});
+  const unsigned char expected[]{
+      0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+      0x89, 0xab, 0xcd, 0xef};
+  ASSERT_EQ(buffer.size(), sizeof(expected));
+  for (size_t index = 0; index < buffer.size(); ++index) {
+    EXPECT_EQ(static_cast<unsigned char>(buffer[index]), expected[index]);
+  }
+
+  uint64_t length = 0;
+  uint32_t type = 0;
+  ASSERT_TRUE(message::mget_be(buffer, &length, 0));
+  ASSERT_TRUE(message::mget_be(buffer, &type, 8));
+  EXPECT_EQ(length, uint64_t{0x0123456789abcdef});
+  EXPECT_EQ(type, uint32_t{0x89abcdef});
+  EXPECT_FALSE(message::mget_be(buffer, &type, 9));
+  EXPECT_FALSE(message::mget_be(
+      buffer, &type, std::numeric_limits<size_t>::max()));
 }

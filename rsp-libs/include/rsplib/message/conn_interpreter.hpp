@@ -32,7 +32,8 @@ using link = rsp::libs::link::link;
  * */
 class conn_interpreter {
   /**
-   * CONTENT_LEN (8 Bytes) | TYPE (1 Bytes) | [0..LEN]
+   * CONTENT_LEN (8 Bytes) | TYPE (4 Bytes) | [0..LEN]
+   * Header integers use big-endian (network byte order).
    * */
  public:
   conn_interpreter() : dispatcher_(&message_dispatcher::instance()) {}
