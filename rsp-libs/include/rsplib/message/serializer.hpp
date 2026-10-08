@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 #include <utility>
 
@@ -29,8 +30,8 @@ struct meta {
 };
 
 class serializer {
-  static constexpr size_t kContentLen = 8;
-  static constexpr size_t kType = 4;
+  static constexpr size_t kContentLen = sizeof(uint64_t);
+  static constexpr size_t kType = sizeof(uint32_t);
 
  public:
   static constexpr size_t kHeaderSize = kContentLen + kType;
@@ -45,29 +46,31 @@ class serializer {
     }
 
     raw_buffer buffer;
-    mset(&buffer, content_len);
-    mset(&buffer, static_cast<int>(type));
+    mset_be(&buffer, static_cast<uint64_t>(content_len));
+    mset_be(&buffer, static_cast<uint32_t>(type));
     const auto str = message.SerializeAsString();
     buffer.insert(buffer.end(), str.begin(), str.end());
     return buffer;
   }
 
   static meta destruct_buffer(const raw_buffer& buffer) {
-    size_t content_length;
-    if (!mget(buffer, &content_length, 0)) return {};
+    uint64_t content_length;
+    if (!mget_be(buffer, &content_length, 0)) return {};
     if (content_length > kMaxPayloadSize) {
       return {.status = parse_status::kInvalid};
     }
 
-    const size_t message_len = kHeaderSize + content_length;
+    // The validated length fits size_t even on a 32-bit target.
+    const size_t payload_size = static_cast<size_t>(content_length);
+    const size_t message_len = kHeaderSize + payload_size;
 
     if (buffer.size() < message_len) {
       return {};
     }
 
     // full message is retrieved
-    int type_parts;
-    if (!mget(buffer, &type_parts, kContentLen)) return {};
+    uint32_t type_parts;
+    if (!mget_be(buffer, &type_parts, kContentLen)) return {};
     const auto type = static_cast<MessageType>(type_parts);
 
     raw_buffer payload;
@@ -76,7 +79,7 @@ class serializer {
 
     // payload.insert(payload.end(), buffer.cbegin() + kContentLen + kType,
     //                buffer.cend());
-    return {parse_status::kComplete, message_len, content_length, type,
+    return {parse_status::kComplete, message_len, payload_size, type,
             payload};
   }
 

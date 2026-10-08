@@ -3,7 +3,9 @@
 #pragma once
 #include <algorithm>
 #include <bitset>
-#include <cstring>
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -31,23 +33,30 @@ inline std::vector<char> retrieve_v(raw_buffer buf, int begin, int end) {
   return retrieve_parts<std::vector<char>>(buf, begin, end);
 }
 
+// Wire integers are stored most-significant byte first (network byte order).
 template <typename T>
-inline void mset(raw_buffer* dest, T&& t) {
-  auto ptr = reinterpret_cast<const char*>(&t);
-  dest->insert(dest->end(), ptr, ptr + sizeof(t));
-  //
-  // auto ptr = reinterpret_cast<char*>(&t);
-  // std::copy(ptr, ptr + sizeof(t), dest);
-  // memcpy(dest, ptr, sizeof(t));
+inline void mset_be(raw_buffer* dest, T value) {
+  static_assert(std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>);
+  for (size_t remaining = sizeof(T); remaining > 0; --remaining) {
+    const auto byte = static_cast<unsigned char>(
+        (value >> ((remaining - 1) * 8)) & 0xff);
+    // Copy the byte representation without signed-char numeric conversion.
+    dest->insert(dest->end(), reinterpret_cast<const char*>(&byte),
+                 reinterpret_cast<const char*>(&byte) + 1);
+  }
 }
 
 template <typename T>
-inline bool mget(const raw_buffer& src, T* dest, uint8_t offset) {
-  if (src.size() < offset + sizeof(*dest)) {
+inline bool mget_be(const raw_buffer& src, T* dest, size_t offset) {
+  static_assert(std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>);
+  if (offset > src.size() || src.size() - offset < sizeof(T)) {
     return false;
   }
-  const auto ptr = src.data() + offset;
-  std::memcpy(dest, ptr, sizeof(*dest));
+  T value = 0;
+  for (size_t index = 0; index < sizeof(T); ++index) {
+    value = (value << 8) | static_cast<unsigned char>(src[offset + index]);
+  }
+  *dest = value;
   return true;
 }
 
