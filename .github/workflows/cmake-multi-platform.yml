@@ -130,6 +130,17 @@ jobs:
       timeout-minutes: 1
       run: python3 tests/e2e_room_timeout.py --build-dir build --log-dir build/e2e-logs
 
+    - name: Print E2E process logs on failure
+      if: failure()
+      run: |
+        python3 - <<'PY'
+        from pathlib import Path
+        for path in sorted(Path("build/e2e-logs").glob("*.log")):
+            print(f"::group::{path.name}", flush=True)
+            print(path.read_text(errors="replace"), flush=True)
+            print("::endgroup::", flush=True)
+        PY
+
     - name: Upload E2E process logs
       if: always()
       uses: actions/upload-artifact@v4

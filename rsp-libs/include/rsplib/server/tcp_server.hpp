@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <set>
 
@@ -27,16 +28,18 @@ class tcp_server {
 
  public:
   static const int kBufBytes = 128;
-  explicit tcp_server(dispatcher* dispatcher)
+  explicit tcp_server(dispatcher* dispatcher, std::uint16_t port = 8080)
       : acceptor_threads_(2),
         // REMARK(@nolleh) not productional #. this is for conv dev
         // TODO(@nolleh) configuration feature
         io_threads_(5),
         acceptor_(*acceptor_threads_.io_context(),
-                  tcp::endpoint(tcp::v4(), 8080)),
+                  tcp::endpoint(tcp::v4(), port)),
         dispatcher_(dispatcher) {}
 
   ~tcp_server() { stop(); }
+
+  tcp::endpoint local_endpoint() const { return acceptor_.local_endpoint(); }
 
   void subscribe(server_event* event) { event_subscribers_.insert(event); }
   void notify_on_created(std::shared_ptr<tcp_connection> conn) {
@@ -81,10 +84,11 @@ class tcp_server {
   void handle_accept(std::shared_ptr<tcp_connection> new_connection,
                      const boost::system::error_code& error) {
     if (!error) {
+      // The owner must attach its session before buffered input can dispatch.
+      notify_on_created(new_connection);
       new_connection->start(kBufBytes);
     }
 
-    notify_on_created(new_connection);
     start_accept();
   }
 
