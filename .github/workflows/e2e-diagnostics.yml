@@ -1,0 +1,29 @@
+name: Inspect failed E2E logs
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/e2e-diagnostics.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-chat-logs
+          path: previous-e2e-logs
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 37883625993
+      - name: Print failed server and client logs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in sorted(Path("previous-e2e-logs").rglob("*.log")):
+              print(f"::group::{path.name}", flush=True)
+              print(path.read_text(errors="replace"), flush=True)
+              print("::endgroup::", flush=True)
+          PY
