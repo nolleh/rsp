@@ -6,13 +6,11 @@
 namespace rsp {
 namespace room {
 
-std::once_flag intranet::s_flag;
-std::unique_ptr<intranet> intranet::s_instance;
-
 intranet& intranet::instance() {
-  std::call_once(intranet::s_flag,
-                 []() { intranet::s_instance.reset(new intranet); });
-  return *intranet::s_instance;
+  // Construction initializes room_manager, which initializes so_manager.
+  // Function-local statics are then destroyed in the reverse dependency order.
+  static intranet server;
+  return server;
 }
 
 }  // namespace room

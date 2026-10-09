@@ -17,7 +17,12 @@ PREFIXES = {
     "rsp-svr/room_contents/": {"RoomContents"},
     "rsp-svr/rci/": {"Room", "RoomContents"},
 }
-TESTS = {"Libs": "LibsTest", "Client": "ClientTest", "Room": "RoomTest"}
+TESTS = {
+    "Libs": ("LibsTest",),
+    "Client": ("ClientTest",),
+    "Room": ("RoomTest", "RoomShutdownTest"),
+}
+TEST_TARGETS = tuple(test for tests in TESTS.values() for test in tests)
 
 
 def select(paths, full=False):
@@ -44,7 +49,11 @@ def select(paths, full=False):
                 affected.add(dependent)
                 pending.append(dependent)
     targets = [target for target in COMPONENTS if target in affected]
-    targets += [test for component, test in TESTS.items() if component in affected]
+    targets += [
+        test
+        for component, tests in TESTS.items() if component in affected
+        for test in tests
+    ]
     return {
         "changed": str(changed).lower(),
         "targets": " ".join(targets),

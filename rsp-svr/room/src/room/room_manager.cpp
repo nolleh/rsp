@@ -4,8 +4,6 @@
 namespace rsp {
 namespace room {
 
-std::once_flag room_manager::s_flag;
-std::unique_ptr<room_manager> room_manager::s_instance;
 
 }  // namespace room
 }  // namespace rsp

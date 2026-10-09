@@ -106,3 +106,43 @@ endif()
 
 include(GoogleTest)
 gtest_discover_tests(RoomTest)
+
+# Exercise actual singleton destruction in a separate process. The fixture
+# checks on_unload ordering even if the platform keeps its DSO mapped.
+add_library(RoomShutdownContents SHARED test/shutdown_contents.cpp)
+target_include_directories(RoomShutdownContents PRIVATE
+    ${rsp-svr_SOURCE_DIR}/rci/include)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(RoomShutdownContents PRIVATE -fno-gnu-unique)
+endif()
+
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shutdown-include/room/config.h"
+    CONTENT "#pragma once\n#define Room_CONTENTS_BIN \"$<TARGET_FILE:RoomShutdownContents>\"\n")
+
+add_executable(RoomShutdownTest
+    test/shutdown_test.cpp
+    src/intranet/intranet.cpp
+    src/room/room.cpp
+    src/room/room_manager.cpp
+    src/room/so_manager.cpp)
+target_include_directories(RoomShutdownTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/shutdown-include
+    ${Boost_INCLUDE_DIR}
+    ${Libs_DIR}/include
+    ${Proto_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${rsp-svr_SOURCE_DIR}/rci/include)
+target_link_libraries(RoomShutdownTest PRIVATE
+    Libs Proto ${Protobuf_LIBRARIES} ${Boost_LIBRARIES} cppzmq)
+add_dependencies(RoomShutdownTest RoomShutdownContents)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(RoomShutdownTest PRIVATE
+        -fsanitize=address -fno-omit-frame-pointer)
+    target_link_libraries(RoomShutdownTest PRIVATE -fsanitize=address)
+endif()
+
+foreach(mode IN ITEMS so-first manager-first channel-first explicit unloaded)
+    add_test(NAME RoomShutdown.${mode} COMMAND RoomShutdownTest ${mode})
+    set_tests_properties(RoomShutdown.${mode} PROPERTIES TIMEOUT 20)
+endforeach()
