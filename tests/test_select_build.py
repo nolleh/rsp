@@ -30,9 +30,15 @@ class SelectionTests(unittest.TestCase):
         cases = {
             "rsp-cli/src/client_session.cpp": {"Client", "ClientTest"},
             "rsp-svr/user/src/main.cpp": {"User"},
-            "rsp-svr/room/src/room/room.cpp": {"Room", "RoomTest", "RoomContents"},
-            "rsp-svr/room_contents/src/so.cpp": {"RoomContents", "Room", "RoomTest"},
-            "rsp-svr/rci/include/interface.hpp": {"RoomContents", "Room", "RoomTest"},
+            "rsp-svr/room/src/room/room.cpp": {
+                "Room", "RoomTest", "RoomShutdownTest", "RoomContents",
+            },
+            "rsp-svr/room_contents/src/so.cpp": {
+                "RoomContents", "Room", "RoomTest", "RoomShutdownTest",
+            },
+            "rsp-svr/rci/include/interface.hpp": {
+                "RoomContents", "Room", "RoomTest", "RoomShutdownTest",
+            },
         }
         for path, expected in cases.items():
             with self.subTest(path=path):
@@ -44,14 +50,14 @@ class SelectionTests(unittest.TestCase):
         result = selector.select(["rsp-libs/include/rsplib/session.hpp"])
         self.assertEqual(set(result["targets"].split()), {
             "Libs", "Client", "User", "Room", "RoomContents",
-            "LibsTest", "ClientTest", "RoomTest",
+            "LibsTest", "ClientTest", "RoomTest", "RoomShutdownTest",
         })
         self.assertEqual(result["e2e"], "true")
 
     def test_protocol_reaches_all_components(self):
         for path in ("proto/common/ping.proto", "gen-proto/CMakeLists.txt"):
             self.assertEqual(set(selector.select([path])["targets"].split()),
-                             set(selector.COMPONENTS) | set(selector.TESTS.values()))
+                             set(selector.COMPONENTS) | set(selector.TEST_TARGETS))
 
     def test_unknown_config_ci_and_integration_tests_build_all(self):
         for path in ("CMakeLists.txt", ".github/workflows/cmake-multi-platform.yml",
@@ -59,12 +65,12 @@ class SelectionTests(unittest.TestCase):
                      "protoc.sh", "new-module/src/new.cpp"):
             with self.subTest(path=path):
                 self.assertEqual(set(selector.select([path])["targets"].split()),
-                                 set(selector.COMPONENTS) | set(selector.TESTS.values()))
+                                 set(selector.COMPONENTS) | set(selector.TEST_TARGETS))
 
     def test_main_code_push_runs_full_regression(self):
         result = selector.select(["rsp-cli/src/main.cpp"], full=True)
         self.assertEqual(set(result["targets"].split()),
-                         set(selector.COMPONENTS) | set(selector.TESTS.values()))
+                         set(selector.COMPONENTS) | set(selector.TEST_TARGETS))
         self.assertEqual(result["e2e"], "true")
 
     def test_combined_changes(self):
