@@ -126,6 +126,10 @@ jobs:
       timeout-minutes: 3
       run: python3 tests/e2e_chat.py --build-dir build --log-dir build/e2e-logs
 
+    - name: Room-unavailable timeout E2E
+      timeout-minutes: 1
+      run: python3 tests/e2e_room_timeout.py --build-dir build --log-dir build/e2e-logs
+
     - name: Upload E2E process logs
       if: always()
       uses: actions/upload-artifact@v4

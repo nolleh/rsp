@@ -1,7 +1,6 @@
 /** Copyright (C) 2024  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
-#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
@@ -44,21 +43,22 @@ class job_join_room : public job,
     request.set_uid(session_->uid());
     request.set_room_id(request_.room_id());
     done_ = std::move(done);
-    deadline_ = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     room_request_id_ = intranet_.room().send_request(
         MessageType::kUser2RoomReqJoinRoom, request,
         [self = shared_from_this(), session = session_](
             const std::shared_ptr<Message>& response) {
           session->post_to_serial_context(
               [self, response] { self->handle_res_join_room(response); });
+        },
+        [self = shared_from_this(), session = session_] {
+          session->post_to_serial_context([self] {
+            self->cancel(cancel_reason::kTimeout);
+          });
         });
   }
 
-  bool expired(std::chrono::steady_clock::time_point now) const override {
-    return room_request_id_ != 0 && now >= deadline_;
-  }
-
   void cancel(cancel_reason reason) override {
+    if (finished_) return;
     intranet_.room().cancel_request(room_request_id_);
     if (reason == cancel_reason::kTimeout) send_timeout_response();
     finish();
@@ -106,7 +106,6 @@ class job_join_room : public job,
   const session_ptr session_;
   completion done_;
   uint64_t room_request_id_{0};
-  std::chrono::steady_clock::time_point deadline_;
   bool finished_{false};
 };
 

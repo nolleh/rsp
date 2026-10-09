@@ -55,6 +55,7 @@ TEST(ClientSession, ReturnsToLoggedInAfterLeaveResponse) {
 
   client->handle_command("2");
   ResCreateRoom create_room;
+  create_room.set_success(true);
   create_room.set_room_id(42);
   send_message(server_socket, MessageType::kResCreateRoom, create_room);
   run_until_state(io_context, client, state::State::kInRoom);

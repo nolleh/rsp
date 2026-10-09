@@ -103,6 +103,12 @@ class state_login : public base_state {
       return std::nullopt;
     }
 
+    if (!create_room.success()) {
+      logger_.info() << "unable to create room" << lg::L_endl;
+      enter();
+      return std::nullopt;
+    }
+
     context_->room_id = create_room.room_id();
     logger_.info() << "created room #" << context_->room_id << ", and joined"
                    << lg::L_endl;

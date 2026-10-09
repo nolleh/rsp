@@ -46,6 +46,7 @@ target_link_libraries(Client PRIVATE
 add_executable(ClientTest
   test/client_session_test.cpp
   test/state_in_room_test.cpp
+  test/state_login_test.cpp
   src/client_session.cpp
   src/state/factory.cpp
   src/state/state.cpp
