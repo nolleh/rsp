@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/rsp-banner.jpg" alt="RSP — RealTime Server Platform" width="960" />
+</p>
+
 # RSP
 ## OVERVIEW
 
