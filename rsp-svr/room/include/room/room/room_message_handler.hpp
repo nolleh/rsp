@@ -19,8 +19,9 @@ namespace lg = rsp::libs::logger;
 
 class room_message_handler {
  public:
-  room_message_handler()
-      : logger_(lg::logger()), room_manager_(room_manager::instance()) {}
+  explicit room_message_handler(
+      room_manager& manager = room_manager::instance())
+      : logger_(lg::logger()), room_manager_(manager) {}
 
   Pong handle(const Ping& ping, const RoutingId&) {
     logger_.trace() << "ping " << lg::L_endl;
@@ -45,9 +46,20 @@ class room_message_handler {
     return res_create_room;
   }
 
+  void handle(const User2RoomReqCreateRoom& request, const RoutingId& source,
+              std::function<void(User2RoomResCreateRoom)> complete,
+              std::function<bool()> begin = {}) {
+    if (begin && !begin()) {
+      complete(User2RoomResCreateRoom{});
+      return;
+    }
+    complete(handle(request, source));
+  }
+
   void handle(
       const User2RoomReqJoinRoom& join_room, const RoutingId& source,
-      std::function<void(User2RoomResJoinRoom)> complete) {
+      std::function<void(User2RoomResJoinRoom)> complete,
+      std::function<bool()> begin = {}) {
     logger_.trace() << "join_room: " << join_room.DebugString() << lg::L_endl;
 
     auto room = room_manager_.find_room(join_room.room_id());
@@ -55,6 +67,7 @@ class room_message_handler {
     res_join_room.set_request_id(join_room.request_id());
     res_join_room.set_room_id(join_room.room_id());
     if (!room) {
+      if (begin) begin();
       res_join_room.set_success(false);
       complete(std::move(res_join_room));
       return;
@@ -67,7 +80,7 @@ class room_message_handler {
                       response.set_success(
                           joined && room_manager_.joined_room(uid, room));
                       complete(std::move(response));
-                    });
+                    }, std::move(begin));
   }
 
   void handle(const User2RoomFwdRoom& fwd_room, const RoutingId&) {
@@ -86,28 +99,32 @@ class room_message_handler {
 
   void handle(
       const User2RoomReqLeaveRoom& leave_room, const RoutingId&,
-      std::function<void(User2RoomResLeaveRoom)> complete) {
+      std::function<void(User2RoomResLeaveRoom)> complete,
+      std::function<bool()> begin = {}) {
     logger_.trace() << "leave_room: " << leave_room.DebugString() << lg::L_endl;
 
-    const auto room = room_manager_.leave_room(leave_room.uid());
+    const auto room = room_manager_.find_room(leave_room.uid());
 
     User2RoomResLeaveRoom res_leave_room;
     res_leave_room.set_request_id(leave_room.request_id());
     if (!room) {
+      if (begin) begin();
       res_leave_room.set_success(false);
       complete(std::move(res_leave_room));
       return;
     }
 
     room->leave_room(leave_room.uid(),
-                     [complete = std::move(complete),
+                     [this, room, uid = leave_room.uid(),
+                      complete = std::move(complete),
                       response = std::move(res_leave_room)](bool left) mutable {
-                       response.set_success(left);
+                       response.set_success(
+                           left && room_manager_.left_room(uid, room));
                        complete(std::move(response));
                      },
                      [this, room] {
                        room_manager_.close_room(room);
-                     });
+                     }, std::move(begin));
   }
 
  private:

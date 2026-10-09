@@ -1,6 +1,8 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
+#include <memory>
+#include <string>
 #include <typeinfo>
 #include <utility>
 
@@ -9,6 +11,7 @@
 #include "room/room/room_message_handler.hpp"
 #include "rsplib/broker/zeromq/routed_channel.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/queued_requests.hpp"
 #include "rsplib/message/serializer.hpp"
 
 namespace rsp {
@@ -20,20 +23,27 @@ namespace msg = rsp::libs::message;
 
 class user_channel {
  public:
-  user_channel()
+  explicit user_channel(
+      std::string address = "tcp://*:5559",
+      br::zmq_context context = std::make_shared<zmq::context_t>(1),
+      room_manager& manager = room_manager::instance())
       : logger_(lg::logger()),
         dispatcher_(this),
-        message_handler_(),
-        channel_("tcp://*:5559") {}
+        message_handler_(manager),
+        channel_(std::move(address), std::move(context)) {}
 
   void start() {
+    start_async();
+    channel_.wait();
+  }
+
+  void start_async() {
     channel_.start(
         [this](br::routing_id source, msg::raw_buffer buffer) {
           current_route_ = std::move(source);
           auto destructed = msg::serializer::destruct_buffer(buffer);
           dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
         });
-    channel_.wait();
   }
 
   void stop() { channel_.stop(); }
@@ -56,27 +66,48 @@ class user_channel {
     message_handler_.handle(notification, current_route_);
   }
 
+  void on_recv(const User2RoomCancelRequest& notification) {
+    requests_->cancel({current_route_, notification.request_id()});
+  }
+
+  void on_recv(const User2RoomReqCreateRoom& request) {
+    handle_request(request);
+  }
+
   void on_recv(const User2RoomReqJoinRoom& request) {
-    const auto destination = current_route_;
-    message_handler_.handle(
-        request, destination,
-        [this, destination](User2RoomResJoinRoom response) {
-          send_response(destination, MessageType::kUser2RoomResJoinRoom,
-                        response);
-        });
+    handle_request(request);
   }
 
   void on_recv(const User2RoomReqLeaveRoom& request) {
-    const auto destination = current_route_;
-    message_handler_.handle(
-        request, destination,
-        [this, destination](User2RoomResLeaveRoom response) {
-          send_response(destination, MessageType::kUser2RoomResLeaveRoom,
-                        response);
-        });
+    handle_request(request);
   }
 
  private:
+  template <typename T>
+  void handle_request(const T& request) {
+    const auto destination = current_route_;
+    const msg::queued_requests::key key{destination, request.request_id()};
+    const auto ticket = requests_->admit(key);
+    if (!ticket) return;
+    const auto registry = requests_;
+
+    try {
+      message_handler_.handle(
+          request, destination,
+          [this, destination, registry, key, ticket](auto response) {
+            const bool started = ticket->started();
+            if (!registry->finish(key, ticket)) return;
+            if (started) {
+              send_response(destination, message_trait<T>::res_type, response);
+            }
+          },
+          [ticket] { return ticket->try_start(); });
+    } catch (...) {
+      registry->finish(key, ticket);
+      throw;
+    }
+  }
+
   template <typename T>
   void send_response(const RoutingId& destination, MessageType type,
                      const T& response) {
@@ -90,6 +121,8 @@ class user_channel {
   room_message_handler message_handler_;
   br::router_channel channel_;
   RoutingId current_route_;
+  std::shared_ptr<msg::queued_requests> requests_ =
+      std::make_shared<msg::queued_requests>();
 };
 
 }  // namespace room

@@ -7,6 +7,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <random>
 #include <string>
 #include <typeinfo>
 #include <utility>
@@ -36,7 +37,7 @@ class room_channel {
   room_channel()
       : logger_(lg::logger()),
         dispatcher_(this),
-        channel_("tcp://127.0.0.1:5559", "user-server-1") {}
+        channel_("tcp://127.0.0.1:5559", make_routing_identity()) {}
 
   ~room_channel() { stop(); }
 
@@ -63,7 +64,8 @@ class room_channel {
     request.set_request_id(request_id);
     requests_.add(
         request_id, std::move(handler),
-        [on_timeout = std::move(on_timeout)] {
+        [this, request_id, on_timeout = std::move(on_timeout)] {
+          send_cancel(request_id);
           try {
             on_timeout();
           } catch (const std::exception& error) {
@@ -80,7 +82,7 @@ class room_channel {
   }
 
   void cancel_request(uint64_t request_id) {
-    requests_.cancel(request_id);
+    if (requests_.cancel(request_id)) send_cancel(request_id);
   }
 
   template <typename T>
@@ -113,6 +115,26 @@ class room_channel {
   }
 
  private:
+  static std::string make_routing_identity() {
+    // A restarted User must not reuse an old route/request-id cancellation key.
+    std::random_device entropy;
+    return "user-server-1-" +
+           std::to_string(std::chrono::system_clock::now()
+                              .time_since_epoch().count()) +
+           "-" + std::to_string(entropy()) + "-" + std::to_string(entropy());
+  }
+
+  void send_cancel(uint64_t request_id) {
+    User2RoomCancelRequest notification;
+    notification.set_request_id(request_id);
+    try {
+      send_notification(MessageType::kUser2RoomCancelRequest, notification);
+    } catch (const std::exception& error) {
+      logger_.warn() << "unable to enqueue room cancellation: "
+                     << error.what() << lg::L_endl;
+    }
+  }
+
   template <typename T>
   void send_to_waiter(const T& response) {
     requests_.complete(response.request_id(), std::make_shared<T>(response));

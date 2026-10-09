@@ -62,9 +62,15 @@ class room : public room_api_interface,
   }
 
   void join_room(const Uid& uid, const RoutingId& route,
-                 std::function<void(bool)> before_notify) {
+                 std::function<void(bool)> before_notify,
+                 std::function<bool()> begin = {}) {
     strand_->post([self = shared_from_this(), uid, route,
-                   before_notify = std::move(before_notify)] {
+                   before_notify = std::move(before_notify),
+                   begin = std::move(begin)] {
+      if (begin && !begin()) {
+        before_notify(false);
+        return;
+      }
       if (self->lifecycle_ != lifecycle::kOpen) {
         before_notify(false);
         return;
@@ -77,10 +83,16 @@ class room : public room_api_interface,
   }
 
   void leave_room(const Uid& uid, std::function<void(bool)> before_notify,
-                  std::function<void()> on_empty) {
+                  std::function<void()> on_empty,
+                  std::function<bool()> begin = {}) {
     strand_->post([self = shared_from_this(), uid,
                    before_notify = std::move(before_notify),
-                   on_empty = std::move(on_empty)] {
+                   on_empty = std::move(on_empty),
+                   begin = std::move(begin)] {
+      if (begin && !begin()) {
+        before_notify(false);
+        return;
+      }
       if (self->lifecycle_ != lifecycle::kOpen ||
           self->users_.erase(uid) == 0) {
         before_notify(false);

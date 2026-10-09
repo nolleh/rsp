@@ -72,7 +72,7 @@ class pending_requests {
                                  std::move(timeout)});
   }
 
-  void cancel(uint64_t id) { take(id); }
+  bool cancel(uint64_t id) { return take(id).has_value(); }
 
   void complete(uint64_t id, const std::shared_ptr<Response>& response,
                 clock::time_point now = clock::now()) {

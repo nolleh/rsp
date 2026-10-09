@@ -40,6 +40,8 @@ class message_dispatcher : public dispatcher_interface {
                 handle_buffer<User2RoomFwdRoom>);
     REG_HANDLER(dispatcher_, MessageType::kUser2RoomReqLeaveRoom,
                 handle_buffer<User2RoomReqLeaveRoom>);
+    REG_HANDLER(dispatcher_, MessageType::kUser2RoomCancelRequest,
+                handle_buffer<User2RoomCancelRequest>);
     dispatcher_.register_unknown_message_handler(
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }

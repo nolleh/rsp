@@ -29,6 +29,7 @@ enum MessageType {
   kUser2RoomNtfLeaveRoom = 22;
   kUser2RoomReqLeaveRoom = 26;
   kUser2RoomResLeaveRoom = 27;
+  kUser2RoomCancelRequest = 28;
 
   reserved 11, 13, 19, 21;
 }

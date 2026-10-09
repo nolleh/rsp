@@ -65,7 +65,8 @@ TEST(PendingRequests, CancelSuppressesBothCallbacks) {
   int callbacks = 0;
   pending.add(1, [&](const auto&) { ++callbacks; }, [&] { ++callbacks; },
               now + 5s);
-  pending.cancel(1);
+  EXPECT_TRUE(pending.cancel(1));
+  EXPECT_FALSE(pending.cancel(1));
   pending.complete(1, std::make_shared<int>(42), now);
   pending.expire(now + 6s);
   EXPECT_EQ(0, callbacks);
