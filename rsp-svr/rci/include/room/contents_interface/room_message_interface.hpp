@@ -31,8 +31,14 @@ class room_message_interface {
   virtual void on_user_exit(const Uid uid) = 0;
 
   /**
-   * about to destroyed room.
-   * this is last interface that sent before destroy the object
+   * Invoked immediately before the room contents are destroyed.
+   *
+   * Complete all content-owned cleanup synchronously in this callback. For
+   * example, cancel timers and pending asynchronous operations, unsubscribe
+   * from events, persist final state, and release external resources. Do not
+   * schedule new room work or send user messages: the room is already shutting
+   * down and its workers and transport may stop after this callback returns.
+   * The contents object may be destroyed immediately after returning.
    * */
   virtual void on_destroy_room() = 0;
 
