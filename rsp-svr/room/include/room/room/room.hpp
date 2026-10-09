@@ -34,7 +34,7 @@ struct user {
       : uid(uid), route(route) {}
 
   const Uid uid;
-  const RoutingId route;
+  RoutingId route;
 };
 
 class room : public room_api_interface,
@@ -76,9 +76,11 @@ class room : public room_api_interface,
         return;
       }
 
-      self->users_.insert({uid, user(uid, route)});
+      auto [member, inserted] = self->users_.try_emplace(uid, uid, route);
+      // Rejoining an existing member refreshes delivery after User restarts.
+      member->second.route = route;
       before_notify(true);
-      self->contents_->on_user_enter(uid);
+      if (inserted) self->contents_->on_user_enter(uid);
     });
   }
 
@@ -168,6 +170,8 @@ class room : public room_api_interface,
   void on_kicked_out_user(const Uid& uid, const KickoutReason& reason) {}
 
  private:
+  friend class room_manager_test_peer;
+
   enum class lifecycle { kOpen, kClosing, kClosed };
 
   void close_impl() {

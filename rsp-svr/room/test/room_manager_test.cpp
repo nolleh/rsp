@@ -56,6 +56,11 @@ class room_manager_test_peer {
     manager.user_rooms_[uid] = room_id;
     return instance;
   }
+  // Call only after draining the Room strand.
+  static RoutingId member_route(const room& instance, const Uid& uid) {
+    return instance.users_.at(uid).route;
+  }
+
   static void post(room_manager& manager, std::function<void()> work) {
     manager.strands_.front().post(std::move(work));
   }
@@ -376,6 +381,81 @@ TEST(RoomCancellation, ProtocolKeepsCompletedJoinAfterLateCancellation) {
   EXPECT_EQ(instance, manager->find_room("guest"));
   EXPECT_EQ(2U, instance->users().size());
   EXPECT_EQ((std::vector<std::string>{"entered"}), events);
+}
+
+TEST(RoomReconnection, RejoinRefreshesOwnerAndGuestRoutesWithoutDuplicateEnter) {
+  boost::asio::io_context io_context;
+  boost::asio::io_context::strand strand(io_context);
+  std::vector<std::string> events;
+  auto instance = std::make_shared<room>(
+      12345, user{"owner", "old-owner-route"}, &strand,
+      std::make_unique<recording_contents>(&events));
+  int successes = 0;
+  auto completed = [&](bool joined) { if (joined) ++successes; };
+
+  instance->join_room("guest", "old-guest-route", completed);
+  instance->join_room("owner", "new-owner-route", completed);
+  instance->join_room("guest", "new-guest-route", completed);
+  instance->join_room("guest", "new-guest-route", completed);
+  io_context.run();
+
+  EXPECT_EQ(4, successes);
+  EXPECT_EQ(2U, instance->users().size());
+  EXPECT_EQ("new-owner-route",
+            room_manager_test_peer::member_route(*instance, "owner"));
+  EXPECT_EQ("new-guest-route",
+            room_manager_test_peer::member_route(*instance, "guest"));
+  EXPECT_EQ((std::vector<std::string>{"entered"}), events);
+}
+
+TEST(RoomReconnection, CancelledRejoinPreservesPreviousRoute) {
+  boost::asio::io_context io_context;
+  boost::asio::io_context::strand strand(io_context);
+  std::vector<std::string> events;
+  auto instance = std::make_shared<room>(
+      12345, user{"owner", "old-route"}, &strand,
+      std::make_unique<recording_contents>(&events));
+  libs::message::queued_requests requests;
+  const libs::message::queued_requests::key key{"new-route", 1};
+  auto ticket = requests.admit(key);
+  bool joined = true;
+
+  instance->join_room(
+      "owner", "new-route", [&](bool success) { joined = success; },
+      [ticket] { return ticket->try_start(); });
+  requests.cancel(key);
+  io_context.run();
+
+  EXPECT_FALSE(joined);
+  EXPECT_EQ("old-route",
+            room_manager_test_peer::member_route(*instance, "owner"));
+  EXPECT_EQ((std::vector<Uid>{"owner"}), instance->users());
+  EXPECT_TRUE(events.empty());
+}
+
+TEST(RoomReconnection, EarlierConnectionLeaveMayRemoveRejoinedMember) {
+  boost::asio::io_context io_context;
+  boost::asio::io_context::strand strand(io_context);
+  std::vector<std::string> events;
+  auto instance = std::make_shared<room>(
+      12345, user{"owner", "owner-route"}, &strand,
+      std::make_unique<recording_contents>(&events));
+  bool left = false;
+  bool empty = false;
+
+  instance->join_room("guest", "old-route",
+                      [](bool joined) { EXPECT_TRUE(joined); });
+  instance->join_room("guest", "new-route",
+                      [](bool joined) { EXPECT_TRUE(joined); });
+  // Leave remains UID-based: an earlier connection's request is not rejected.
+  instance->leave_room("guest", [&](bool success) { left = success; },
+                       [&] { empty = true; });
+  io_context.run();
+
+  EXPECT_TRUE(left);
+  EXPECT_FALSE(empty);
+  EXPECT_EQ((std::vector<Uid>{"owner"}), instance->users());
+  EXPECT_EQ((std::vector<std::string>{"entered", "exited"}), events);
 }
 
 }  // namespace room
