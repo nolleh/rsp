@@ -1,7 +1,7 @@
 # RSP
 ## OVERVIEW
 
-[![License: GNU GPL](https://img.shields.io/badge/License-GNU%20GPL-blue.svg)](https://opensource.org/licenses/gpl-3-0)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 **R**ealTime **S**erver **P**latform
 
@@ -32,10 +32,12 @@ Terms `platform` meaning
 so with this platform, you can implement `ANY` (Game/Chatting) logic that need to communicate between `same room users`
 > 2. after enter the room, the rooms' logic is `ALSO` changeable by shared library `WHILE RUNNING SERVER` (with-no-shutdown-time)
 
-It is open to use,  
-but plz represent where it [from](https://github.com/nolleh/rsp) and  
-and also if you like this, or to give motivation for development, press star. :)
--- *follows GNU GPL LICENSE*
+RSP is licensed under the [Apache License, Version 2.0](LICENSE).
+You can use, modify, and distribute it in commercial and proprietary projects
+without disclosing your own source code, subject to the license terms.
+Third-party dependencies remain under their respective licenses.
+
+If you find RSP useful, a star is appreciated. :)
 
 ## Restriction
 To make things simple, not very concern about multi platform (OS) 
