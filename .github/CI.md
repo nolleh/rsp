@@ -40,6 +40,10 @@ Push detection compares the event's before and after commits; new branches or
 an unavailable previous tip use a full build. Deletions and moves across modules
 count both old and new paths. Unknown paths default to a full build.
 
+Branch-deletion pushes have no new commit to build. An explicit `deleted` flag
+or an all-zero `after` SHA returns an empty selection before any Git commands,
+so dependency installation, compilation and C++/E2E tests are skipped normally.
+
 Markdown/reStructuredText, `docs/`, `.github/assets/`, LICENSE and NOTICE are
 documentation-only. Do not store build inputs in those directories. Extend
 the selector and its tests when introducing a new module or dependency edge.

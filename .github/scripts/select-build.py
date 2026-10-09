@@ -66,6 +66,9 @@ def changed_paths(event, event_name):
         base = git("merge-base", base, head).decode().strip()
     elif event_name == "push":
         base, head = event["before"], event["after"]
+        # Deleted refs have no new commit to compare or build.
+        if event.get("deleted") or head == "0" * 40:
+            return []
         if base == "0" * 40:
             return ["CMakeLists.txt"]
         if subprocess.run(

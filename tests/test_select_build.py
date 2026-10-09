@@ -1,10 +1,12 @@
 """Regression coverage for changed-path selection and Git event ranges."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 SPEC = importlib.util.spec_from_file_location(
     "select_build", Path(__file__).resolve().parents[1] / ".github/scripts/select-build.py"
@@ -130,6 +132,46 @@ class GitRangeTests(unittest.TestCase):
         for base in ("0" * 40, "f" * 40):
             paths = selector.changed_paths({"before": base, "after": head}, "push")
             self.assertEqual(selector.select(paths)["e2e"], "true")
+
+    def test_deleted_branch_skips_git_and_builds(self):
+        events = (
+            {"before": self.base, "after": "0" * 40, "deleted": True},
+            {"before": self.base, "after": "0" * 40},
+            {"before": "f" * 40, "after": "0" * 40},
+            {"before": "0" * 40, "after": "0" * 40},
+            {"before": self.base, "after": self.base, "deleted": True},
+        )
+        for event in events:
+            with self.subTest(event=event):
+                with mock.patch.object(selector, "git") as git_mock:
+                    with mock.patch.object(selector.subprocess, "run") as run_mock:
+                        paths = selector.changed_paths(event, "push")
+                git_mock.assert_not_called()
+                run_mock.assert_not_called()
+                self.assertEqual(paths, [])
+                result = selector.select(paths, full=True)
+                self.assertEqual(result["targets"], "")
+                for flag in ("changed", "libs", "client", "room", "e2e"):
+                    self.assertEqual(result[flag], "false")
+
+    def test_deleted_push_cli_emits_successful_no_build_outputs(self):
+        event_file = Path("event.json").resolve()
+        output_file = Path("outputs.txt").resolve()
+        event_file.write_text(json.dumps({
+            "before": self.base, "after": "0" * 40, "deleted": True,
+            "ref": "refs/heads/feat/ci",
+        }), encoding="utf-8")
+        result = subprocess.run(
+            ["python3", str(Path(selector.__file__).resolve())],
+            env={**os.environ, "GITHUB_EVENT_PATH": str(event_file),
+                 "GITHUB_EVENT_NAME": "push", "GITHUB_OUTPUT": str(output_file)},
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(output_file.read_text().splitlines(), [
+            "changed=false", "targets=", "libs=false", "client=false",
+            "room=false", "e2e=false",
+        ])
 
     def test_whitespace_paths_are_preserved(self):
         self.write(" file with spaces.cpp")
