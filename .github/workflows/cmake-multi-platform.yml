@@ -140,11 +140,3 @@ jobs:
             print(path.read_text(errors="replace"), flush=True)
             print("::endgroup::", flush=True)
         PY
-
-    - name: Upload E2E process logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: e2e-chat-logs
-        path: build/e2e-logs/
-        if-no-files-found: ignore
