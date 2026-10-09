@@ -2,11 +2,11 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
+#include <exception>
 #include <functional>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <typeinfo>
 #include <utility>
@@ -15,6 +15,7 @@
 #include "proto/room/room.pb.h"
 #include "rsplib/broker/zeromq/routed_channel.hpp"
 #include "rsplib/logger/logger.hpp"
+#include "rsplib/message/pending_requests.hpp"
 #include "rsplib/message/serializer.hpp"
 #include "rsplib/message/types.hpp"
 #include "user/intranet/message_dispatcher.hpp"
@@ -44,24 +45,33 @@ class room_channel {
       auto destructed = libs::message::serializer::destruct_buffer(buffer);
       dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
     });
+    requests_.start();
   }
 
   void stop() {
+    requests_.stop();
     channel_.stop();
-    std::lock_guard<std::mutex> lock(requests_mutex_);
     requests_.clear();
   }
 
   template <typename T>
   uint64_t send_request(
       MessageType type, T request,
-      std::function<void(const std::shared_ptr<Message>)> handler) {
+      std::function<void(const std::shared_ptr<Message>)> handler,
+      std::function<void()> on_timeout) {
     const auto request_id = next_request_id_.fetch_add(1);
     request.set_request_id(request_id);
-    {
-      std::lock_guard<std::mutex> lock(requests_mutex_);
-      requests_[request_id] = std::move(handler);
-    }
+    requests_.add(
+        request_id, std::move(handler),
+        [on_timeout = std::move(on_timeout)] {
+          try {
+            on_timeout();
+          } catch (const std::exception& error) {
+            lg::logger().error() << "unable to dispatch room timeout: "
+                                 << error.what() << lg::L_endl;
+          }
+        },
+        std::chrono::steady_clock::now() + std::chrono::seconds(5));
 
     channel_.send(libs::message::serializer::serialize(type, request));
     logger_.trace() << "send to room, requestId:" << request_id
@@ -70,8 +80,7 @@ class room_channel {
   }
 
   void cancel_request(uint64_t request_id) {
-    std::lock_guard<std::mutex> lock(requests_mutex_);
-    requests_.erase(request_id);
+    requests_.cancel(request_id);
   }
 
   template <typename T>
@@ -106,16 +115,7 @@ class room_channel {
  private:
   template <typename T>
   void send_to_waiter(const T& response) {
-    std::function<void(const std::shared_ptr<Message>)> handler;
-    {
-      std::lock_guard<std::mutex> lock(requests_mutex_);
-      auto iter = requests_.find(response.request_id());
-      if (requests_.end() == iter) return;
-
-      handler = std::move(iter->second);
-      requests_.erase(iter);
-    }
-    handler(std::make_shared<T>(response));
+    requests_.complete(response.request_id(), std::make_shared<T>(response));
   }
 
   template <typename T>
@@ -133,9 +133,7 @@ class room_channel {
   lg::s_logger& logger_;
   message_dispatcher<room_channel> dispatcher_;
   br::dealer_channel channel_;
-  std::mutex requests_mutex_;
-  std::map<uint64_t, std::function<void(const std::shared_ptr<Message>)>>
-      requests_;
+  libs::message::pending_requests<Message> requests_;
   std::atomic<uint64_t> next_request_id_{1};
 };
 

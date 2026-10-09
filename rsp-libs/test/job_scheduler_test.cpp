@@ -59,7 +59,7 @@ TEST(JobScheduler, WaitsForAsyncJobCompletion) {
   EXPECT_EQ((std::vector<std::string>{"run first", "run second"}), events);
 }
 
-TEST(JobScheduler, CancelsExpiredCurrentJobBeforeNextJob) {
+TEST(JobScheduler, ExternalTimeoutCompletesCurrentJobBeforeNextJob) {
   rsp::libs::job::job_scheduler scheduler;
   std::vector<std::string> events;
   auto first = std::make_shared<manual_job>("first", &events, true);
@@ -67,6 +67,9 @@ TEST(JobScheduler, CancelsExpiredCurrentJobBeforeNextJob) {
 
   scheduler.push_and_run(first);
   scheduler.push_and_run(second);
+  EXPECT_EQ((std::vector<std::string>{"run first"}), events);
+
+  first->cancel(rsp::libs::job::job::cancel_reason::kTimeout);
 
   EXPECT_EQ((std::vector<std::string>{"run first", "cancel first timeout",
                                        "run second"}),

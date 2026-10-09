@@ -38,7 +38,6 @@ class job_scheduler {
 
   void push_and_run(job_ptr j) {
     job_ptr rejected;
-    job_ptr expired;
     job_ptr next;
     {
       std::lock_guard<std::mutex> lock(m_);
@@ -46,11 +45,7 @@ class job_scheduler {
         rejected = std::move(j);
       } else {
         q_.push(std::move(j));
-        if (running_) {
-          if (q_.front()->expired(std::chrono::steady_clock::now())) {
-            expired = q_.front();
-          }
-        } else {
+        if (!running_) {
           running_ = true;
           next = q_.front();
         }
@@ -58,8 +53,6 @@ class job_scheduler {
     }
     if (rejected) {
       rejected->cancel(job::cancel_reason::kShutdown);
-    } else if (expired) {
-      expired->cancel(job::cancel_reason::kTimeout);
     } else if (next) {
       run(next);
     }
