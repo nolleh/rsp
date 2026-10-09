@@ -18,6 +18,9 @@ class intranet {
 
   ~intranet() {
     stop();
+    // Room callbacks may still use this channel during contents teardown.
+    // Drain them while the channel object and its shared library are alive.
+    room_manager::instance().shutdown();
   }
 
   // TODO(@nolleh) check
@@ -27,8 +30,6 @@ class intranet {
   void stop() { user_channel_.stop(); }
 
  private:
-  static std::once_flag s_flag;
-  static std::unique_ptr<intranet> s_instance;
   intranet() : logger_(lg::logger()), user_channel_() {}
 
   intranet(const intranet&) = delete;

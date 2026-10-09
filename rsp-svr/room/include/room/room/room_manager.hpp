@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <stdexcept>
 #include <future>
 #include <utility>
 #include <vector>
@@ -22,34 +23,42 @@ class room_manager_test_peer;
 class room_manager {
  public:
   static room_manager& instance() {
-    std::call_once(room_manager::s_flag, []() {
-      room_manager::s_instance.reset(new room_manager());
-    });
-    return *room_manager::s_instance;
+    // Register library teardown before room teardown, even if callers
+    // initialize the room manager before explicitly loading contents.
+    so_manager::instance();
+    static room_manager manager;
+    return manager;
   }
 
-  ~room_manager() {
-    std::vector<std::shared_ptr<room>> rooms;
-    {
-      std::lock_guard<std::mutex> lock(m_);
-      for (auto& [room_id, instance] : rooms_) {
-        rooms.push_back(std::move(instance));
+  ~room_manager() { shutdown(); }
+
+  // Call after stopping admission. Keep the channel and contents library
+  // alive until callbacks have finished and room contents are released.
+  void shutdown() {
+    std::call_once(shutdown_flag_, [this] {
+      std::vector<std::shared_ptr<room>> rooms;
+      {
+        std::lock_guard<std::mutex> lock(m_);
+        stopping_ = true;
+        for (auto& [room_id, instance] : rooms_) {
+          rooms.push_back(std::move(instance));
+        }
+        rooms_.clear();
+        user_rooms_.clear();
       }
-      rooms_.clear();
-      user_rooms_.clear();
-    }
 
-    std::vector<std::future<void>> closed;
-    closed.reserve(rooms.size());
-    for (const auto& instance : rooms) {
-      closed.push_back(instance->close());
-    }
-    for (auto& result : closed) {
-      result.get();
-    }
+      std::vector<std::future<void>> closed;
+      closed.reserve(rooms.size());
+      for (const auto& instance : rooms) {
+        closed.push_back(instance->close());
+      }
+      for (auto& result : closed) {
+        result.get();
+      }
 
-    rooms.clear();
-    workers_.stop();
+      rooms.clear();
+      workers_.stop();
+    });
   }
 
   std::shared_ptr<room> create_room(const std::string& uid,
@@ -58,6 +67,7 @@ class room_manager {
     RoomId room_id = rsp::libs::util::rng(10000, 100000);
     // auto room_id = (--rooms_.end())->first + 1;
     std::lock_guard<std::mutex> l(m_);
+    if (stopping_) throw std::logic_error("room manager is shutting down");
     auto created =
         std::make_shared<room>(room_id, user{uid, route},
                                &strands_.at(rooms_.size() % strands_.size()));
@@ -158,8 +168,8 @@ class room_manager {
     workers_.start();
   }
 
-  static std::once_flag s_flag;
-  static std::unique_ptr<room_manager> s_instance;
+  std::once_flag shutdown_flag_;
+  bool stopping_ = false;
 
   std::mutex m_;
   std::map<RoomId, std::shared_ptr<room>> rooms_;

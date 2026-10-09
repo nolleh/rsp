@@ -145,6 +145,24 @@ TEST(RoomManager, ClosesRoomsBeforeWorkerShutdown) {
   EXPECT_EQ((std::vector<std::string>{"destroyed"}), events);
 }
 
+TEST(RoomManager, ShutdownIsIdempotentAndRejectsNewRooms) {
+  std::vector<std::string> events;
+  auto manager = room_manager_test_peer::create_manager();
+  auto instance = room_manager_test_peer::create_room(
+      *manager, "owner", 12345,
+      std::make_unique<recording_contents>(&events));
+
+  manager->shutdown();
+  manager->shutdown();
+
+  EXPECT_EQ(nullptr, manager->find_room(12345));
+  EXPECT_EQ(nullptr, manager->find_room("owner"));
+  EXPECT_THROW(manager->create_room("late", "route"), std::logic_error);
+  manager.reset();
+  instance.reset();
+  EXPECT_EQ((std::vector<std::string>{"destroyed"}), events);
+}
+
 TEST(RoomLifecycle, LastUserLeaveClosesRoomOnStrand) {
   boost::asio::io_context io_context;
   boost::asio::io_context::strand strand(io_context);
