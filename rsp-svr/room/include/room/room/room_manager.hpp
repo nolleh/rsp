@@ -85,6 +85,17 @@ class room_manager {
     return true;
   }
 
+  bool left_room(const Uid& uid, const std::shared_ptr<room>& instance) {
+    std::lock_guard<std::mutex> lock(m_);
+    auto membership = user_rooms_.find(uid);
+    auto found = rooms_.find(instance->room_id());
+    if (membership == user_rooms_.end() ||
+        membership->second != instance->room_id() ||
+        found == rooms_.end() || found->second != instance) return false;
+    user_rooms_.erase(membership);
+    return true;
+  }
+
   std::shared_ptr<room> find_room(Uid uid) {
     RoomId room_id = 0;
     {

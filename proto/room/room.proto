@@ -68,3 +68,9 @@ message User2RoomFwdClient {
   string uid = 4;
   string message = 5;
 }
+
+// Best-effort notification. Identified by the sender's ROUTER identity and
+// the original internal request ID; never acknowledged or tracked as a request.
+message User2RoomCancelRequest {
+  uint64 request_id = 1;
+}

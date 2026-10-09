@@ -34,7 +34,7 @@ struct user {
       : uid(uid), route(route) {}
 
   const Uid uid;
-  const RoutingId route;
+  RoutingId route;
 };
 
 class room : public room_api_interface,
@@ -62,25 +62,39 @@ class room : public room_api_interface,
   }
 
   void join_room(const Uid& uid, const RoutingId& route,
-                 std::function<void(bool)> before_notify) {
+                 std::function<void(bool)> before_notify,
+                 std::function<bool()> begin = {}) {
     strand_->post([self = shared_from_this(), uid, route,
-                   before_notify = std::move(before_notify)] {
+                   before_notify = std::move(before_notify),
+                   begin = std::move(begin)] {
+      if (begin && !begin()) {
+        before_notify(false);
+        return;
+      }
       if (self->lifecycle_ != lifecycle::kOpen) {
         before_notify(false);
         return;
       }
 
-      self->users_.insert({uid, user(uid, route)});
+      auto [member, inserted] = self->users_.try_emplace(uid, uid, route);
+      // Rejoining an existing member refreshes delivery after User restarts.
+      member->second.route = route;
       before_notify(true);
-      self->contents_->on_user_enter(uid);
+      if (inserted) self->contents_->on_user_enter(uid);
     });
   }
 
   void leave_room(const Uid& uid, std::function<void(bool)> before_notify,
-                  std::function<void()> on_empty) {
+                  std::function<void()> on_empty,
+                  std::function<bool()> begin = {}) {
     strand_->post([self = shared_from_this(), uid,
                    before_notify = std::move(before_notify),
-                   on_empty = std::move(on_empty)] {
+                   on_empty = std::move(on_empty),
+                   begin = std::move(begin)] {
+      if (begin && !begin()) {
+        before_notify(false);
+        return;
+      }
       if (self->lifecycle_ != lifecycle::kOpen ||
           self->users_.erase(uid) == 0) {
         before_notify(false);
@@ -156,6 +170,8 @@ class room : public room_api_interface,
   void on_kicked_out_user(const Uid& uid, const KickoutReason& reason) {}
 
  private:
+  friend class room_manager_test_peer;
+
   enum class lifecycle { kOpen, kClosing, kClosed };
 
   void close_impl() {
