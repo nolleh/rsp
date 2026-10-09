@@ -8,8 +8,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-build-changes.yml
+
   build:
+    needs: changes
+    if: ${{ always() }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -49,9 +57,20 @@ jobs:
             c_compiler: clang
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Require successful change detection
+      if: needs.changes.result != 'success'
+      run: |
+        echo 'Change detection failed; refusing to report a successful build check.'
+        exit 1
+
+    - uses: actions/checkout@v4
+
+    - name: Documentation-only change
+      if: needs.changes.outputs.changed != 'true'
+      run: echo 'No build-affecting changes; skipping dependency installation, build and tests.'
 
     - name: Set reusable strings
+      if: needs.changes.outputs.changed == 'true'
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
       shell: bash
@@ -59,6 +78,7 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Install Boost
+      if: needs.changes.outputs.changed == 'true'
       uses: MarkusJx/install-boost@v2.6.0
       id: install-boost
       with:
@@ -90,12 +110,14 @@ jobs:
         sudo make -j4 install
         cd ../..
 
-      if: runner.os == 'Linux'
+      if: needs.changes.outputs.changed == 'true' && runner.os == 'Linux'
 
     - name: Prepare Proto
+      if: needs.changes.outputs.changed == 'true'
       run: ./protoc.sh
 
     - name: Configure CMake
+      if: needs.changes.outputs.changed == 'true'
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
@@ -111,22 +133,34 @@ jobs:
       env:
         BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+    - name: Build affected targets
+      if: needs.changes.outputs.changed == 'true'
+      env:
+        BUILD_TARGETS: ${{ needs.changes.outputs.targets }}
+      run: |
+        read -r -a targets <<< "$BUILD_TARGETS"
+        cmake --build "${{ steps.strings.outputs.build-output-dir }}" \
+          --config "${{ matrix.build_type }}" --target "${targets[@]}" --parallel 2
 
-    - name: Test
-      # working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      # run: ctest --build-config ${{ matrix.build_type }}
-      run: ./test.sh
+    - name: Test shared library
+      if: needs.changes.outputs.libs == 'true'
+      run: ctest --test-dir build/rsp-libs --build-config Release --output-on-failure --no-tests=error
+
+    - name: Test client
+      if: needs.changes.outputs.client == 'true'
+      run: ctest --test-dir build/rsp-cli --build-config Release --output-on-failure --no-tests=error
+
+    - name: Test room
+      if: needs.changes.outputs.room == 'true'
+      run: ctest --test-dir build/rsp-svr/room --build-config Release --output-on-failure --no-tests=error
 
     - name: Two-client chat and leave-room E2E
+      if: needs.changes.outputs.e2e == 'true'
       timeout-minutes: 3
       run: python3 tests/e2e_chat.py --build-dir build --log-dir build/e2e-logs
 
     - name: Room-unavailable timeout E2E
+      if: needs.changes.outputs.e2e == 'true'
       timeout-minutes: 1
       run: python3 tests/e2e_room_timeout.py --build-dir build --log-dir build/e2e-logs
 
@@ -140,3 +174,4 @@ jobs:
             print(path.read_text(errors="replace"), flush=True)
             print("::endgroup::", flush=True)
         PY
+

@@ -1,0 +1,41 @@
+name: Detect affected CMake targets
+
+on:
+  workflow_call:
+    outputs:
+      changed:
+        value: ${{ jobs.detect.outputs.changed }}
+      targets:
+        value: ${{ jobs.detect.outputs.targets }}
+      libs:
+        value: ${{ jobs.detect.outputs.libs }}
+      client:
+        value: ${{ jobs.detect.outputs.client }}
+      room:
+        value: ${{ jobs.detect.outputs.room }}
+      e2e:
+        value: ${{ jobs.detect.outputs.e2e }}
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.select.outputs.changed }}
+      targets: ${{ steps.select.outputs.targets }}
+      libs: ${{ steps.select.outputs.libs }}
+      client: ${{ steps.select.outputs.client }}
+      room: ${{ steps.select.outputs.room }}
+      e2e: ${{ steps.select.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify target selection
+        run: python3 -m unittest discover -s tests -p 'test_select_build.py' -v
+      - name: Select affected targets
+        id: select
+        run: python3 .github/scripts/select-build.py
+
