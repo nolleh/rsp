@@ -67,8 +67,14 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   void stop(bool force_close = false) {
     lg::logger().debug() << "post stop impl, force:" << force_close
                          << lg::L_endl;
-    strand_.dispatch(std::bind(&tcp_connection::active_stop_impl,
-                               shared_from_this(), force_close));
+    auto handler = std::bind(&tcp_connection::active_stop_impl,
+                             shared_from_this(), force_close);
+    if (force_close) {
+      strand_.dispatch(std::move(handler));
+    } else {
+      // Preserve the order of sends already posted, even from this strand.
+      strand_.post(std::move(handler));
+    }
   }
 
   void stop(const boost::system::error_code& ec) {
@@ -120,9 +126,8 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void active_stop_impl(const bool force) {
     // https://stackoverflow.com/questions/12794107/why-do-i-need-strand-per-connection-when-using-boostasio/12801042#12801042
-    namespace asio = boost::asio::ip;
     // for now, allow serverside close without restriction.
-    if (closed_ || (!force && sent_shutdown_)) {
+    if (closed_ || (!force && graceful_close_requested_)) {
       return;
     }
 
@@ -131,6 +136,13 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       return;
     }
 
+    graceful_close_requested_ = true;
+    if (!write_queue_.empty()) return;
+    shutdown_send_impl();
+  }
+
+  void shutdown_send_impl() {
+    namespace asio = boost::asio::ip;
     lg::logger().trace() << "run" << lg::L_endl;
     boost::system::error_code shutdown_ec;
     socket_.shutdown(asio::tcp::socket::shutdown_send, shutdown_ec);
@@ -165,7 +177,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   void send_impl(shared_const_buffer buffer) {
-    if (closed_ || !socket_.is_open()) return;
+    if (closed_ || graceful_close_requested_ || !socket_.is_open()) return;
     const bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
     if (write_in_progress) return;
@@ -200,7 +212,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
                                 std::to_string(bytes) + ")"
                          << lg::L_endl;
     write_queue_.pop_front();
-    if (!write_queue_.empty()) write_next();
+    if (!write_queue_.empty()) {
+      write_next();
+    } else if (graceful_close_requested_) {
+      shutdown_send_impl();
+    }
   }
 
   void handle_read(
@@ -246,6 +262,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   link* link_;
   std::deque<shared_const_buffer> write_queue_;
   close_handler on_closed_;
+  bool graceful_close_requested_{false};
   bool sent_shutdown_{false};
   bool closed_{false};
 };

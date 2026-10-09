@@ -30,7 +30,8 @@ class job_stop : public rsp::libs::job::job {
 
   void stop(const session_ptr& session) {
     session->stop(force_close_);
-    session_manager::instance().remove_session(*session);
+    // Keep the session alive while queued responses drain. The connection's
+    // close callback removes it from the manager once shutdown completes.
   }
 
   const session_ptr session_;
