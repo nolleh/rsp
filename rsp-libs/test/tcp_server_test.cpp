@@ -46,7 +46,7 @@ class delayed_session_owner : public rsp::libs::server::server_event {
 class session_check_dispatcher
     : public rsp::libs::message::message_dispatcher_interface {
  public:
-  void dispatch(MessageType, const rsp::libs::message::raw_buffer&,
+  void dispatch(MessageType, rsp::libs::message::buffer_ptr,
                 rsp::libs::link::link* session) override {
     std::_Exit(session ? 0 : 3);
   }
@@ -54,13 +54,15 @@ class session_check_dispatcher
 
 }  // namespace
 
-TEST(TcpServerDeathTest, InitializesSessionBeforeReadingBufferedRequest) {
+TEST(TcpServerDeathTest,
+     InitializesSessionBeforeReadingBufferedRequest) {
   EXPECT_EXIT(
       ([] {
         namespace asio = boost::asio;
         using tcp = asio::ip::tcp;
 
-        // Isolate the blocking server and fail instead of hanging on regression.
+        // Isolate the blocking server and fail instead of hanging on
+        // regression.
         std::thread([] {
           std::this_thread::sleep_for(std::chrono::seconds(3));
           std::_Exit(2);

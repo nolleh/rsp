@@ -76,9 +76,9 @@ class job_create_room : public job,
     response.set_room_id(room_response->room_id());
     response.set_success(room_response->success());
 
-    const auto buffer =
+    auto buffer =
         message::serializer::serialize(MessageType::kResCreateRoom, response);
-    session_->send(buffer);
+    session_->send(std::move(buffer));
     finish();
   }
 

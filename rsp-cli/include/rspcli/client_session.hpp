@@ -37,7 +37,7 @@ class client_session : public std::enable_shared_from_this<client_session> {
    public:
     explicit session_dispatcher(client_session* owner) : owner_(owner) {}
 
-    void dispatch(MessageType type, const libs::message::raw_buffer& payload,
+    void dispatch(MessageType type, libs::message::buffer_ptr payload,
                   libs::link::link*) override;
 
    private:
@@ -45,7 +45,7 @@ class client_session : public std::enable_shared_from_this<client_session> {
   };
 
   void read_next();
-  void dispatch(MessageType type, const libs::message::raw_buffer& payload);
+  void dispatch(MessageType type, libs::message::buffer_ptr payload);
   void transition_to(state::State next);
   void queue_write(MessageType type, libs::message::raw_buffer message);
   void write_next();

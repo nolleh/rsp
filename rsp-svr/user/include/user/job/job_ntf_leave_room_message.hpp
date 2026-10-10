@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
@@ -39,9 +40,9 @@ class job_ntf_leave_room_message
 
     NtfLeaveRoom ntf_leave_room;
     ntf_leave_room.set_reason(notification_.reason());
-    const auto buffer = message::serializer::serialize(
+    auto buffer = message::serializer::serialize(
         MessageType::kNtfLeaveRoom, ntf_leave_room);
-    session_->send(buffer);
+    session_->send(std::move(buffer));
     session_->set_leave_room();
     done();
   }

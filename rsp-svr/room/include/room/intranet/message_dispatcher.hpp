@@ -1,6 +1,8 @@
 /** Copyright (C) 2023  nolleh (nolleh7707@gmail.com) **/
 #pragma once
 
+#include <utility>
+
 #include "proto/common/message_type.pb.h"
 #include "proto/common/ping.pb.h"
 #include "proto/room/room.pb.h"
@@ -46,9 +48,8 @@ class message_dispatcher : public dispatcher_interface {
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }
 
-  void dispatch(MessageType type, const raw_buffer& buffer,
-                link* link) override {
-    dispatcher_.dispatch(type, buffer, link);
+  void dispatch(MessageType type, buffer_ptr buffer, link* link) override {
+    dispatcher_.dispatch(type, std::move(buffer), link);
   }
 
   void handle_unknown(link* l) {

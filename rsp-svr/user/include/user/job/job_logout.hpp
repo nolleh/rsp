@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "proto/user/login.pb.h"
 #include "rsplib/job/job.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -34,7 +36,7 @@ class job_logout : public rsp::libs::job::job {
     logout.set_uid(session->uid());
     auto buffer = rsp::libs::message::serializer::serialize(
         MessageType::kResLogout, logout);
-    session->send(buffer);
+    session->send(std::move(buffer));
   }
 
  private:

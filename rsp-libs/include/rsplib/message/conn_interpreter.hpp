@@ -5,12 +5,13 @@
 #include <algorithm>
 #include <bitset>
 #include <iterator>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "proto/common/message_type.pb.h"
 #include "rsplib/logger/logger.hpp"
-#include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/message/message_dispatcher.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/message/serializer.hpp"
@@ -63,7 +64,9 @@ class conn_interpreter {
 
       buffer_ = retrieve_v(buffer_, meta.size, buffer_.size());
       lg::logger().trace() << "about to dispatch" << lg::L_endl;
-      dispatcher_->dispatch(meta.type, meta.payload, link_);
+      dispatcher_->dispatch(
+          meta.type,
+          std::make_shared<const raw_buffer>(std::move(meta.payload)), link_);
     }
   }
 

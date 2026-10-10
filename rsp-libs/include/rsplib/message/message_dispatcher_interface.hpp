@@ -18,7 +18,7 @@ class message_dispatcher_interface {
       std::function<void(link::link*)>) {}
   virtual void unregister_handler(MessageType type) {}
 
-  virtual void dispatch(MessageType type, const raw_buffer& buffer,
+  virtual void dispatch(MessageType type, buffer_ptr buffer,
                         rsp::libs::link::link* link) {}
 };
 

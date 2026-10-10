@@ -18,9 +18,8 @@ client_session::client_session(socket socket)
       interpreter_(&dispatcher_) {}  // NOLINT
 
 void client_session::session_dispatcher::dispatch(
-    MessageType type, const libs::message::raw_buffer& payload,
-    libs::link::link*) {
-  owner_->dispatch(type, payload);
+    MessageType type, libs::message::buffer_ptr payload, libs::link::link*) {
+  owner_->dispatch(type, std::move(payload));
 }
 
 void client_session::start() {
@@ -72,11 +71,10 @@ void client_session::read_next() {
 }
 
 void client_session::dispatch(MessageType type,
-                              const libs::message::raw_buffer& payload) {
+                              libs::message::buffer_ptr payload) {
   if (stopped_ || !state_) return;
 
-  if (const auto next = state_->on_message(
-          type, std::make_shared<libs::message::raw_buffer>(payload))) {
+  if (const auto next = state_->on_message(type, std::move(payload))) {
     transition_to(*next);
   }
 }

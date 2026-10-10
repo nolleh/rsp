@@ -4,6 +4,7 @@
 #include <istream>
 #include <memory>
 #include <streambuf>
+#include <utility>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
@@ -51,9 +52,8 @@ class message_dispatcher : public dispatcher_interface {
         std::bind(&message_dispatcher::handle_unknown, this, ph::_1));
   }
 
-  void dispatch(MessageType type, const raw_buffer& buffer,
-                link* link) override {
-    dispatcher_.dispatch(type, buffer, link);
+  void dispatch(MessageType type, buffer_ptr buffer, link* link) override {
+    dispatcher_.dispatch(type, std::move(buffer), link);
   }
 
   void handle_unknown(link* l) {
@@ -63,9 +63,6 @@ class message_dispatcher : public dispatcher_interface {
     session->on_recv_unknown();
   }
 
-  // TODO(@nolleh) hum. actually now, no need to manage the buffer as s_ptr.
-  // client also need to be changed to add some layer.
-  // let's consider after development was got some where.
   template <typename T>
   void handle_buffer(buffer_ptr buffer, link* l) {
     T t;

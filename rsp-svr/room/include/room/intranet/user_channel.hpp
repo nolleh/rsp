@@ -42,7 +42,11 @@ class user_channel {
         [this](br::routing_id source, msg::raw_buffer buffer) {
           current_route_ = std::move(source);
           auto destructed = msg::serializer::destruct_buffer(buffer);
-          dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+          dispatcher_.dispatch(
+              destructed.type,
+              std::make_shared<const msg::raw_buffer>(
+                  std::move(destructed.payload)),
+              nullptr);
         });
   }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include "proto/room/room.pb.h"
 #include "proto/user/login.pb.h"
@@ -42,9 +43,9 @@ class job_cli_forward_message
     forward.set_sender_type(message_.sender_type());
     forward.set_sender_uid(message_.sender_uid());
     forward.set_message(message_.message());
-    const auto buffer =
+    auto buffer =
         message::serializer::serialize(MessageType::kFwdClient, forward);
-    session_->send(buffer);
+    session_->send(std::move(buffer));
     done();
   }
 

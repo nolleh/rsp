@@ -11,10 +11,8 @@ namespace libs {
 
 class buffer {
  public:
-  static const message::buffer_ptr make_buffer_ptr(const std::string& msg) {
-    auto buffer = std::make_shared<message::raw_buffer>();
-    buffer->insert(buffer->end(), msg.begin(), msg.end());
-    return buffer;
+  static message::buffer_ptr make_buffer_ptr(const std::string& msg) {
+    return std::make_shared<const message::raw_buffer>(msg.begin(), msg.end());
   }
 };
 
