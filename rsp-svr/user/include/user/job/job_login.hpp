@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/user/login.pb.h"
@@ -47,9 +48,9 @@ class job_login : public job {
     login.set_is_attached(session->room_id() ? true : false);
     login.set_room_id(session->room_id());
 
-    const auto buffer =
+    auto buffer =
         message::serializer::serialize(MessageType::kResLogin, login);
-    session_->send(buffer);
+    session_->send(std::move(buffer));
     lg::logger().debug() << "sent success login response for:" << uid
                          << lg::L_endl;
   }

@@ -44,7 +44,11 @@ class room_channel {
   void start() {
     channel_.start([this](libs::message::raw_buffer buffer) {
       auto destructed = libs::message::serializer::destruct_buffer(buffer);
-      dispatcher_.dispatch(destructed.type, destructed.payload, nullptr);
+      dispatcher_.dispatch(
+          destructed.type,
+          std::make_shared<const libs::message::raw_buffer>(
+              std::move(destructed.payload)),
+          nullptr);
     });
     requests_.start();
   }

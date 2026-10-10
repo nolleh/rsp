@@ -5,10 +5,10 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "proto/common/message_type.pb.h"
-#include "rsplib/buffer/shared_const_buffer.hpp"
 #include "rsplib/message/types.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
 #include "rsplib/logger/logger.hpp"
@@ -49,8 +49,7 @@ class message_dispatcher: public message_dispatcher_interface {
   }
 
   // TODO(@nolleh) refactor
-  void dispatch(MessageType type, const raw_buffer& buffer,
-                link* link) override {
+  void dispatch(MessageType type, buffer_ptr buffer, link* link) override {
     // it is hard to determine message struct in here.
     // so delegate parsing role to handler
 
@@ -63,7 +62,7 @@ class message_dispatcher: public message_dispatcher_interface {
 
     handler handler = iter->second;
     logger_.trace() << "handler..." << &handler << lg::L_endl;
-    handler(std::make_shared<raw_buffer>(buffer), link);
+    handler(std::move(buffer), link);
   }
 
  private:

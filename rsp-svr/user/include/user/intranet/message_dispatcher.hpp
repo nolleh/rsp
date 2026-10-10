@@ -2,6 +2,7 @@
 #pragma once
 
 #include <typeinfo>
+#include <utility>
 
 #include "proto/common/message_type.pb.h"
 #include "proto/common/ping.pb.h"
@@ -51,9 +52,8 @@ class message_dispatcher : public dispatcher_interface {
   }
 
 #undef REG_HANDLER
-  void dispatch(MessageType type, const raw_buffer& buffer,
-                link* link) override {
-    dispatcher_.dispatch(type, buffer, link);
+  void dispatch(MessageType type, buffer_ptr buffer, link* link) override {
+    dispatcher_.dispatch(type, std::move(buffer), link);
   }
 
   void handle_unknown(link* l) {

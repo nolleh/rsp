@@ -11,8 +11,6 @@
 
 #include <boost/asio.hpp>
 
-#include "rsplib/buffer/shared_const_buffer.hpp"
-#include "rsplib/buffer/shared_mutable_buffer.hpp"
 #include "rsplib/logger/logger.hpp"
 #include "rsplib/message/conn_interpreter.hpp"
 #include "rsplib/message/message_dispatcher_interface.hpp"
@@ -34,6 +32,7 @@ namespace ph = std::placeholders;
 namespace lg = logger;
 using link = link::link;
 using raw_buffer = message::raw_buffer;
+using buffer_ptr = message::buffer_ptr;
 
 class tcp_connection;
 using connection_ptr = std::shared_ptr<tcp_connection>;
@@ -56,9 +55,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   tcp::socket& socket() { return socket_; }
 
   void start(size_t len) {
-    // std::vector<char> bufvec(len);
-    // buffer::shared_mutable_buffer buffer{bufvec};
-    // std::array<char, LEN_BYTE> bufarr;
     lg::logger().debug() << "post impl" << lg::L_endl;
     strand_.post(
         std::bind(&tcp_connection::start_impl, shared_from_this(), len));
@@ -84,11 +80,13 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   // no handle for message type, just send buffer
-  void send(const raw_buffer& msg) {
+  void send(raw_buffer msg) {
     lg::logger().debug() << "send post impl" << lg::L_endl;
-    shared_const_buffer buffer{msg};
+    auto buffer = std::make_shared<const raw_buffer>(std::move(msg));
     strand_.post(
-        std::bind(&tcp_connection::send_impl, shared_from_this(), buffer));
+        [self = shared_from_this(), buffer = std::move(buffer)]() mutable {
+          self->send_impl(std::move(buffer));
+        });
   }
 
   void attach_link(link* link) {
@@ -176,7 +174,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     if (on_closed) on_closed(shared_from_this());
   }
 
-  void send_impl(shared_const_buffer buffer) {
+  void send_impl(buffer_ptr buffer) {
     if (closed_ || graceful_close_requested_ || !socket_.is_open()) return;
     const bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
@@ -190,7 +188,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     auto handler = asio::bind_executor(
         strand_, std::bind(&tcp_connection::handle_write, shared_from_this(),
                            ph::_1, ph::_2));
-    asio::async_write(socket_, write_queue_.front(), handler);
+    asio::async_write(socket_, asio::buffer(*write_queue_.front()), handler);
   }
 
   void handle_write(const boost::system::error_code& error, size_t bytes) {
@@ -220,7 +218,6 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   }
 
   void handle_read(
-      // buffer::shared_mutable_buffer buffer,
       const std::shared_ptr<std::array<char, kBufBytes>>& arr,
       const boost::system::error_code& error, size_t bytes) {
     if (boost::asio::error::eof == error) {
@@ -260,7 +257,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   conn_interpreter interpreter_;
   std::mutex m_;
   link* link_;
-  std::deque<shared_const_buffer> write_queue_;
+  std::deque<buffer_ptr> write_queue_;
   close_handler on_closed_;
   bool graceful_close_requested_{false};
   bool sent_shutdown_{false};

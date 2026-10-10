@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include "rsplib/server/tcp_connection.hpp"
 
@@ -28,9 +29,8 @@ class link {
   template <typename Message>
   void on_recv(Message&& msg) {}
 
-  template <typename Message>
-  void send(const Message& msg) {
-    connection_->send(msg);
+  void send(message::raw_buffer msg) {
+    connection_->send(std::move(msg));
   }
 
   void start(size_t bytes) {

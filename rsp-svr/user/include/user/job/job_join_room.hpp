@@ -78,9 +78,9 @@ class job_join_room : public job,
     response.set_request_id(request_.request_id());
     response.set_success(room_response->success());
 
-    const auto buffer =
+    auto buffer =
         message::serializer::serialize(MessageType::kResJoinRoom, response);
-    session_->send(buffer);
+    session_->send(std::move(buffer));
     finish();
   }
 

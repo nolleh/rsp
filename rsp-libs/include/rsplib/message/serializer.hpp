@@ -79,8 +79,7 @@ class serializer {
 
     // payload.insert(payload.end(), buffer.cbegin() + kContentLen + kType,
     //                buffer.cend());
-    return {parse_status::kComplete, message_len, payload_size, type,
-            payload};
+    return {parse_status::kComplete, message_len, payload_size, type, payload};
   }
 
   template <typename Message>

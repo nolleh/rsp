@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <memory>
 // https://opensource.com/article/22/1/unit-testing-googletest-ctest
 #include <gtest/gtest.h>  // NOLINT
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "proto/common/message_type.pb.h"
@@ -189,6 +191,32 @@ TEST(Interpreter, DispatchesAllCompleteMessagesFromOneRead) {
   interpreter.handle_buffer(input, first_buffer.size());
 
   EXPECT_EQ(received, (std::vector<std::string>{"first", "second"}));
+}
+
+TEST(MessageDispatcher, PreservesSharedPayloadOwnership) {
+  namespace message = rsp::libs::message;
+
+  auto received = std::make_shared<message::buffer_ptr>();
+  auto payload = std::make_shared<const message::raw_buffer>(
+      message::raw_buffer{'p', 'a', 'y', 'l', 'o', 'a', 'd'});
+  const auto* original = payload.get();
+
+  message::message_dispatcher::instance().register_handler(
+      MessageType::kPing,
+      [received](message::buffer_ptr buffer, rsp::libs::link::link*) {
+        *received = std::move(buffer);
+      });
+
+  message::message_dispatcher::instance().dispatch(
+      MessageType::kPing, std::move(payload), nullptr);
+
+  EXPECT_FALSE(payload);
+  ASSERT_TRUE(*received);
+  EXPECT_EQ(original, received->get());
+  EXPECT_EQ(**received,
+            (message::raw_buffer{'p', 'a', 'y', 'l', 'o', 'a', 'd'}));
+  message::message_dispatcher::instance().unregister_handler(
+      MessageType::kPing);
 }
 
 TEST(Interpreter, RejectsOversizedFrame) {
