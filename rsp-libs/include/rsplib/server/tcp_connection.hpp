@@ -185,10 +185,14 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void write_next() {
     namespace asio = boost::asio;
+    auto buffer = write_queue_.front();
+    // Retain the active buffer even if finish_close() clears the queue.
     auto handler = asio::bind_executor(
-        strand_, std::bind(&tcp_connection::handle_write, shared_from_this(),
-                           ph::_1, ph::_2));
-    asio::async_write(socket_, asio::buffer(*write_queue_.front()), handler);
+        strand_, [self = shared_from_this(), buffer](
+                     const boost::system::error_code& error, size_t bytes) {
+          self->handle_write(error, bytes);
+        });
+    asio::async_write(socket_, asio::buffer(*buffer), handler);
   }
 
   void handle_write(const boost::system::error_code& error, size_t bytes) {
