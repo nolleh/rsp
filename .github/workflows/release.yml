@@ -34,7 +34,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes protobuf-compiler libprotobuf-dev
+
+          wget --quiet https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-all-21.12.tar.gz
+          tar -xzf protobuf-all-21.12.tar.gz
+          cmake -S protobuf-21.12 -B protobuf-21.12/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -Dprotobuf_BUILD_SHARED_LIBS=OFF \
+            -Dprotobuf_BUILD_TESTS=OFF
+          cmake --build protobuf-21.12/build --parallel 2
+          sudo cmake --install protobuf-21.12/build
 
           wget --quiet https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2
           tar -xjf boost_1_83_0.tar.bz2
@@ -42,6 +50,8 @@ jobs:
           wget --quiet https://github.com/zeromq/libzmq/releases/download/v4.3.5/zeromq-4.3.5.tar.gz
           tar -xzf zeromq-4.3.5.tar.gz
           cmake -S zeromq-4.3.5 -B zeromq-4.3.5/build \
+            -DBUILD_SHARED=OFF \
+            -DBUILD_STATIC=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DZMQ_BUILD_TESTS=OFF
           cmake --build zeromq-4.3.5/build --parallel 2
@@ -60,6 +70,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_C_COMPILER=gcc
           -DCMAKE_CXX_COMPILER=g++
+          -DProtobuf_USE_STATIC_LIBS=ON
           -DRSP_DISTRIBUTABLE=ON
           -DBoost_NO_SYSTEM_PATHS=ON
           -DBOOST_ROOT=${{ github.workspace }}/boost_1_83_0
