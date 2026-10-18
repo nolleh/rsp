@@ -26,9 +26,15 @@ else()
     message(SEND_ERROR "unsupported")
 endif()
 
-set(Room_CONTENTS_BIN
-    ${CMAKE_BINARY_DIR}/rsp-svr/room_contents/libRoomContents${EXTENSION}
-)
+option(RSP_DISTRIBUTABLE
+  "Load RoomContents from beside the Room executable" OFF)
+if(RSP_DISTRIBUTABLE AND UNIX AND NOT APPLE)
+    set(Room_CONTENTS_BIN "$ORIGIN/libRoomContents${EXTENSION}")
+else()
+    set(Room_CONTENTS_BIN
+        ${CMAKE_BINARY_DIR}/rsp-svr/room_contents/libRoomContents${EXTENSION}
+    )
+endif()
 configure_file(config.h.in ${PROJECT_SOURCE_DIR}/include/room/config.h)
 
 file(GLOB_RECURSE SRC src/*.cpp)
@@ -116,9 +122,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(RoomShutdownContents PRIVATE -fno-gnu-unique)
 endif()
 
+string(CONCAT RoomShutdown_CONFIG_CONTENT
+    "#pragma once\n"
+    "#define Room_CONTENTS_BIN \"$<TARGET_FILE:RoomShutdownContents>\"\n")
 file(GENERATE
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shutdown-include/room/config.h"
-    CONTENT "#pragma once\n#define Room_CONTENTS_BIN \"$<TARGET_FILE:RoomShutdownContents>\"\n")
+    CONTENT "${RoomShutdown_CONFIG_CONTENT}")
 
 add_executable(RoomShutdownTest
     test/shutdown_test.cpp
