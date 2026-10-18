@@ -34,6 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
+          sudo apt-get install --yes gcc-12 g++-12
 
           wget --quiet https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-all-21.12.tar.gz
           tar -xzf protobuf-all-21.12.tar.gz
@@ -68,8 +69,8 @@ jobs:
         run: >
           cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=gcc
-          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER=gcc-12
+          -DCMAKE_CXX_COMPILER=g++-12
           -DProtobuf_USE_STATIC_LIBS=ON
           -DRSP_DISTRIBUTABLE=ON
           -DBoost_NO_SYSTEM_PATHS=ON
