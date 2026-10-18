@@ -62,7 +62,7 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++
           -DRSP_DISTRIBUTABLE=ON
           -DBoost_NO_SYSTEM_PATHS=ON
-          -DBoost_ROOT=${{ github.workspace }}/boost_1_83_0
+          -DBOOST_ROOT=${{ github.workspace }}/boost_1_83_0
           -DBoost_INCLUDE_DIR=${{ github.workspace }}/boost_1_83_0
 
       - name: Build
