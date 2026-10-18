@@ -64,6 +64,48 @@ TEST(TcpConnection, WritesQueuedMessagesInOrder) {
   runner.join();
 }
 
+TEST(TcpConnection, ClosesBeforePostingMessagesBeyondSendByteLimit) {
+  namespace asio = boost::asio;
+  using tcp = asio::ip::tcp;
+
+  asio::io_context io_context;
+  rsp::libs::message::message_dispatcher_interface dispatcher;
+  std::promise<void> closed;
+  auto closed_result = closed.get_future();
+  auto connection = rsp::libs::server::tcp_connection::create(
+      &io_context, &dispatcher,
+      [&closed](const rsp::libs::server::connection_ptr&) {
+        closed.set_value();
+      },
+      8);
+
+  tcp::acceptor acceptor{io_context, tcp::endpoint(tcp::v4(), 0)};
+  acceptor.async_accept(connection->socket(),
+                        [](const boost::system::error_code&) {});
+
+  tcp::socket client{io_context};
+  client.connect(acceptor.local_endpoint());
+
+  connection->send(std::vector<char>{'f', 'i', 'r', 's', 't'});
+  connection->send(std::vector<char>{'n', 'e', 'x', 't'});
+
+  auto work = asio::make_work_guard(io_context);
+  std::thread runner([&io_context] { io_context.run(); });
+
+  const auto close_status = closed_result.wait_for(std::chrono::seconds(1));
+  EXPECT_EQ(std::future_status::ready, close_status);
+
+  std::array<char, 1> received{};
+  boost::system::error_code read_error;
+  const auto bytes = client.read_some(asio::buffer(received), read_error);
+  EXPECT_EQ(0u, bytes);
+  EXPECT_EQ(asio::error::eof, read_error);
+
+  work.reset();
+  io_context.stop();
+  runner.join();
+}
+
 TEST(TcpConnection, NotifiesCloseOnceAfterPeerDisconnects) {
   namespace asio = boost::asio;
   using tcp = asio::ip::tcp;

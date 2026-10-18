@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -45,11 +47,15 @@ using dispatcher = message::message_dispatcher_interface;
 class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  public:
   static constexpr int kBufBytes = 128;
+  static constexpr std::size_t kMaxPendingSendBytes = 1024 * 1024;
   static connection_ptr create(boost::asio::io_context* io_context,
                                dispatcher* dispatcher,
-                               close_handler on_closed = {}) {
+                               close_handler on_closed = {},
+                               std::size_t max_pending_send_bytes =
+                                   kMaxPendingSendBytes) {
     return std::shared_ptr<tcp_connection>(
-        new tcp_connection(io_context, dispatcher, std::move(on_closed)));
+        new tcp_connection(io_context, dispatcher, std::move(on_closed),
+                           max_pending_send_bytes));
   }
 
   tcp::socket& socket() { return socket_; }
@@ -82,11 +88,23 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   // no handle for message type, just send buffer
   void send(raw_buffer msg) {
     lg::logger().debug() << "send post impl" << lg::L_endl;
+    const auto size = msg.size();
+    if (!reserve_send_bytes(size)) {
+      if (!send_overflowed_.exchange(true)) {
+        lg::logger().warn()
+            << "client egress queue overflow, pending bytes:"
+            << pending_send_bytes_.load() << ", message bytes:" << size
+            << ", limit:" << max_pending_send_bytes_ << lg::L_endl;
+        stop(true);
+      }
+      return;
+    }
+
     auto buffer = std::make_shared<const raw_buffer>(std::move(msg));
-    strand_.post(
-        [self = shared_from_this(), buffer = std::move(buffer)]() mutable {
-          self->send_impl(std::move(buffer));
-        });
+    strand_.post([self = shared_from_this(), buffer = std::move(buffer),
+                  size]() mutable {
+      self->send_impl(std::move(buffer), size);
+    });
   }
 
   void attach_link(link* link) {
@@ -103,11 +121,38 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
  private:
   // TODO(@nolleh) consider options for linger / nagle
   explicit tcp_connection(boost::asio::io_context* io_context,
-                          dispatcher* dispatcher, close_handler on_closed)
+                          dispatcher* dispatcher, close_handler on_closed,
+                          std::size_t max_pending_send_bytes)
       : strand_(*io_context),
         socket_(*io_context),
         interpreter_(dispatcher),
-        on_closed_(std::move(on_closed)) {}
+        on_closed_(std::move(on_closed)),
+        max_pending_send_bytes_(max_pending_send_bytes) {}
+
+  struct pending_write {
+    buffer_ptr buffer;
+    std::size_t reserved_bytes;
+  };
+
+  bool reserve_send_bytes(std::size_t size) {
+    if (send_overflowed_.load()) return false;
+
+    auto pending = pending_send_bytes_.load();
+    while (size <= max_pending_send_bytes_ &&
+           pending <= max_pending_send_bytes_ - size) {
+      if (pending_send_bytes_.compare_exchange_weak(pending,
+                                                    pending + size)) {
+        if (!send_overflowed_.load()) return true;
+        pending_send_bytes_.fetch_sub(size);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  void release_send_bytes(std::size_t size) {
+    pending_send_bytes_.fetch_sub(size);
+  }
 
   void start_impl(size_t len) {
     if (!socket_.is_open()) return;
@@ -168,16 +213,23 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
       socket_.close(ignored);
     }
+    for (const auto& write : write_queue_) {
+      release_send_bytes(write.reserved_bytes);
+    }
     write_queue_.clear();
 
     auto on_closed = std::move(on_closed_);
     if (on_closed) on_closed(shared_from_this());
   }
 
-  void send_impl(buffer_ptr buffer) {
-    if (closed_ || graceful_close_requested_ || !socket_.is_open()) return;
+  void send_impl(buffer_ptr buffer, std::size_t reserved_bytes) {
+    if (closed_ || graceful_close_requested_ || send_overflowed_.load() ||
+        !socket_.is_open()) {
+      release_send_bytes(reserved_bytes);
+      return;
+    }
     const bool write_in_progress = !write_queue_.empty();
-    write_queue_.push_back(std::move(buffer));
+    write_queue_.push_back({std::move(buffer), reserved_bytes});
     if (write_in_progress) return;
 
     write_next();
@@ -185,7 +237,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
 
   void write_next() {
     namespace asio = boost::asio;
-    auto buffer = write_queue_.front();
+    auto buffer = write_queue_.front().buffer;
     // Retain the active buffer even if finish_close() clears the queue.
     auto handler = asio::bind_executor(
         strand_, [self = shared_from_this(), buffer](
@@ -213,6 +265,7 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
     lg::logger().trace() << "conn: write message size(" +
                                 std::to_string(bytes) + ")"
                          << lg::L_endl;
+    release_send_bytes(write_queue_.front().reserved_bytes);
     write_queue_.pop_front();
     if (!write_queue_.empty()) {
       write_next();
@@ -261,8 +314,11 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   conn_interpreter interpreter_;
   std::mutex m_;
   link* link_;
-  std::deque<buffer_ptr> write_queue_;
+  std::deque<pending_write> write_queue_;
   close_handler on_closed_;
+  const std::size_t max_pending_send_bytes_;
+  std::atomic<std::size_t> pending_send_bytes_{0};
+  std::atomic<bool> send_overflowed_{false};
   bool graceful_close_requested_{false};
   bool sent_shutdown_{false};
   bool closed_{false};
