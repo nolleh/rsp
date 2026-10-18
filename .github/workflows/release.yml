@@ -23,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-22.04
+          - runner: ubuntu-24.04
             arch: x86_64
-          - runner: ubuntu-22.04-arm
+          - runner: ubuntu-24.04-arm
             arch: aarch64
 
     steps:
@@ -34,7 +34,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes gcc-12 g++-12
 
           wget --quiet https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-all-21.12.tar.gz
           tar -xzf protobuf-all-21.12.tar.gz
@@ -69,8 +68,8 @@ jobs:
         run: >
           cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=gcc-12
-          -DCMAKE_CXX_COMPILER=g++-12
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
           -DProtobuf_USE_STATIC_LIBS=ON
           -DRSP_DISTRIBUTABLE=ON
           -DBoost_NO_SYSTEM_PATHS=ON
@@ -103,7 +102,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
         run: |
-          package="rsp-${PACKAGE_VERSION}-ubuntu-${ARCH}"
+          package="rsp-${PACKAGE_VERSION}-ubuntu-24.04-${ARCH}"
           mkdir -p "dist/${package}"
           cp build/rsp-svr/user/User "dist/${package}/"
           cp build/rsp-svr/room/Room "dist/${package}/"
@@ -115,7 +114,7 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-${{ matrix.arch }}
+          name: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-24.04-${{ matrix.arch }}
           path: dist/*.tar.gz
           if-no-files-found: error
 
@@ -123,12 +122,12 @@ jobs:
     name: Create draft release
     if: github.event_name == 'push'
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Download packages
         uses: actions/download-artifact@v4
         with:
-          pattern: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-*
+          pattern: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-24.04-*
           path: dist
           merge-multiple: true
 
