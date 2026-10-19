@@ -1,6 +1,31 @@
-# v0.0.2
+# v0.1.0 - 2026-10-19
 
-Added Room Server
+Room Server MVP.
+
+## Added
+
+- Room creation, joining, leaving, and kickout flows
+- Dynamically loaded RoomContents shared library
+- User-to-Room routing through ZeroMQ
+- Room and session lifecycle management
+- Request cancellation and timeout handling
+- Two-client chat and Room-unavailable timeout end-to-end tests
+- Ubuntu 24.04 prebuilt releases for x86_64 and aarch64
+
+## Changed
+
+- Serialized room and session processing for safer concurrent operation
+- Added bounded client send queues and connection backpressure handling
+- Improved connection and server shutdown behavior
+
+## Current scope
+
+- A reference C++ CLI is provided; a reusable client SDK is under
+  consideration
+- Browser-compatible transport and WebSocket support are under consideration
+- The RoomContents interface remains intentionally minimal and may evolve
+
+[Release notes](https://github.com/nolleh/rsp/releases/tag/v0.1.0)
 
 ---
 # v0.0.1
