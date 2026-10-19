@@ -1,0 +1,152 @@
+name: Release prebuilt binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "rsp-svr/room/CMakeLists.txt"
+
+env:
+  PACKAGE_VERSION: ${{ github.event_name == 'push' && github.ref_name || format('pr-{0}', github.event.number) }}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Ubuntu ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+
+          wget --quiet https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-all-21.12.tar.gz
+          tar -xzf protobuf-all-21.12.tar.gz
+          cmake -S protobuf-21.12 -B protobuf-21.12/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -Dprotobuf_BUILD_SHARED_LIBS=OFF \
+            -Dprotobuf_BUILD_TESTS=OFF
+          cmake --build protobuf-21.12/build --parallel 2
+          sudo cmake --install protobuf-21.12/build
+
+          wget --quiet https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2
+          tar -xjf boost_1_83_0.tar.bz2
+
+          wget --quiet https://github.com/zeromq/libzmq/releases/download/v4.3.5/zeromq-4.3.5.tar.gz
+          tar -xzf zeromq-4.3.5.tar.gz
+          cmake -S zeromq-4.3.5 -B zeromq-4.3.5/build \
+            -DBUILD_SHARED=ON \
+            -DBUILD_STATIC=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DZMQ_BUILD_TESTS=OFF
+          cmake --build zeromq-4.3.5/build --parallel 2
+          sudo cmake --install zeromq-4.3.5/build
+
+          wget --quiet https://github.com/zeromq/cppzmq/archive/refs/tags/v4.10.0.tar.gz \
+            -O cppzmq-4.10.0.tar.gz
+          tar -xzf cppzmq-4.10.0.tar.gz
+          cmake -S cppzmq-4.10.0 -B cppzmq-4.10.0/build \
+            -DCPPZMQ_BUILD_TESTS=OFF
+          sudo cmake --install cppzmq-4.10.0/build
+
+      - name: Configure CMake
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
+          '-DCMAKE_BUILD_RPATH=$ORIGIN;/usr/local/lib'
+          -DProtobuf_USE_STATIC_LIBS=ON
+          -DRSP_DISTRIBUTABLE=ON
+          -DBoost_NO_SYSTEM_PATHS=ON
+          -DBOOST_ROOT=${{ github.workspace }}/boost_1_83_0
+          -DBoost_INCLUDE_DIR=${{ github.workspace }}/boost_1_83_0
+
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+
+      - name: Place RoomContents beside Room
+        run: >
+          cmake -E copy_if_different
+          build/rsp-svr/room_contents/libRoomContents.so
+          build/rsp-svr/room/libRoomContents.so
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure --no-tests=error
+
+      - name: Run end-to-end tests
+        run: |
+          python3 tests/e2e_chat.py --build-dir build --log-dir build/e2e-logs
+          python3 tests/e2e_room_timeout.py --build-dir build --log-dir build/e2e-logs
+
+      - name: Verify architecture
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: test "$(uname -m)" = "$EXPECTED_ARCH"
+
+      - name: Package
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          package="rsp-${PACKAGE_VERSION}-ubuntu-24.04-${ARCH}"
+          mkdir -p "dist/${package}"
+          cp build/rsp-svr/user/User "dist/${package}/"
+          cp build/rsp-svr/room/Room "dist/${package}/"
+          cp build/rsp-svr/room/libRoomContents.so "dist/${package}/"
+          cp build/rsp-cli/Client "dist/${package}/"
+          cp -L /usr/local/lib/libzmq.so.5 "dist/${package}/"
+          cp README.md LICENSE "dist/${package}/"
+
+          for binary in User Room Client libRoomContents.so; do
+            ldd "dist/${package}/${binary}"
+            ! ldd "dist/${package}/${binary}" | grep --quiet "not found"
+          done
+          ldd "dist/${package}/User" | grep --quiet "dist/${package}/libzmq.so.5"
+          ldd "dist/${package}/Room" | grep --quiet "dist/${package}/libzmq.so.5"
+          tar -C dist -czf "dist/${package}.tar.gz" "${package}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-24.04-${{ matrix.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: Create draft release
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: rsp-${{ env.PACKAGE_VERSION }}-ubuntu-24.04-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: >
+          gh release create "$TAG" dist/*.tar.gz
+          --repo "$GITHUB_REPOSITORY"
+          --title "$TAG"
+          --generate-notes
+          --draft
